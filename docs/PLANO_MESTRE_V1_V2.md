@@ -668,6 +668,8 @@ Ao final da transicao:
 
 ## Documentos complementares
 
+- `docs/CHECKLIST_IMPLEMENTACAO_FRONTEND.md`
+- `docs/CRITERIOS_REVISAO_VISUAL.md`
 - `docs/ESTRATEGIA_V1_NO_V2.md`
 - `docs/MATRIZ_V1_V2.md`
 - `docs/ESTRATEGIA_TESTES_ANTES_UI.md`
