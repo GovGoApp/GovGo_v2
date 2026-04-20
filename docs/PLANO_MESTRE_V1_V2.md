@@ -30,7 +30,7 @@ Em resumo:
 
 - navegacao principal da v2: Inicio, Busca, Empresas, Radar, Relatorios;
 - o design atual da v2 continua como referencia visual e funcional;
-- o frontend pre-pronto em `design/` e a fonte de verdade da camada visual da v2;
+- `design/` e a base canonica que define a camada visual da v2; a UI real nao e o codigo dessa pasta, mas deve ser implementada integralmente a partir dela;
 - a interface Dash do v1 nao entra como parte da experiencia final;
 - nenhum modulo legado deve entrar na UI da v2 sem passar por homologacao backend-first;
 - modulos problematicos devem ser triados antes da integracao.
@@ -109,9 +109,9 @@ Primeiro entram as capacidades mais maduras do v1 e mais centrais para o produto
 
 O maior risco da transicao e misturar tudo. Esse risco sera evitado desde o inicio.
 
-### 6. Tratar `design/` como contrato visual obrigatorio
+### 6. Tratar `design/` como base canonica de definicao visual
 
-O conteudo de `design/` nao deve ser lido como inspiracao. Ele deve ser tratado como implementacao visual pre-pronta da v2.
+O conteudo de `design/` nao deve ser lido apenas como inspiracao, nem como a UI de producao pronta. Ele deve ser tratado como a base que define a UI real da v2.
 
 Isso inclui manter o padrao definido ali para:
 
@@ -128,10 +128,11 @@ Isso inclui manter o padrao definido ali para:
 Regra pratica:
 
 - nada disso deve ser hardcoded fora do padrao definido em `design/`;
-- toda migracao do prototipo para a aplicacao final deve carregar esse padrao como base;
-- qualquer novo valor visual so pode entrar se primeiro virar padrao do sistema em `design/`.
+- a UI real pode ser implementada em outra estrutura de codigo, mas deve ser derivada dessa base;
+- toda migracao do prototipo para a aplicacao final deve traduzir esse padrao para a stack real sem redefinir a linguagem visual;
+- qualquer novo valor visual so pode entrar se primeiro virar padrao do sistema definido a partir de `design/`.
 
-Em outras palavras: a implementacao final deve puxar o design do repositorio, e nao redesenhar a interface em codigo novo por fora dele.
+Em outras palavras: a UI real nao e a pasta `design/`, mas deve ser totalmente definida por ela.
 
 ## Arquitetura-alvo
 
@@ -146,7 +147,7 @@ Responsavel por:
 - navegacao;
 - componentes e estado de interface;
 - consumo de API;
-- preservacao fiel do padrao visual ja definido em `design/`.
+- traducao fiel do padrao visual ja definido em `design/` para a implementacao real da aplicacao.
 
 ### API do produto
 
@@ -343,7 +344,7 @@ Entregas:
 - contratos iniciais dos modulos prioritarios;
 - mapa dos modulos legados a reaproveitar;
 - estrategia de testes e triagem operacionalizada;
-- regra de implementacao do frontend baseada em `design/`, sem hardcode visual fora do padrao.
+- regra de implementacao do frontend derivada de `design/`, sem redefinicao visual paralela fora do padrao.
 
 Saida esperada:
 
@@ -654,7 +655,7 @@ Para a operacao do time, cada fase deve virar:
 
 Todo item de frontend deve incluir tambem um criterio visual obrigatorio:
 
-5. aderencia ao padrao de `design/`, sem desvio de layout, CSS, tipografia, paleta, boxes ou componentes por hardcode local.
+5. aderencia ao padrao definido em `design/`, sem desvio de layout, CSS, tipografia, paleta, boxes ou componentes por redefinicao visual local.
 
 ## Resultado esperado ao final
 
@@ -668,8 +669,11 @@ Ao final da transicao:
 
 ## Documentos complementares
 
+- `docs/CONVENCAO_ARQUITETURA_FRONTEND.md`
 - `docs/CHECKLIST_IMPLEMENTACAO_FRONTEND.md`
 - `docs/CRITERIOS_REVISAO_VISUAL.md`
+- `docs/DEFINICAO_DE_PRONTO_POR_TELA.md`
+- `docs/ESPECIFICACAO_TELA_INICIO.md`
 - `docs/ESTRATEGIA_V1_NO_V2.md`
 - `docs/MATRIZ_V1_V2.md`
 - `docs/ESTRATEGIA_TESTES_ANTES_UI.md`

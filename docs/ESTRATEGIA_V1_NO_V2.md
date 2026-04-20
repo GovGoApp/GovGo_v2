@@ -21,8 +21,8 @@ Em termos de produto, o v2 passa a ser a aplicacao. O v1 passa a ser o backend o
 
 - Navegacao principal aprovada para a v2: Inicio, Busca, Empresas, Radar, Relatorios.
 - O design atual e a referencia visual e funcional da v2.
-- O conteudo de `design/` ja esta pre-pronto e deve ser levado para a aplicacao final tal como esta em estrutura, CSS, fontes, paleta, boxes e padrao visual.
-- Nada da camada visual deve ser hardcoded fora desse padrao; novos valores visuais so entram se forem incorporados primeiro ao proprio sistema de design em `design/`.
+- O conteudo de `design/` nao e a UI real em producao; ele e a base que define a UI real da aplicacao e deve orientar integralmente sua implementacao visual.
+- Nada da camada visual deve ser inventado fora dessa base; novos valores visuais so entram se forem incorporados primeiro ao sistema de design definido a partir de `design/`.
 - O nome tecnico de alguns arquivos do design ainda pode refletir nomenclaturas antigas, mas a documentacao deve considerar o modelo de produto aprovado.
 - O objetivo nao e migrar a UI do v1. O objetivo e migrar capacidades e fluxos do v1 para dentro da experiencia do v2.
 
@@ -77,7 +77,7 @@ O design da v2 ja descreve uma arquitetura de produto muito clara:
 - um modo Relatorios orientado a perguntas analiticas e SQL assistido;
 - uma camada transversal de artefatos do usuario, historico, alertas e boletins.
 
-Esse design tambem ja define o padrao de implementacao visual que deve ser preservado na aplicacao final. Isso significa que migrar o v2 nao e redesenhar interface, trocar CSS livremente ou reconstruir layout fora do sistema visual ja estabelecido em `design/`.
+Esse design tambem define a base visual a partir da qual as paginas reais devem ser implementadas. Isso significa que migrar o v2 nao e copiar literalmente a pasta `design/` para producao, nem redesenhar interface por interpretacao livre. E implementar a UI real a partir do que `design/` ja determina.
 
 Isso significa que a migracao v1 -> v2 nao deve ser pensada como "reescrever do zero". Ela deve ser pensada como "reempacotar o que ja existe do v1 dentro da arquitetura de experiencia do v2".
 

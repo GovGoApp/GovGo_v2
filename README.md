@@ -8,8 +8,8 @@ Nova base de trabalho da versao v2 do GovGo.
 - A base inicial presente hoje esta em `design/`.
 - O prototipo atual roda a partir de `design/GovGo v2.html`.
 - Os componentes de interface estao em `design/govgo/`.
-- O frontend pre-pronto em `design/` e a referencia obrigatoria da UI final: layout, CSS, fontes, paleta, boxes e padroes visuais devem ser levados para a aplicacao como estao definidos ali.
-- Nada da camada visual deve ser hardcoded fora desse padrao.
+- `design/` nao e a UI real em producao; ele e a base obrigatoria a partir da qual a UI real deve ser definida.
+- Layout, CSS, fontes, paleta, boxes e padroes visuais da aplicacao devem nascer dessa base, sem redesenho paralelo fora dela.
 
 ## Objetivo imediato
 
@@ -18,8 +18,11 @@ Organizar a v2 como um repositorio proprio, conectado a `GovGo_v2`, para evoluir
 ## Documentacao de migracao
 
 - `docs/PLANO_MESTRE_V1_V2.md`: plano central e sequenciado da transicao completa do v1 para o v2.
-- `docs/CHECKLIST_IMPLEMENTACAO_FRONTEND.md`: checklist tecnico para implementar telas e componentes seguindo fielmente o padrao de `design/`.
-- `docs/CRITERIOS_REVISAO_VISUAL.md`: criterios objetivos para revisar PRs e garantir aderencia visual ao design pre-pronto.
+- `docs/CONVENCAO_ARQUITETURA_FRONTEND.md`: convencao para traduzir `design/` em arquitetura real de frontend sem redesenho paralelo.
+- `docs/CHECKLIST_IMPLEMENTACAO_FRONTEND.md`: checklist tecnico para implementar a UI real a partir da base visual definida em `design/`.
+- `docs/CRITERIOS_REVISAO_VISUAL.md`: criterios objetivos para revisar PRs e garantir aderencia visual ao design definido em `design/`.
+- `docs/DEFINICAO_DE_PRONTO_POR_TELA.md`: gate de aceite para considerar uma tela realmente pronta na v2.
+- `docs/ESPECIFICACAO_TELA_INICIO.md`: primeira especificacao de tela real derivada do design atual, usando Inicio como prova de implementacao.
 - `docs/ESTRATEGIA_V1_NO_V2.md`: estrategia para transformar o v1 em backend e servicos da v2.
 - `docs/MATRIZ_V1_V2.md`: matriz funcional v1 -> v2 com prioridades de migracao.
 - `docs/ESTRATEGIA_TESTES_ANTES_UI.md`: estrategia para homologar modulos do v1 antes de conecta-los a interface da v2.

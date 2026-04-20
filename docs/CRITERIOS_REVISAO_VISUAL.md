@@ -6,15 +6,17 @@ Criar um criterio de revisao objetivo para garantir que cada tela nova ou migrad
 
 Este documento deve ser usado em revisao de PR, homologacao visual e aceite de entrega.
 
+Ele complementa o checklist tecnico em `docs/CHECKLIST_IMPLEMENTACAO_FRONTEND.md` e a definicao de pronto em `docs/DEFINICAO_DE_PRONTO_POR_TELA.md`.
+
 ## Regra de aceite
 
 Uma implementacao frontend nao deve ser aprovada apenas porque funciona tecnicamente.
 
-Ela tambem precisa demonstrar aderencia visual ao que ja esta pre-pronto em `design/`.
+Ela tambem precisa demonstrar aderencia visual ao que foi definido em `design/` como base da UI real.
 
 ## Pergunta principal de revisao
 
-Esta tela foi implementada como extensao do design existente ou foi redesenhada em paralelo?
+Esta tela foi implementada a partir do design existente ou foi redesenhada em paralelo?
 
 Se a resposta estiver mais perto de "redesenhada em paralelo", a entrega deve voltar para ajuste.
 
@@ -22,7 +24,7 @@ Se a resposta estiver mais perto de "redesenhada em paralelo", a entrega deve vo
 
 ## 1. Referencia de origem identificada
 
-O PR ou entrega precisa informar qual arquivo ou conjunto de arquivos em `design/` serviu de referencia.
+O PR ou entrega precisa informar qual arquivo ou conjunto de arquivos em `design/` serviu de base de definicao para a implementacao.
 
 Reprova se:
 
@@ -183,7 +185,7 @@ Quando a entrega funciona, mas cria desvios locais de layout, estilo ou componen
 
 ### Bloquear
 
-Quando a implementacao introduz hardcode visual, redesenho paralelo ou quebra do sistema.
+Quando a implementacao introduz redefinicao visual paralela, hardcode indevido ou quebra do sistema.
 
 ## Checklist curto para PR
 
@@ -195,3 +197,5 @@ Antes de aprovar, confirmar:
 4. tipografia, paleta e boxes seguem o sistema;
 5. estados tecnicos respeitam a mesma linguagem visual;
 6. nao houve redesenho indevido por causa do backend.
+
+Esse checklist deve ser executado dentro do fluxo de revisao definido em `.github/PULL_REQUEST_TEMPLATE.md`.
