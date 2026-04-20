@@ -1,0 +1,70 @@
+/* GovGo v2 Design Tokens */
+:root {
+  /* Brand */
+  --orange:        #FF5722;
+  --orange-600:    #E8481A;
+  --orange-700:    #C73C15;
+  --orange-50:     #FFF1EC;
+  --orange-100:    #FFE1D5;
+
+  --deep-blue:     #003A70;
+  --deep-blue-ink: #002247;
+  --nav-blue:      #0B4A8A;
+  --blue-50:       #EEF3FC;
+  --blue-100:      #E0EAF9;
+  --blue-200:      #C9D8F0;
+
+  --green:         #2E7D32;
+  --green-50:      #E8F3E9;
+  --green-100:     #CDE5CF;
+
+  --risk:          #B4481A;
+  --risk-50:       #FBECE3;
+
+  /* Neutrals — cool off-white, warm hints */
+  --paper:         #FFFFFF;
+  --workspace:     #F6F7FA;
+  --surface-sunk:  #F0F2F7;
+  --rail:          #FAFBFD;
+  --hairline:      #E4E7EE;
+  --hairline-soft: #EEF0F5;
+  --divider:       #D8DCE5;
+
+  --ink-1:         #1A2233;   /* primary text */
+  --ink-2:         #425066;   /* secondary */
+  --ink-3:         #6B7896;   /* tertiary */
+  --ink-4:         #9AA5BD;   /* placeholder / icon faint */
+
+  /* Type */
+  --font-display:  'Sora', system-ui, sans-serif;
+  --font-body:     'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono:     'JetBrains Mono', ui-monospace, monospace;
+
+  /* Elevation */
+  --shadow-xs:     0 1px 0 rgba(16,24,40,.04);
+  --shadow-sm:     0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.04);
+  --shadow-md:     0 4px 12px rgba(16,24,40,.06), 0 2px 4px rgba(16,24,40,.04);
+  --shadow-lg:     0 12px 28px rgba(16,24,40,.10), 0 4px 8px rgba(16,24,40,.04);
+  --ring-focus:    0 0 0 3px color-mix(in oklab, var(--orange) 22%, transparent);
+
+  /* Radii */
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 10px;
+  --r-xl: 14px;
+  --r-pill: 999px;
+}
+
+/* Utility */
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.display { font-family: var(--font-display); letter-spacing: -0.01em; }
+
+/* Scrollbars — subtle */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: #D4D9E3; border-radius: 10px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb:hover { background: #B8C0CE; border: 2px solid transparent; background-clip: padding-box; }
+
+button { font-family: inherit; }
+input, textarea { font-family: inherit; }
