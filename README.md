@@ -15,8 +15,11 @@ Nova base de trabalho da versao v2 do GovGo.
 
 Organizar a v2 como um repositorio proprio, conectado a `GovGo_v2`, para evoluir do prototipo atual para a nova aplicacao.
 
+Regra central do projeto: tudo no v1 que ainda for util para o funcionamento do produto deve acabar funcionando no v2, seja por reaproveitamento, encapsulamento, reprojeto ou substituicao equivalente.
+
 ## Documentacao de migracao
 
+- `docs/DIARIO_DE_BORDO.md`: primeiro documento a ser lido em novos prompts; registra estado atual, fase corrente, prioridades e proximo passo oficial.
 - `docs/PLANO_MESTRE_V1_V2.md`: plano central e sequenciado da transicao completa do v1 para o v2.
 - `docs/CONVENCAO_ARQUITETURA_FRONTEND.md`: convencao para traduzir `design/` em arquitetura real de frontend sem redesenho paralelo.
 - `docs/CHECKLIST_IMPLEMENTACAO_FRONTEND.md`: checklist tecnico para implementar a UI real a partir da base visual definida em `design/`.

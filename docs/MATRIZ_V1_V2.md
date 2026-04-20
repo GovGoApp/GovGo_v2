@@ -7,6 +7,12 @@
 - `Acao`: reaproveitar, encapsular ou construir.
 - `Prioridade`: ordem pratica para migracao.
 
+Regra de uso:
+
+- esta matriz representa a cobertura funcional alvo do v1 dentro do v2;
+- se uma funcionalidade util do v1 nao estiver mapeada aqui, a matriz esta incompleta e precisa ser atualizada;
+- mudar a implementacao e permitido, perder a funcao de negocio nao.
+
 ## Matriz
 
 | Funcionalidade | Origem v1 | Destino v2 | Acao | Prioridade |
@@ -82,6 +88,16 @@ Exemplos:
 - dashboard do Inicio
 - contratos de API frontend <-> backend
 - camada de estado compartilhado da v2
+
+## Regra de cobertura funcional
+
+Esta matriz nao deve ser usada para justificar corte silencioso de capacidade util do v1.
+
+Ela deve ser usada para garantir que:
+
+1. toda funcionalidade util do v1 tenha destino no v2;
+2. toda funcionalidade sem reaproveitamento direto tenha plano de equivalencia funcional;
+3. qualquer exclusao seja intencional, explicitada e tecnicamente justificada.
 
 ## Ordem recomendada de execucao
 

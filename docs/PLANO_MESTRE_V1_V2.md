@@ -4,6 +4,8 @@
 
 Este documento consolida o plano completo para levar o GovGo do estado atual do v1 para a aplicacao-alvo do v2.
 
+Para retomar o contexto mais recente em uma nova conversa, ler antes `docs/DIARIO_DE_BORDO.md`.
+
 Ele unifica quatro linhas que ja estavam definidas em documentos separados:
 
 - estrategia de migracao do v1 para o v2;
@@ -23,6 +25,20 @@ Em resumo:
 
 - v2 = shell, experiencia, navegacao, fluxos e interface do produto;
 - v1 = backend legado reaproveitado, estabilizado, encapsulado e progressivamente reestruturado.
+
+## Regra de cobertura funcional do v1
+
+Tudo no v1 que ainda for util para o funcionamento do produto deve acabar funcionando no v2.
+
+Isso nao significa copiar literalmente a UI antiga ou manter toda implementacao legada intacta.
+
+Significa o seguinte:
+
+- toda capacidade util do v1 precisa ter destino explicito no v2;
+- esse destino pode ser reaproveitamento direto, encapsulamento, reprojeto ou substituicao equivalente;
+- uma capacidade so pode ficar de fora se estiver obsoleta, quebrada sem valor de recuperacao ou substituida por solucao melhor que preserve sua funcao de negocio.
+
+O criterio de sucesso da migracao nao e "integrar parte do v1". O criterio de sucesso e absorver no v2 tudo o que no v1 ainda gera valor real de produto e operacao.
 
 ## Estado atual resumido
 
@@ -51,6 +67,8 @@ O v1 ja possui base forte para:
 - relatorios NL -> SQL;
 - analise por CNPJ/empresa;
 - pipeline de ingestao PNCP.
+
+Essa base nao deve ser lida como lista opcional. Ela representa a cobertura funcional que o v2 precisa absorver ao longo da transicao.
 
 ### O que ainda nao esta pronto para a v2
 
@@ -100,6 +118,8 @@ Cada modulo do v1 sera classificado como:
 - encapsular;
 - reprojetar;
 - descartar e substituir.
+
+Mas essa classificacao nao elimina a necessidade de cobertura funcional. Se a funcao ainda for util, ela continua tendo que existir no v2, mesmo quando a implementacao mude.
 
 ### 4. Priorizar valor com baixo risco
 

@@ -13,6 +13,8 @@ A estrategia correta e:
 - usar o v2 como a nova camada de experiencia, navegacao e estado compartilhado;
 - substituir os mocks do design por dados reais de forma progressiva.
 
+Regra adicional obrigatoria: tudo no v1 que ainda for util para o funcionamento do produto deve acabar funcionando no v2, mesmo que por outra implementacao tecnica.
+
 Para a forma de validacao desses modulos antes da UI, ver tambem `docs/ESTRATEGIA_TESTES_ANTES_UI.md`.
 
 Em termos de produto, o v2 passa a ser a aplicacao. O v1 passa a ser o backend operacional e de inteligencia que alimenta essa aplicacao.
@@ -23,6 +25,7 @@ Em termos de produto, o v2 passa a ser a aplicacao. O v1 passa a ser o backend o
 - O design atual e a referencia visual e funcional da v2.
 - O conteudo de `design/` nao e a UI real em producao; ele e a base que define a UI real da aplicacao e deve orientar integralmente sua implementacao visual.
 - Nada da camada visual deve ser inventado fora dessa base; novos valores visuais so entram se forem incorporados primeiro ao sistema de design definido a partir de `design/`.
+- Toda funcionalidade util do v1 deve ter destino funcional no v2.
 - O nome tecnico de alguns arquivos do design ainda pode refletir nomenclaturas antigas, mas a documentacao deve considerar o modelo de produto aprovado.
 - O objetivo nao e migrar a UI do v1. O objetivo e migrar capacidades e fluxos do v1 para dentro da experiencia do v2.
 
@@ -80,6 +83,8 @@ O design da v2 ja descreve uma arquitetura de produto muito clara:
 Esse design tambem define a base visual a partir da qual as paginas reais devem ser implementadas. Isso significa que migrar o v2 nao e copiar literalmente a pasta `design/` para producao, nem redesenhar interface por interpretacao livre. E implementar a UI real a partir do que `design/` ja determina.
 
 Isso significa que a migracao v1 -> v2 nao deve ser pensada como "reescrever do zero". Ela deve ser pensada como "reempacotar o que ja existe do v1 dentro da arquitetura de experiencia do v2".
+
+Tambem significa que, se uma funcionalidade do v1 ainda ajuda o produto a operar, ela deve ser contemplada no v2 por um caminho claro: reaproveitar, encapsular, reprojetar ou substituir com equivalencia funcional.
 
 ## Mapeamento Funcional: v1 -> v2
 
