@@ -94,7 +94,7 @@ function ModeRelatorios() {
       <aside style={{borderRight: "1px solid var(--hairline)", background: "var(--paper)", overflowY: "auto"}}>
         <div style={{padding: "12px 10px 10px", borderBottom: "1px solid var(--hairline)"}}>
           <div style={{fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".08em", fontWeight: 600, margin: "0 2px 8px"}}>MODO RELATÓRIOS</div>
-          <Input size="sm" placeholder="Pergunte em português…" icon={<Icon.sparkle size={14}/>} value={q} onChange={setQ}/>
+          <Input size="sm" placeholder="Pergunte em português…" icon={<Icon.terminal size={14}/>} value={q} onChange={setQ}/>
           <div style={{display: "flex", gap: 6, marginTop: 8, alignItems: "center"}}>
             <Chip tone="blue" icon={<Icon.sparkle size={10}/>}>NL → SQL</Chip>
             <span style={{flex: 1}}/>

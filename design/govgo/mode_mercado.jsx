@@ -142,8 +142,8 @@ function ModeMercado() {
       {/* Inspector — now on the LEFT, with search input */}
       <aside style={{borderRight: "1px solid var(--hairline)", background: "var(--paper)", overflowY: "auto"}}>
         <div style={{padding: "12px 10px 10px", borderBottom: "1px solid var(--hairline)"}}>
-          <div style={{fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".08em", fontWeight: 600, margin: "0 2px 8px"}}>MODO MERCADO</div>
-          <Input size="sm" placeholder="Mercado, categoria, comprador ou UF…" icon={<Icon.chart size={14}/>} value={query} onChange={setQuery}/>
+          <div style={{fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".08em", fontWeight: 600, margin: "0 2px 8px"}}>MODO RADAR</div>
+          <Input size="sm" placeholder="Mercado, categoria, comprador ou UF…" icon={<Icon.radar size={14}/>} value={query} onChange={setQuery}/>
           <div style={{display: "flex", gap: 6, marginTop: 8, alignItems: "center", flexWrap: "wrap"}}>
             <Chip tone="blue">Brasil</Chip>
             <Chip tone="blue">{period}</Chip>

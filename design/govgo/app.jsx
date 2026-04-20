@@ -60,7 +60,7 @@ function App() {
       <div style={{
         display: "grid",
         gridTemplateColumns: mode === "oportunidades"
-          ? `72px 300px 1fr ${activityOpen ? "300px" : "44px"}`
+          ? "72px 320px 1fr"
           : "72px 1fr",
         flex: 1, minHeight: 0,
       }}>
@@ -69,7 +69,6 @@ function App() {
         <main style={{minWidth: 0, overflow: "hidden"}}>
           {modeEls[mode]}
         </main>
-        {mode === "oportunidades" && <ActivityRail open={activityOpen} onToggle={() => setActivityOpen(!activityOpen)}/>}
       </div>
       <TweaksPanel tweaks={tweaks} setTweak={setTweak}/>
     </div>

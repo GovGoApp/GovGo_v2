@@ -69,8 +69,8 @@ function LeftRail({mode, onMode}) {
   const items = [
     { id: "home",          label: "Início",         icon: <Icon.grid size={18}/> },
     { id: "oportunidades", label: "Busca",          icon: <Icon.search size={18}/>, count: "214" },
-    { id: "fornecedores",  label: "Análise",        icon: <Icon.building size={18}/> },
-    { id: "mercado",       label: "Mercado",        icon: <Icon.chart size={18}/>,  badge: "novo"},
+    { id: "fornecedores",  label: "Empresas",       icon: <Icon.building size={18}/> },
+    { id: "mercado",       label: "Radar",          icon: <Icon.radar size={18}/>},
     { id: "relatorios",    label: "Relatórios",     icon: <Icon.terminal size={18}/> },
     { id: "designsystem",  label: "Design",         icon: <Icon.sparkle size={18}/> },
   ];
@@ -117,6 +117,7 @@ function LeftRail({mode, onMode}) {
 
 // ---------- Search rail (LEFT in Busca mode) ----------
 function SearchRail() {
+  const [filtersOpen, setFiltersOpen] = uS(false);
   return (
     <aside style={{
       minWidth: 0, background: "var(--rail)", borderRight: "1px solid var(--hairline)",
@@ -136,55 +137,145 @@ function SearchRail() {
         </div>
       </div>
 
-      {/* Filters */}
       <div style={{flex: 1, overflowY: "auto", paddingBottom: 12}}>
-        <Collapsible title="Filtros ativos" icon={<Icon.filter size={13}/>} defaultOpen>
-          <div style={{display: "flex", flexWrap: "wrap", gap: 5}}>
-            <Chip tone="blue" onRemove={()=>{}}>Status: Aberto</Chip>
-            <Chip tone="blue" onRemove={()=>{}}>UF: CE, SP, BA</Chip>
-            <Chip tone="orange" onRemove={()=>{}}>sim ≥ 0.85</Chip>
-            <Chip tone="blue" onRemove={()=>{}}>R$ &gt; 100k</Chip>
-            <Chip tone="blue" onRemove={()=>{}}>Vence em 60d</Chip>
-          </div>
-        </Collapsible>
-        <Collapsible title="Geografia" defaultOpen>
-          <div style={{display: "flex", flexWrap: "wrap", gap: 5}}>
-            {["SP","RJ","MG","CE","BA","DF","RS","PR","GO","PE","SC","AM","PA","MT"].map(uf => (
-              <Chip key={uf} tone={["SP","CE","BA"].includes(uf) ? "blue" : "default"}>{uf}</Chip>
-            ))}
-          </div>
-        </Collapsible>
-        <Collapsible title="Valor estimado">
-          <div style={{padding: "4px 2px", fontSize: 12, color: "var(--ink-3)"}}>R$ 100.000 — R$ 500.000.000</div>
-          <div style={{background: "var(--surface-sunk)", height: 6, borderRadius: 3, position: "relative", marginTop: 8}}>
-            <div style={{position: "absolute", left: "18%", right: "22%", top: 0, bottom: 0, background: "var(--deep-blue)", borderRadius: 3}}/>
-            <div style={{position: "absolute", left: "calc(18% - 6px)", top: -3, width: 12, height: 12, borderRadius: "50%", background: "var(--paper)", border: "2px solid var(--deep-blue)"}}/>
-            <div style={{position: "absolute", left: "calc(78% - 6px)", top: -3, width: 12, height: 12, borderRadius: "50%", background: "var(--paper)", border: "2px solid var(--deep-blue)"}}/>
-          </div>
-        </Collapsible>
-        <Collapsible title="Modalidade">
-          <div style={{display: "flex", flexDirection: "column", gap: 4, fontSize: 13}}>
-            {["Pregão Eletrônico (142)","Concorrência (38)","Dispensa (24)","RDC (10)"].map((m, i) => (
-              <label key={i} style={{display: "flex", alignItems: "center", gap: 8, padding: "4px 0"}}>
-                <input type="checkbox" defaultChecked={i<2}/> <span>{m}</span>
-              </label>
-            ))}
-          </div>
-        </Collapsible>
-        <Collapsible title="Palavras-chave" defaultOpen={false}>
-          <div style={{display: "flex", flexDirection: "column", gap: 8}}>
-            <Input size="sm" placeholder="Inclusão" icon={<Icon.plus size={13}/>} value="alimentação, refeições"/>
-            <Input size="sm" placeholder="Exclusão" icon={<Icon.close size={13}/>} value="consultoria, ti"/>
-          </div>
-        </Collapsible>
-        <Collapsible title="Aderência ao perfil" defaultOpen={false}>
-          <Input size="sm" mono placeholder="CNPJ" value="14.024.944/0001-03"/>
-        </Collapsible>
-      </div>
+        {/* Filters — single collapsible box, smaller font */}
+        <div style={{margin: "10px 10px 0", background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 8, fontSize: 11.5}}>
+          <button onClick={() => setFiltersOpen(!filtersOpen)} style={{
+            all: "unset", cursor: "pointer", width: "100%", boxSizing: "border-box",
+            display: "flex", alignItems: "center", gap: 7, padding: "8px 10px",
+            color: "var(--ink-2)",
+          }}>
+            <Icon.filter size={12}/>
+            <span style={{fontSize: 11.5, fontWeight: 600, letterSpacing: ".02em"}}>Filtros</span>
+            <Chip tone="orange">5 ativos</Chip>
+            <span style={{flex: 1}}/>
+            <span style={{transform: filtersOpen ? "rotate(180deg)" : "none", transition: "transform 140ms", color: "var(--ink-3)", display: "inline-flex"}}>
+              <Icon.chevDown size={12}/>
+            </span>
+          </button>
+          {filtersOpen && (
+            <div style={{borderTop: "1px solid var(--hairline-soft)", padding: "8px 10px 10px", fontSize: 11.5}}>
+              <div style={{display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 10}}>
+                <Chip tone="blue" onRemove={()=>{}}>Status: Aberto</Chip>
+                <Chip tone="blue" onRemove={()=>{}}>UF: CE, SP, BA</Chip>
+                <Chip tone="orange" onRemove={()=>{}}>sim ≥ 0.85</Chip>
+                <Chip tone="blue" onRemove={()=>{}}>R$ &gt; 100k</Chip>
+                <Chip tone="blue" onRemove={()=>{}}>Vence em 60d</Chip>
+              </div>
 
-      <div style={{borderTop: "1px solid var(--hairline)", padding: 10, display: "flex", gap: 6, background: "var(--paper)"}}>
-        <Button kind="ghost" size="sm" style={{flex: 1, justifyContent: "center"}}>Limpar</Button>
-        <Button kind="primary" size="sm" style={{flex: 2, justifyContent: "center"}}>Aplicar filtros</Button>
+              <div style={{fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".05em", fontWeight: 600, margin: "6px 0 5px"}}>Geografia</div>
+              <div style={{display: "flex", flexWrap: "wrap", gap: 4}}>
+                {["SP","RJ","MG","CE","BA","DF","RS","PR","GO","PE","SC","AM","PA","MT"].map(uf => (
+                  <Chip key={uf} tone={["SP","CE","BA"].includes(uf) ? "blue" : "default"}>{uf}</Chip>
+                ))}
+              </div>
+
+              <div style={{fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".05em", fontWeight: 600, margin: "12px 0 5px"}}>Valor estimado</div>
+              <div style={{fontSize: 11, color: "var(--ink-3)"}}>R$ 100.000 — R$ 500.000.000</div>
+              <div style={{background: "var(--surface-sunk)", height: 5, borderRadius: 3, position: "relative", marginTop: 6}}>
+                <div style={{position: "absolute", left: "18%", right: "22%", top: 0, bottom: 0, background: "var(--deep-blue)", borderRadius: 3}}/>
+                <div style={{position: "absolute", left: "calc(18% - 5px)", top: -3, width: 11, height: 11, borderRadius: "50%", background: "var(--paper)", border: "2px solid var(--deep-blue)"}}/>
+                <div style={{position: "absolute", left: "calc(78% - 5px)", top: -3, width: 11, height: 11, borderRadius: "50%", background: "var(--paper)", border: "2px solid var(--deep-blue)"}}/>
+              </div>
+
+              <div style={{fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".05em", fontWeight: 600, margin: "12px 0 5px"}}>Modalidade</div>
+              <div style={{display: "flex", flexDirection: "column", gap: 2, fontSize: 11.5}}>
+                {["Pregão Eletrônico (142)","Concorrência (38)","Dispensa (24)","RDC (10)"].map((m, i) => (
+                  <label key={i} style={{display: "flex", alignItems: "center", gap: 7, padding: "2px 0"}}>
+                    <input type="checkbox" defaultChecked={i<2}/> <span>{m}</span>
+                  </label>
+                ))}
+              </div>
+
+              <div style={{fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".05em", fontWeight: 600, margin: "12px 0 5px"}}>Palavras-chave</div>
+              <div style={{display: "flex", flexDirection: "column", gap: 6}}>
+                <Input size="sm" placeholder="Inclusão" icon={<Icon.plus size={12}/>} value="alimentação, refeições"/>
+                <Input size="sm" placeholder="Exclusão" icon={<Icon.close size={12}/>} value="consultoria, ti"/>
+              </div>
+
+              <div style={{fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".05em", fontWeight: 600, margin: "12px 0 5px"}}>Aderência ao perfil</div>
+              <Input size="sm" mono placeholder="CNPJ" value="14.024.944/0001-03"/>
+
+              <div style={{display: "flex", gap: 6, marginTop: 10}}>
+                <Button kind="ghost" size="sm" style={{flex: 1, justifyContent: "center"}}>Limpar</Button>
+                <Button kind="primary" size="sm" style={{flex: 2, justifyContent: "center"}}>Aplicar</Button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Favoritos / Histórico / Alertas / Boletins */}
+        <Collapsible title="Favoritos" icon={<Icon.starFill size={12}/>} extra={<span style={{fontSize: 11, color: "var(--ink-3)"}}>12</span>} defaultOpen>
+          <div style={{display: "flex", flexDirection: "column", gap: 6}}>
+            {DATA.favoritos.map(f => (
+              <div key={f.id} style={{
+                background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 8,
+                padding: "10px 11px", cursor: "pointer",
+              }}>
+                <div style={{display: "flex", alignItems: "flex-start", gap: 8}}>
+                  <div style={{flex: 1, minWidth: 0}}>
+                    <div style={{fontSize: 12.5, fontWeight: 600, color: "var(--ink-1)", lineHeight: 1.3, marginBottom: 2}}>{f.title}</div>
+                    <div style={{fontSize: 11, color: "var(--ink-3)"}}>{f.org}</div>
+                  </div>
+                  <Icon.bookmark size={13} s={1.6}/>
+                </div>
+                <div style={{display: "flex", alignItems: "center", gap: 6, marginTop: 8}}>
+                  <span style={{fontSize: 11, color: f.tone === "orange" ? "var(--orange)" : "var(--deep-blue)", fontWeight: 600}}>{f.date}</span>
+                  <Chip tone={f.tone === "orange" ? "orange" : "blue"}>vence em {f.status}</Chip>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Collapsible>
+
+        <Collapsible title="Histórico" icon={<Icon.history size={13}/>}>
+          <div style={{display: "flex", flexDirection: "column", gap: 2}}>
+            {DATA.historico.map((h, i) => (
+              <button key={i} style={{
+                all: "unset", cursor: "pointer",
+                padding: "8px 10px", borderRadius: 6,
+                display: "flex", alignItems: "center", gap: 8,
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = "var(--paper)"}
+              onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                <Icon.clock size={13}/>
+                <div style={{flex: 1, minWidth: 0, overflow: "hidden"}}>
+                  <div style={{fontSize: 12.5, color: "var(--ink-1)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"}}>{h.q}</div>
+                  <div style={{fontSize: 11, color: "var(--ink-3)"}}>{h.when} · {h.hits} resultados</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </Collapsible>
+
+        <Collapsible title="Alertas" icon={<Icon.bell size={13}/>} extra={<Chip tone="orange">3</Chip>}>
+          <div style={{display: "flex", flexDirection: "column", gap: 6}}>
+            {[
+              { t:"3 novos editais em Alimentação/SP", when: "há 8 min", tone: "orange" },
+              { t:"Vila Vitória publicou em novo CNAE",  when: "há 1 h",   tone: "blue" },
+              { t:"Contrato C-4118 vence em 35d",         when: "hoje",     tone: "risk" },
+            ].map((a, i) => (
+              <div key={i} style={{
+                padding: "10px 11px", background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 8,
+                display: "flex", gap: 10,
+              }}>
+                <span style={{width: 6, height: 6, borderRadius: 99, marginTop: 6,
+                  background: a.tone === "orange" ? "var(--orange)" : a.tone === "risk" ? "var(--risk)" : "var(--deep-blue)" }}/>
+                <div style={{flex: 1}}>
+                  <div style={{fontSize: 12.5, color: "var(--ink-1)", lineHeight: 1.35}}>{a.t}</div>
+                  <div style={{fontSize: 11, color: "var(--ink-3)", marginTop: 2}}>{a.when}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Collapsible>
+
+        <Collapsible title="Boletins" icon={<Icon.brief size={13}/>} defaultOpen={false}>
+          <div style={{fontSize: 12, color: "var(--ink-3)", padding: "6px 2px"}}>
+            Relatórios diários das suas buscas e CNPJs favoritos.
+          </div>
+          <Button size="sm" style={{marginTop: 6, width: "100%", justifyContent: "center"}}>Configurar boletins</Button>
+        </Collapsible>
       </div>
     </aside>
   );

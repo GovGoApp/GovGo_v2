@@ -124,7 +124,7 @@ function ModeFornecedores() {
     <div style={{display: "grid", gridTemplateColumns: "320px 1fr", height: "100%", overflow: "hidden"}}>
       <aside style={{borderRight: "1px solid var(--hairline)", background: "var(--paper)", overflowY: "auto"}}>
         <div style={{padding: "12px 10px 10px", borderBottom: "1px solid var(--hairline)"}}>
-          <div style={{fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".08em", fontWeight: 600, margin: "0 2px 8px"}}>MODO ANÁLISE</div>
+          <div style={{fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".08em", fontWeight: 600, margin: "0 2px 8px"}}>MODO EMPRESAS</div>
           <Input size="sm" placeholder="CNPJ ou nome da empresa…" icon={<Icon.building size={14}/>} value={query} onChange={v => { setQuery(v); setShowDisambig(true); }}/>
           <div style={{display: "flex", gap: 6, marginTop: 8, alignItems: "center"}}>
             <Chip tone="blue" icon={<Icon.sparkle size={10}/>}>busca fuzzy</Chip>

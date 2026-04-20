@@ -19,6 +19,7 @@ const Icon = {
   table:       (p) => <I {...p}><rect x="3" y="4" width="14" height="12" rx="1.5"/><path d="M3 8h14M3 12h14M8.5 4v12"/></I>,
   map:         (p) => <I {...p}><path d="m3 5 4-1.5L13 6l4-1.5v11L13 17 7 14.5 3 16z"/><path d="M7 3.5v11M13 6v11"/></I>,
   chart:       (p) => <I {...p}><path d="M3 16h14M6 13V9M10 13V5M14 13v-5"/></I>,
+  radar:       (p) => <I {...p}><circle cx="10" cy="10" r="7"/><circle cx="10" cy="10" r="4"/><path d="M10 10 16 6"/><circle cx="10" cy="10" r="1" fill="currentColor" stroke="none"/></I>,
   brief:       (p) => <I {...p}><rect x="3" y="6" width="14" height="10" rx="1.5"/><path d="M7 6V4.5A1.5 1.5 0 0 1 8.5 3h3A1.5 1.5 0 0 1 13 4.5V6"/></I>,
   terminal:    (p) => <I {...p}><rect x="3" y="4" width="14" height="12" rx="1.5"/><path d="m6 9 2 2-2 2M11 13h3"/></I>,
   bookmark:    (p) => <I {...p}><path d="M6 3h8v14l-4-2.5L6 17z"/></I>,

@@ -31,13 +31,6 @@ function ModeHome({onMode}) {
       icon: <Icon.terminal size={22}/>,
       stat: "14 consultas salvas · NL → SQL", accent: "blue",
     },
-    {
-      id: "designsystem", label: "Design System", tag: "Referência",
-      title: "Fundamentos visuais",
-      desc: "Tokens de cor, tipografia, elevação e componentes usados em toda a plataforma GovGo v2.",
-      icon: <Icon.grid size={22}/>,
-      stat: "Tokens · componentes · exemplos", accent: "neutral",
-    },
   ];
 
   const kpis = [
@@ -145,7 +138,7 @@ function ModeHome({onMode}) {
       {/* Modes — BIG cards */}
       <div style={{marginBottom: 10, display: "flex", alignItems: "baseline", gap: 10}}>
         <h3 style={{fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 600, color: "var(--ink-1)", margin: 0}}>Por onde começar</h3>
-        <span style={{fontSize: 12, color: "var(--ink-3)"}}>cinco modos · um clique</span>
+        <span style={{fontSize: 12, color: "var(--ink-3)"}}>quatro modos · um clique</span>
       </div>
       <div style={{
         display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14,
