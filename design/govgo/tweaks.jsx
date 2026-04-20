@@ -26,7 +26,7 @@ function TweaksPanel({tweaks, setTweak}) {
     <button onClick={() => onChange(v)} style={{
       all: "unset", cursor: "pointer", padding: "5px 10px", fontSize: 12,
       borderRadius: 6, border: `1px solid ${cur === v ? "var(--deep-blue)" : "var(--hairline)"}`,
-      background: cur === v ? "var(--deep-blue)" : "white",
+      background: cur === v ? "var(--deep-blue)" : "var(--paper)",
       color: cur === v ? "white" : "var(--ink-2)",
       fontWeight: 500,
     }}>{children}</button>
@@ -35,7 +35,7 @@ function TweaksPanel({tweaks, setTweak}) {
   return (
     <div style={{
       position: "fixed", bottom: 20, right: 20, width: 320, zIndex: 100,
-      background: "white", border: "1px solid var(--hairline)",
+      background: "var(--paper)", border: "1px solid var(--hairline)",
       borderRadius: 12, boxShadow: "var(--shadow-lg)",
       overflow: "hidden",
     }}>

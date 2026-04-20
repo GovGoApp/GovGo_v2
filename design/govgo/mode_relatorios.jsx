@@ -16,9 +16,9 @@ function RelatoriosTabs({tabs, active, onActivate, onClose, onNew}) {
             style={{
               display: "inline-flex", alignItems: "center", gap: 8,
               padding: "9px 12px", marginTop: 6,
-              background: isActive ? "white" : "transparent",
+              background: isActive ? "var(--paper)" : "transparent",
               border: isActive ? "1px solid var(--hairline)" : "1px solid transparent",
-              borderBottom: isActive ? "1px solid white" : "1px solid transparent",
+              borderBottom: isActive ? "1px solid var(--paper)" : "1px solid transparent",
               borderRadius: "8px 8px 0 0",
               cursor: "pointer", position: "relative", top: 1,
               fontSize: 12.5, fontWeight: 500,
@@ -91,7 +91,7 @@ function ModeRelatorios() {
   return (
     <div style={{display: "grid", gridTemplateColumns: "320px 1fr", height: "100%", overflow: "hidden"}}>
       {/* Inspector — LEFT: search input + history */}
-      <aside style={{borderRight: "1px solid var(--hairline)", background: "white", overflowY: "auto"}}>
+      <aside style={{borderRight: "1px solid var(--hairline)", background: "var(--paper)", overflowY: "auto"}}>
         <div style={{padding: "12px 10px 10px", borderBottom: "1px solid var(--hairline)"}}>
           <div style={{fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".08em", fontWeight: 600, margin: "0 2px 8px"}}>MODO RELATÓRIOS</div>
           <Input size="sm" placeholder="Pergunte em português…" icon={<Icon.sparkle size={14}/>} value={q} onChange={setQ}/>
@@ -108,8 +108,8 @@ function ModeRelatorios() {
             <button key={i} style={{
               all: "unset", cursor: "pointer", display: "block", width: "100%", boxSizing: "border-box",
               padding: "10px 12px", marginBottom: 6,
-              background: i === 0 ? "var(--orange-50)" : "white",
-              border: `1px solid ${i === 0 ? "#FBCEB9" : "var(--hairline)"}`,
+              background: i === 0 ? "var(--orange-50)" : "var(--paper)",
+              border: `1px solid ${i === 0 ? "var(--orange-100)" : "var(--hairline)"}`,
               borderRadius: 8,
             }}>
               <div style={{fontSize: 12.5, color: "var(--ink-1)", fontWeight: 500, lineHeight: 1.4}}>{r.q}</div>
@@ -144,7 +144,7 @@ function ModeRelatorios() {
         {ran && (
           <>
             {/* SQL preview */}
-            <div style={{background: "var(--deep-blue-ink)", borderRadius: 10, overflow: "hidden", marginBottom: 14}}>
+            <div style={{background: "var(--code-bg)", borderRadius: 10, overflow: "hidden", marginBottom: 14}}>
               <div style={{display: "flex", alignItems: "center", padding: "10px 14px", borderBottom: "1px solid rgba(255,255,255,.08)"}}>
                 <div style={{display: "inline-flex", gap: 6}}>
                   <span style={{width: 10, height: 10, borderRadius: 99, background: "#FF5F57"}}/>
@@ -175,7 +175,7 @@ function ModeRelatorios() {
             </div>
 
             {/* Results */}
-            <div style={{background: "white", border: "1px solid var(--hairline)", borderRadius: 10, overflow: "hidden"}}>
+            <div style={{background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 10, overflow: "hidden"}}>
               <div style={{padding: "12px 16px", borderBottom: "1px solid var(--hairline-soft)", display: "flex", alignItems: "center", gap: 10}}>
                 <Chip tone="green" icon={<Icon.check size={10}/>}>Executado</Chip>
                 <span style={{fontSize: 12, color: "var(--ink-3)"}}>10 linhas · 420 ms</span>
@@ -196,7 +196,7 @@ function ModeRelatorios() {
                   gridTemplateColumns: "56px 2fr 80px 120px 160px",
                   padding: "11px 16px", borderBottom: "1px solid var(--hairline-soft)", fontSize: 13,
                   alignItems: "center",
-                  background: i === 0 ? "var(--orange-50)" : "white"}}>
+                  background: i === 0 ? "var(--orange-50)" : "var(--paper)"}}>
                   <span className="mono" style={{color: "var(--ink-2)", fontWeight: 500}}>{r[0]}</span>
                   <span style={{color: "var(--ink-1)", fontWeight: i === 0 ? 600 : 500}}>{r[1]}</span>
                   <span className="mono" style={{color: "var(--ink-2)"}}>{r[2]}</span>

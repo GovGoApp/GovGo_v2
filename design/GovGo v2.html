@@ -22,9 +22,16 @@
 <div id="root"></div>
 
 <script>
+  // Theme bootstrap — runs before React to avoid flash of wrong theme
+  try {
+    var t = localStorage.getItem('govgo-theme') || 'light';
+    if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  } catch(e){}
+</script>
+<script>
   // Tweak defaults — rewritten by the host on change
   window.__TWEAKS = /*EDITMODE-BEGIN*/{
-    "mode": "relatorios",
+    "mode": "oportunidades",
     "density": "comfortable",
     "accent": "orange",
     "showInspector": true
@@ -41,6 +48,7 @@
 <script type="text/babel" src="govgo/mode_mercado.jsx"></script>
 <script type="text/babel" src="govgo/mode_relatorios.jsx"></script>
 <script type="text/babel" src="govgo/mode_designsystem.jsx"></script>
+<script type="text/babel" src="govgo/mode_home.jsx"></script>
 <script type="text/babel" src="govgo/tweaks.jsx"></script>
 <script type="text/babel" src="govgo/app.jsx"></script>
 </body>

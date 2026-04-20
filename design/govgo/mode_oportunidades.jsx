@@ -16,9 +16,9 @@ function WorkspaceTabs({tabs, active, onActivate, onClose, onNew}) {
             style={{
               display: "inline-flex", alignItems: "center", gap: 8,
               padding: "9px 12px 9px 12px", marginTop: 6,
-              background: isActive ? "white" : "transparent",
+              background: isActive ? "var(--paper)" : "transparent",
               border: isActive ? "1px solid var(--hairline)" : "1px solid transparent",
-              borderBottom: isActive ? "1px solid white" : "1px solid transparent",
+              borderBottom: isActive ? "1px solid var(--paper)" : "1px solid transparent",
               borderRadius: "8px 8px 0 0",
               cursor: "pointer", position: "relative", top: 1,
               fontSize: 12.5, fontWeight: 500,
@@ -104,7 +104,7 @@ function ModeOportunidades() {
             }
           />
 
-          <div style={{display: "flex", flexWrap: "wrap", gap: 8, padding: "12px 14px", background: "white", border: "1px solid var(--hairline)", borderRadius: 10, marginBottom: 14}}>
+          <div style={{display: "flex", flexWrap: "wrap", gap: 8, padding: "12px 14px", background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 10, marginBottom: 14}}>
             <span style={{fontSize: 11.5, color: "var(--ink-3)", fontWeight: 600, textTransform: "uppercase", letterSpacing: ".06em", alignSelf: "center", marginRight: 4}}>Filtros ativos</span>
             <Chip tone="blue" onRemove={()=>{}}>Status: Aberto</Chip>
             <Chip tone="blue" onRemove={()=>{}}>UF: CE, SP, BA, RS, GO…</Chip>
@@ -115,7 +115,7 @@ function ModeOportunidades() {
             <Button kind="ghost" size="sm" icon={<Icon.plus size={12}/>}>Adicionar filtro</Button>
           </div>
 
-          <div style={{background: "white", border: "1px solid var(--hairline)", borderRadius: 10, overflow: "hidden"}}>
+          <div style={{background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 10, overflow: "hidden"}}>
             <div style={{display: "grid",
               gridTemplateColumns: "44px 56px minmax(0,2.2fr) 1fr 56px 150px 140px 120px",
               fontSize: 11, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".04em", fontWeight: 600,
@@ -135,7 +135,7 @@ function ModeOportunidades() {
                     gridTemplateColumns: "44px 56px minmax(0,2.2fr) 1fr 56px 150px 140px 120px",
                     padding: "12px 16px", borderBottom: "1px solid var(--hairline-soft)",
                     alignItems: "center", cursor: "pointer",
-                    background: "white",
+                    background: "var(--paper)",
                     fontSize: 13,
                   }}>
                   <span style={{color: "var(--ink-3)"}}><Icon.bookmark size={14}/></span>

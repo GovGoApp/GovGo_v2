@@ -9,6 +9,8 @@
 
   --deep-blue:     #003A70;
   --deep-blue-ink: #002247;
+  --nav-bg:        #002247;   /* left rail & code editor background */
+  --code-bg:       #0E1624;
   --nav-blue:      #0B4A8A;
   --blue-50:       #EEF3FC;
   --blue-100:      #E0EAF9;
@@ -68,3 +70,60 @@
 
 button { font-family: inherit; }
 input, textarea { font-family: inherit; }
+
+/* ================================================================= */
+/* Dark mode — tokens mirror the light palette with adjusted surfaces */
+/* ================================================================= */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Brand — slightly brighter so they pop on dark surfaces */
+  --orange:        #FF6A3D;
+  --orange-600:    #FF5722;
+  --orange-700:    #FF8A66;   /* text-on-dark variant */
+  --orange-50:     #3A1A10;   /* background tint */
+  --orange-100:    #4A2418;
+
+  --deep-blue:     #7FB0F0;   /* used as accent text — brighten on dark */
+  --deep-blue-ink: #C5D9F3;
+  --nav-bg:        #0A0F17;   /* left rail & code editor background (stays dark) */
+  --code-bg:       #0A0F17;
+  --nav-blue:      #1E3A5F;
+  --blue-50:       #17243A;
+  --blue-100:      #1E3452;
+  --blue-200:      #2A4976;
+
+  --green:         #7BC77E;
+  --green-50:      #17301A;
+  --green-100:     #234B27;
+
+  --risk:          #FF8A66;
+  --risk-50:       #3A1F16;
+
+  /* Neutrals — true dark but not pure black */
+  --paper:         #161B25;   /* cards, tables, main surfaces */
+  --workspace:     #0D1118;   /* app background */
+  --surface-sunk:  #1F2632;   /* inputs, muted panels */
+  --rail:          #131821;   /* subtle rail */
+  --hairline:      #263040;
+  --hairline-soft: #1D2532;
+  --divider:       #2F3A4D;
+
+  --ink-1:         #EEF2F8;
+  --ink-2:         #B8C3D4;
+  --ink-3:         #8391A6;
+  --ink-4:         #5C6880;
+
+  --shadow-xs:     0 1px 0 rgba(0,0,0,.35);
+  --shadow-sm:     0 1px 2px rgba(0,0,0,.45), 0 1px 3px rgba(0,0,0,.35);
+  --shadow-md:     0 4px 12px rgba(0,0,0,.50), 0 2px 4px rgba(0,0,0,.35);
+  --shadow-lg:     0 14px 32px rgba(0,0,0,.55), 0 4px 10px rgba(0,0,0,.40);
+  --ring-focus:    0 0 0 3px color-mix(in oklab, var(--orange) 35%, transparent);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #2B3547; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: #3A455A; }
+
+/* Smooth theme swap */
+html { transition: background-color .18s ease; }
+body, .surface, aside, header, section, .card { transition: background-color .18s ease, border-color .18s ease, color .18s ease; }

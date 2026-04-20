@@ -39,6 +39,8 @@ const Icon = {
   trendDown:   (p) => <I {...p}><path d="m3 7 4 4 3-3 7 7"/><path d="M12 15h5v-5"/></I>,
   globe:       (p) => <I {...p}><circle cx="10" cy="10" r="7"/><path d="M3 10h14M10 3c2 2.5 3 5 3 7s-1 4.5-3 7c-2-2.5-3-5-3-7s1-4.5 3-7Z"/></I>,
   clock:       (p) => <I {...p}><circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 1.5"/></I>,
+  sun:         (p) => <I {...p}><circle cx="10" cy="10" r="3.5"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.3 4.3l1.4 1.4M14.3 14.3l1.4 1.4M4.3 15.7l1.4-1.4M14.3 5.7l1.4-1.4"/></I>,
+  moon:        (p) => <I {...p} s={1.4}><path d="M15.5 12.5A6 6 0 0 1 7.5 4.5a6 6 0 1 0 8 8Z"/></I>,
   logo:        ({size=22}) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <rect x="1.5" y="1.5" width="21" height="21" rx="5.5" fill="#003A70"/>

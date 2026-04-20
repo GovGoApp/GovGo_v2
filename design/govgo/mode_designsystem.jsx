@@ -1,13 +1,44 @@
 // Mode: Design System — mini reference
-function Swatch({name, hex, light}) {
+// Resolve CSS color (hex or var(--name)) to #rrggbb, then measure contrast.
+function resolveColor(c) {
+  if (typeof window === "undefined") return "#ffffff";
+  const el = document.createElement("div");
+  el.style.color = c;
+  el.style.display = "none";
+  document.body.appendChild(el);
+  const rgb = getComputedStyle(el).color;
+  document.body.removeChild(el);
+  return rgb; // rgb(r, g, b)
+}
+function luminance(rgbStr) {
+  const m = rgbStr.match(/\d+(\.\d+)?/g);
+  if (!m) return 1;
+  const [r, g, b] = m.slice(0, 3).map(Number).map(v => v / 255);
+  const lin = v => v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+}
+function Swatch({name, color, label}) {
+  const ref = React.useRef(null);
+  const [fg, setFg] = React.useState("#fff");
+  const [resolved, setResolved] = React.useState(label || "");
+  React.useEffect(() => {
+    if (!ref.current) return;
+    const bg = getComputedStyle(ref.current).backgroundColor;
+    setFg(luminance(bg) > 0.5 ? "var(--ink-1)" : "#fff");
+    if (!label) {
+      // convert rgb(r,g,b) -> #rrggbb
+      const m = bg.match(/\d+/g);
+      if (m) setResolved("#" + m.slice(0,3).map(v => (+v).toString(16).padStart(2,"0")).join("").toUpperCase());
+    }
+  }, [color, label]);
   return (
     <div>
-      <div style={{
-        height: 68, background: hex, borderRadius: 10,
+      <div ref={ref} style={{
+        height: 68, background: color, borderRadius: 10,
         border: "1px solid var(--hairline)",
         display: "flex", alignItems: "flex-end", padding: 10,
       }}>
-        <span className="mono" style={{fontSize: 11, color: light ? "var(--ink-1)" : "white", fontWeight: 600}}>{hex}</span>
+        <span className="mono" style={{fontSize: 11, color: fg, fontWeight: 600}}>{resolved}</span>
       </div>
       <div style={{marginTop: 6, fontSize: 12, color: "var(--ink-2)", fontWeight: 500}}>{name}</div>
     </div>
@@ -27,19 +58,19 @@ function ModeDesignSystem() {
       <div style={{marginTop: 20}}>
         <h3 style={{fontFamily: "var(--font-display)", fontSize: 14, color: "var(--ink-2)", textTransform: "uppercase", letterSpacing: ".06em", margin: "0 0 12px"}}>Cores de marca</h3>
         <div style={{display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 18}}>
-          <Swatch name="Laranja GovGo" hex="#FF5722"/>
-          <Swatch name="Azul institucional" hex="#003A70"/>
-          <Swatch name="Fundo azul claro" hex="#E0EAF9" light/>
-          <Swatch name="Verde sucesso" hex="#2E7D32"/>
+          <Swatch name="Laranja GovGo" color="var(--orange)"/>
+          <Swatch name="Azul institucional" color="var(--deep-blue)"/>
+          <Swatch name="Fundo azul claro" color="var(--blue-50)"/>
+          <Swatch name="Verde sucesso" color="var(--green)"/>
         </div>
         <h3 style={{fontFamily: "var(--font-display)", fontSize: 14, color: "var(--ink-2)", textTransform: "uppercase", letterSpacing: ".06em", margin: "0 0 12px"}}>Neutros & superfícies</h3>
         <div style={{display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 10}}>
-          <Swatch name="Paper" hex="#FFFFFF" light/>
-          <Swatch name="Workspace" hex="#F6F7FA" light/>
-          <Swatch name="Sunk" hex="#F0F2F7" light/>
-          <Swatch name="Hairline" hex="#E4E7EE" light/>
-          <Swatch name="Ink 2" hex="#425066"/>
-          <Swatch name="Ink 1" hex="#1A2233"/>
+          <Swatch name="Paper" color="var(--paper)"/>
+          <Swatch name="Workspace" color="var(--surface)"/>
+          <Swatch name="Sunk" color="var(--surface-sunk)"/>
+          <Swatch name="Hairline" color="var(--hairline)"/>
+          <Swatch name="Ink 2" color="var(--ink-2)"/>
+          <Swatch name="Ink 1" color="var(--ink-1)"/>
         </div>
       </div>
 
@@ -52,7 +83,7 @@ function ModeDesignSystem() {
             {fam: "IBM Plex Sans", usage: "Texto e tabelas", sample: "Alimentação hospitalar"},
             {fam: "JetBrains Mono", usage: "Dados técnicos & SQL", sample: "14.024.944/0001-03"},
           ].map(t => (
-            <div key={t.fam} style={{padding: 18, border: "1px solid var(--hairline)", borderRadius: 10, background: "white"}}>
+            <div key={t.fam} style={{padding: 18, border: "1px solid var(--hairline)", borderRadius: 10, background: "var(--paper)"}}>
               <div style={{fontSize: 11, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".04em", fontWeight: 600}}>{t.usage}</div>
               <div style={{fontFamily: t.fam === "JetBrains Mono" ? "JetBrains Mono" : t.fam, fontSize: 24, fontWeight: 600, color: "var(--ink-1)", marginTop: 6, letterSpacing: "-0.01em"}}>{t.sample}</div>
               <div style={{fontSize: 12, color: "var(--ink-3)", marginTop: 6}} className="mono">{t.fam}</div>
@@ -154,14 +185,14 @@ function ModeDesignSystem() {
           <div style={{display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12}}>
             {/* empty */}
             <div style={{padding: 22, border: "1px dashed var(--divider)", borderRadius: 10, textAlign: "center", background: "var(--rail)"}}>
-              <div style={{width: 38, height: 38, margin: "0 auto 10px", borderRadius: 99, background: "white", border: "1px solid var(--hairline)", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "var(--ink-3)"}}>
+              <div style={{width: 38, height: 38, margin: "0 auto 10px", borderRadius: 99, background: "var(--paper)", border: "1px solid var(--hairline)", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "var(--ink-3)"}}>
                 <Icon.search size={18}/>
               </div>
               <div style={{fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 14}}>Nenhum resultado</div>
               <div style={{fontSize: 12, color: "var(--ink-3)", marginTop: 4, lineHeight: 1.4}}>Tente termos mais amplos ou remova filtros.</div>
             </div>
             {/* loading */}
-            <div style={{padding: 22, border: "1px solid var(--hairline)", borderRadius: 10, background: "white"}}>
+            <div style={{padding: 22, border: "1px solid var(--hairline)", borderRadius: 10, background: "var(--paper)"}}>
               {[1,2,3].map(i => (
                 <div key={i} style={{display: "flex", gap: 8, alignItems: "center", marginBottom: 8}}>
                   <div style={{width: 28, height: 28, borderRadius: 99, background: "linear-gradient(90deg,#EEF0F5,#F6F7FA,#EEF0F5)", backgroundSize: "200% 100%", animation: "shine 1.4s infinite"}}/>
@@ -213,7 +244,7 @@ function ModeDesignSystem() {
       </div>
 
       {/* Motion note */}
-      <div style={{marginTop: 24, padding: 18, background: "white", border: "1px solid var(--hairline)", borderRadius: 10}}>
+      <div style={{marginTop: 24, padding: 18, background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 10}}>
         <h3 style={{fontFamily: "var(--font-display)", fontSize: 14, color: "var(--ink-2)", textTransform: "uppercase", letterSpacing: ".06em", margin: "0 0 10px"}}>Comportamento</h3>
         <div style={{display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, fontSize: 13}}>
           {[

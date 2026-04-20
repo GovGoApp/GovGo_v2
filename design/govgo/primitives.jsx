@@ -20,10 +20,10 @@ function Button({kind = "default", size = "md", icon, iconRight, children, onCli
   const variants = {
     primary: { background: "var(--orange)", color: "white", boxShadow: "0 1px 0 rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,.18)" },
     secondary: { background: "var(--deep-blue)", color: "white" },
-    default: { background: "white", color: "var(--ink-1)", borderColor: "var(--hairline)", boxShadow: "var(--shadow-xs)" },
+    default: { background: "var(--paper)", color: "var(--ink-1)", borderColor: "var(--hairline)", boxShadow: "var(--shadow-xs)" },
     ghost:   { background: "transparent", color: "var(--ink-2)" },
     subtle:  { background: "var(--surface-sunk)", color: "var(--ink-1)" },
-    danger:  { background: "white", color: "var(--risk)", borderColor: "var(--hairline)" },
+    danger:  { background: "var(--paper)", color: "var(--risk)", borderColor: "var(--hairline)" },
   };
   const activeStyle = active ? (kind === "ghost" ? { background: "var(--blue-50)", color: "var(--deep-blue)" } : {}) : {};
   return (
@@ -41,8 +41,8 @@ function Button({kind = "default", size = "md", icon, iconRight, children, onCli
 // ---------- Chip ----------
 function Chip({children, onRemove, tone = "default", icon, active, onClick}) {
   const tones = {
-    default:{ bg: "white", fg: "var(--ink-2)", bd: "var(--hairline)" },
-    orange: { bg: "var(--orange-50)", fg: "var(--orange-700)", bd: "#FBCEB9" },
+    default:{ bg: "var(--paper)", fg: "var(--ink-2)", bd: "var(--hairline)" },
+    orange: { bg: "var(--orange-50)", fg: "var(--orange-700)", bd: "var(--orange-100)" },
     blue:   { bg: "var(--blue-50)", fg: "var(--deep-blue)", bd: "var(--blue-200)" },
     green:  { bg: "var(--green-50)", fg: "var(--green)", bd: "var(--green-100)" },
     risk:   { bg: "var(--risk-50)", fg: "var(--risk)", bd: "#F0C8B4" },
@@ -79,7 +79,7 @@ function Input({icon, iconRight, placeholder, value, onChange, size = "md", mono
     <div style={{
       display: "flex", alignItems: "center", gap: 8,
       padding: size === "sm" ? "6px 10px" : "9px 12px",
-      background: "white", borderRadius: "var(--r-md)",
+      background: "var(--paper)", borderRadius: "var(--r-md)",
       border: `1px solid ${focus ? "var(--deep-blue)" : "var(--hairline)"}`,
       boxShadow: focus ? "var(--ring-focus)" : "var(--shadow-xs)",
       transition: "border-color 120ms, box-shadow 120ms",
@@ -102,7 +102,7 @@ function Input({icon, iconRight, placeholder, value, onChange, size = "md", mono
 function Card({children, style, title, extra, padding = 16, subtle}) {
   return (
     <section style={{
-      background: subtle ? "var(--rail)" : "white",
+      background: subtle ? "var(--rail)" : "var(--paper)",
       border: "1px solid var(--hairline)",
       borderRadius: "var(--r-lg)",
       boxShadow: subtle ? "none" : "var(--shadow-xs)",
@@ -128,7 +128,7 @@ function KPI({label, value, delta, unit, trend, sub, accent}) {
   const neg = delta && delta < 0;
   return (
     <div style={{
-      background: "white",
+      background: "var(--paper)",
       border: "1px solid var(--hairline)",
       borderRadius: "var(--r-lg)",
       padding: "14px 16px 12px",
@@ -207,7 +207,7 @@ function Tabs({tabs, value, onChange, style}) {
               padding: "5px 12px", borderRadius: "var(--r-sm)",
               fontSize: 12.5, fontWeight: 500,
               color: active ? "var(--ink-1)" : "var(--ink-3)",
-              background: active ? "white" : "transparent",
+              background: active ? "var(--paper)" : "transparent",
               boxShadow: active ? "var(--shadow-xs)" : "none",
               display: "inline-flex", alignItems: "center", gap: 6,
             }}>{t.icon}{t.label}
@@ -302,8 +302,8 @@ function ModeSearchBar({placeholder, value, chips, right, icon = <Icon.search si
     <div style={{
       display: "flex", alignItems: "center", gap: 10,
       padding: "0 12px 0 14px", height: 44,
-      background: "white",
-      border: `1px solid ${isOrange ? "#FBCEB9" : "var(--hairline)"}`,
+      background: "var(--paper)",
+      border: `1px solid ${isOrange ? "var(--orange-100)" : "var(--hairline)"}`,
       borderRadius: 10,
       boxShadow: "var(--shadow-sm)",
       marginBottom: 16,

@@ -65,7 +65,7 @@ function EditalDetail({ edital }) {
       {/* Top bar with breadcrumb */}
       <div style={{
         display: "flex", alignItems: "center", gap: 10,
-        padding: "10px 24px", background: "white",
+        padding: "10px 24px", background: "var(--paper)",
         borderBottom: "1px solid var(--hairline)",
       }}>
         <span style={{fontSize: 11, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".06em", fontWeight: 600}}>Busca</span>
@@ -85,7 +85,7 @@ function EditalDetail({ edital }) {
         <div style={{maxWidth: 1080, margin: "0 auto"}}>
 
         {/* Hero — org + title + badges */}
-        <div style={{padding: "18px 24px 14px", background: "white", borderBottom: "1px solid var(--hairline)"}}>
+        <div style={{padding: "18px 24px 14px", background: "var(--paper)", borderBottom: "1px solid var(--hairline)"}}>
           <div style={{display: "flex", alignItems: "flex-start", gap: 16}}>
             <div style={{
               width: 52, height: 52, borderRadius: 10,
@@ -117,7 +117,7 @@ function EditalDetail({ edital }) {
         {/* KPI strip */}
         <div style={{
           display: "grid", gridTemplateColumns: "repeat(4, 1fr)",
-          background: "white", borderBottom: "1px solid var(--hairline)",
+          background: "var(--paper)", borderBottom: "1px solid var(--hairline)",
         }}>
           {[
             { lbl: "Valor estimado", val: e.val === 0 ? "—" : fmtBRL(e.val).replace("R$ ", "R$\u202F"), sub: e.val === 0 ? "sigiloso" : "total do lote", mono: true },
@@ -144,7 +144,7 @@ function EditalDetail({ edital }) {
         {/* Tabs */}
         <div style={{
           display: "flex", gap: 0, padding: "0 20px",
-          background: "white", borderBottom: "1px solid var(--hairline)",
+          background: "var(--paper)", borderBottom: "1px solid var(--hairline)",
           position: "sticky", top: 0, zIndex: 2,
         }}>
           {[
@@ -244,7 +244,7 @@ function EditalDetail({ edital }) {
           )}
 
           {tab === "itens" && (
-            <div style={{background: "white", border: "1px solid var(--hairline)", borderRadius: 10, overflow: "hidden"}}>
+            <div style={{background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 10, overflow: "hidden"}}>
               <div style={{
                 display: "grid", gridTemplateColumns: "50px minmax(0, 1fr) 110px 110px 130px 70px",
                 padding: "10px 16px", background: "var(--rail)",
@@ -282,7 +282,7 @@ function EditalDetail({ edital }) {
               {docs.map((d, i) => (
                 <div key={i} style={{
                   display: "flex", gap: 12, padding: "12px 14px",
-                  background: "white", border: "1px solid var(--hairline)", borderRadius: 10,
+                  background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 10,
                   cursor: "pointer",
                 }}>
                   <div style={{
@@ -313,7 +313,7 @@ function EditalDetail({ edital }) {
                 <div key={i} style={{position: "relative", paddingBottom: 14}}>
                   <div style={{
                     position: "absolute", left: -18, top: 4, width: 11, height: 11, borderRadius: "50%",
-                    background: h.future ? "white" : h.tone === "orange" ? "var(--orange)" : h.tone === "blue" ? "var(--deep-blue)" : h.tone === "green" ? "var(--green)" : "var(--ink-3)",
+                    background: h.future ? "var(--paper)" : h.tone === "orange" ? "var(--orange)" : h.tone === "blue" ? "var(--deep-blue)" : h.tone === "green" ? "var(--green)" : "var(--ink-3)",
                     border: h.future ? "2px dashed var(--ink-4)" : "none",
                   }}/>
                   <div style={{display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap"}}>
@@ -330,13 +330,13 @@ function EditalDetail({ edital }) {
           {tab === "concorrencia" && (
             <div>
               <p style={{margin: "0 0 12px", fontSize: 12.5, color: "var(--ink-3)"}}>Fornecedores detectados com histórico neste órgão ou objeto similar.</p>
-              <div style={{background: "white", border: "1px solid var(--hairline)", borderRadius: 10, overflow: "hidden"}}>
+              <div style={{background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 10, overflow: "hidden"}}>
                 {concorrencia.map((c, i) => (
                   <div key={i} style={{
                     display: "grid", gridTemplateColumns: "1fr 140px 110px 110px 40px",
                     padding: "12px 16px", alignItems: "center",
                     borderBottom: i < concorrencia.length - 1 ? "1px solid var(--hairline-soft)" : "none",
-                    background: i === 0 ? "var(--orange-50)" : "white",
+                    background: i === 0 ? "var(--orange-50)" : "var(--paper)",
                   }}>
                     <div style={{minWidth: 0}}>
                       <div style={{fontSize: 12.5, fontWeight: 600, color: "var(--ink-1)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"}}>{c.name}</div>
@@ -397,7 +397,7 @@ function EditalDetail({ edital }) {
       {/* Sticky footer actions */}
       <div style={{
         display: "flex", alignItems: "center", gap: 8,
-        padding: "12px 20px", background: "white",
+        padding: "12px 20px", background: "var(--paper)",
         borderTop: "1px solid var(--hairline)",
       }}>
         <Button kind="ghost" size="sm" icon={<Icon.bookmark size={13}/>}>Salvar</Button>
@@ -413,7 +413,7 @@ function EditalDetail({ edital }) {
 
 function SideBlock({ title, children }) {
   return (
-    <div style={{background: "white", border: "1px solid var(--hairline)", borderRadius: 10, padding: "12px 14px"}}>
+    <div style={{background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 10, padding: "12px 14px"}}>
       <div style={{fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".06em", fontWeight: 600, marginBottom: 8}}>{title}</div>
       {children}
     </div>

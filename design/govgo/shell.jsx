@@ -2,9 +2,19 @@
 const { useState: uS } = React;
 
 function TopBar({mode}) {
+  const [theme, setTheme] = uS(() => {
+    if (typeof document === 'undefined') return 'light';
+    return document.documentElement.getAttribute('data-theme') || localStorage.getItem('govgo-theme') || 'light';
+  });
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('govgo-theme', next); } catch(e){}
+  };
   return (
     <header style={{
-      height: 56, background: "white", borderBottom: "1px solid var(--hairline)",
+      height: 56, background: "var(--paper)", borderBottom: "1px solid var(--hairline)",
       display: "flex", alignItems: "center", padding: "0 16px", gap: 16,
       position: "sticky", top: 0, zIndex: 30,
     }}>
@@ -22,6 +32,14 @@ function TopBar({mode}) {
       <div style={{flex: 1}}/>
       <div style={{display: "flex", alignItems: "center", gap: 8}}>
         <Button kind="ghost" size="sm" icon={<Icon.history size={14}/>}>Histórico</Button>
+        <button onClick={toggleTheme} title={theme === 'dark' ? 'Modo claro' : 'Modo escuro'} style={{
+          all: "unset", cursor: "pointer",
+          width: 34, height: 34, borderRadius: 8, display: "inline-flex",
+          alignItems: "center", justifyContent: "center", color: "var(--ink-2)",
+          border: "1px solid var(--hairline)", background: "var(--paper)",
+        }}>
+          {theme === 'dark' ? <Icon.sun size={16}/> : <Icon.moon size={16}/>}
+        </button>
         <div style={{height: 20, width: 1, background: "var(--hairline)"}}/>
         <span style={{
           fontSize: 11.5, padding: "3px 8px", borderRadius: 999,
@@ -33,7 +51,7 @@ function TopBar({mode}) {
           width: 34, height: 34, borderRadius: 8, display: "inline-flex",
           alignItems: "center", justifyContent: "center", color: "var(--ink-2)",
         }}><Icon.bell size={17}/>
-          <span style={{position:"absolute", top: 7, right: 8, width: 7, height: 7, borderRadius: "50%", background: "var(--orange)", border: "2px solid white"}}/>
+          <span style={{position:"absolute", top: 7, right: 8, width: 7, height: 7, borderRadius: "50%", background: "var(--orange)", border: "2px solid var(--paper)"}}/>
         </button>
         <div style={{
           width: 32, height: 32, borderRadius: "50%",
@@ -49,15 +67,16 @@ function TopBar({mode}) {
 
 function LeftRail({mode, onMode}) {
   const items = [
+    { id: "home",          label: "Início",         icon: <Icon.grid size={18}/> },
     { id: "oportunidades", label: "Busca",          icon: <Icon.search size={18}/>, count: "214" },
     { id: "fornecedores",  label: "Análise",        icon: <Icon.building size={18}/> },
     { id: "mercado",       label: "Mercado",        icon: <Icon.chart size={18}/>,  badge: "novo"},
     { id: "relatorios",    label: "Relatórios",     icon: <Icon.terminal size={18}/> },
-    { id: "designsystem",  label: "Design System",  icon: <Icon.grid size={18}/> },
+    { id: "designsystem",  label: "Design",         icon: <Icon.sparkle size={18}/> },
   ];
   return (
     <nav style={{
-      width: 72, background: "var(--deep-blue-ink)",
+      width: 72, background: "var(--nav-bg)",
       display: "flex", flexDirection: "column", alignItems: "center", padding: "14px 0",
       gap: 2, borderRight: "1px solid rgba(255,255,255,.04)",
     }}>
@@ -104,7 +123,7 @@ function SearchRail() {
       display: "flex", flexDirection: "column", overflow: "hidden",
     }}>
       {/* Busca box */}
-      <div style={{background: "white", borderBottom: "1px solid var(--hairline)"}}>
+      <div style={{background: "var(--paper)", borderBottom: "1px solid var(--hairline)"}}>
         <div style={{padding: "12px 10px 10px"}}>
           <div style={{fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".08em", fontWeight: 600, margin: "0 2px 8px"}}>MODO BUSCA</div>
           <Input size="sm" placeholder="Buscar editais, objeto, palavra-chave…" icon={<Icon.search size={14}/>} value="alimentação hospitalar"/>
@@ -139,8 +158,8 @@ function SearchRail() {
           <div style={{padding: "4px 2px", fontSize: 12, color: "var(--ink-3)"}}>R$ 100.000 — R$ 500.000.000</div>
           <div style={{background: "var(--surface-sunk)", height: 6, borderRadius: 3, position: "relative", marginTop: 8}}>
             <div style={{position: "absolute", left: "18%", right: "22%", top: 0, bottom: 0, background: "var(--deep-blue)", borderRadius: 3}}/>
-            <div style={{position: "absolute", left: "calc(18% - 6px)", top: -3, width: 12, height: 12, borderRadius: "50%", background: "white", border: "2px solid var(--deep-blue)"}}/>
-            <div style={{position: "absolute", left: "calc(78% - 6px)", top: -3, width: 12, height: 12, borderRadius: "50%", background: "white", border: "2px solid var(--deep-blue)"}}/>
+            <div style={{position: "absolute", left: "calc(18% - 6px)", top: -3, width: 12, height: 12, borderRadius: "50%", background: "var(--paper)", border: "2px solid var(--deep-blue)"}}/>
+            <div style={{position: "absolute", left: "calc(78% - 6px)", top: -3, width: 12, height: 12, borderRadius: "50%", background: "var(--paper)", border: "2px solid var(--deep-blue)"}}/>
           </div>
         </Collapsible>
         <Collapsible title="Modalidade">
@@ -163,7 +182,7 @@ function SearchRail() {
         </Collapsible>
       </div>
 
-      <div style={{borderTop: "1px solid var(--hairline)", padding: 10, display: "flex", gap: 6, background: "white"}}>
+      <div style={{borderTop: "1px solid var(--hairline)", padding: 10, display: "flex", gap: 6, background: "var(--paper)"}}>
         <Button kind="ghost" size="sm" style={{flex: 1, justifyContent: "center"}}>Limpar</Button>
         <Button kind="primary" size="sm" style={{flex: 2, justifyContent: "center"}}>Aplicar filtros</Button>
       </div>
@@ -176,7 +195,7 @@ function ActivityRail({open, onToggle}) {
   if (!open) {
     return (
       <aside style={{
-        width: 44, borderLeft: "1px solid var(--hairline)", background: "white",
+        width: 44, borderLeft: "1px solid var(--hairline)", background: "var(--paper)",
         display: "flex", flexDirection: "column", alignItems: "center", padding: "10px 0", gap: 6,
       }}>
         <button onClick={onToggle} title="Expandir" style={{
@@ -206,7 +225,7 @@ function ActivityRail({open, onToggle}) {
       width: 300, borderLeft: "1px solid var(--hairline)", background: "var(--rail)",
       display: "flex", flexDirection: "column", overflow: "hidden",
     }}>
-      <div style={{padding: "10px 14px", borderBottom: "1px solid var(--hairline)", background: "white", display: "flex", alignItems: "center", gap: 8}}>
+      <div style={{padding: "10px 14px", borderBottom: "1px solid var(--hairline)", background: "var(--paper)", display: "flex", alignItems: "center", gap: 8}}>
         <div style={{fontFamily: "var(--font-display)", fontSize: 13, fontWeight: 600, color: "var(--ink-1)"}}>Atividade</div>
         <span style={{flex: 1}}/>
         <button onClick={onToggle} title="Recolher" style={{
@@ -220,7 +239,7 @@ function ActivityRail({open, onToggle}) {
           <div style={{display: "flex", flexDirection: "column", gap: 6}}>
             {DATA.favoritos.map(f => (
               <div key={f.id} style={{
-                background: "white", border: "1px solid var(--hairline)", borderRadius: 8,
+                background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 8,
                 padding: "10px 11px", cursor: "pointer",
               }}>
                 <div style={{display: "flex", alignItems: "flex-start", gap: 8}}>
@@ -247,7 +266,7 @@ function ActivityRail({open, onToggle}) {
                 padding: "8px 10px", borderRadius: 6,
                 display: "flex", alignItems: "center", gap: 8,
               }}
-              onMouseEnter={e => e.currentTarget.style.background = "white"}
+              onMouseEnter={e => e.currentTarget.style.background = "var(--rail)"}
               onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                 <Icon.clock size={13}/>
                 <div style={{flex: 1, minWidth: 0, overflow: "hidden"}}>
@@ -267,7 +286,7 @@ function ActivityRail({open, onToggle}) {
               { t:"Contrato C-4118 vence em 35d",         when: "hoje",     tone: "risk" },
             ].map((a, i) => (
               <div key={i} style={{
-                padding: "10px 11px", background: "white", border: "1px solid var(--hairline)", borderRadius: 8,
+                padding: "10px 11px", background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 8,
                 display: "flex", gap: 10,
               }}>
                 <span style={{width: 6, height: 6, borderRadius: 99, marginTop: 6,

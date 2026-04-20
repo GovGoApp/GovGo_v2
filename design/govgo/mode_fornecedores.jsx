@@ -50,9 +50,9 @@ function FornecedoresTabs({tabs, active, onActivate, onClose, onNew}) {
             style={{
               display: "inline-flex", alignItems: "center", gap: 8,
               padding: "9px 12px", marginTop: 6,
-              background: isActive ? "white" : "transparent",
+              background: isActive ? "var(--paper)" : "transparent",
               border: isActive ? "1px solid var(--hairline)" : "1px solid transparent",
-              borderBottom: isActive ? "1px solid white" : "1px solid transparent",
+              borderBottom: isActive ? "1px solid var(--paper)" : "1px solid transparent",
               borderRadius: "8px 8px 0 0",
               cursor: "pointer", position: "relative", top: 1,
               fontSize: 12.5, fontWeight: 500,
@@ -122,7 +122,7 @@ function ModeFornecedores() {
 
   return (
     <div style={{display: "grid", gridTemplateColumns: "320px 1fr", height: "100%", overflow: "hidden"}}>
-      <aside style={{borderRight: "1px solid var(--hairline)", background: "white", overflowY: "auto"}}>
+      <aside style={{borderRight: "1px solid var(--hairline)", background: "var(--paper)", overflowY: "auto"}}>
         <div style={{padding: "12px 10px 10px", borderBottom: "1px solid var(--hairline)"}}>
           <div style={{fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".08em", fontWeight: 600, margin: "0 2px 8px"}}>MODO ANÁLISE</div>
           <Input size="sm" placeholder="CNPJ ou nome da empresa…" icon={<Icon.building size={14}/>} value={query} onChange={v => { setQuery(v); setShowDisambig(true); }}/>
@@ -135,14 +135,14 @@ function ModeFornecedores() {
           {/* Inline disambiguation — shown when query is a name, not a CNPJ */}
           {showDisambig && query && !/^\d/.test(query.trim()) && (
             <div style={{
-              marginTop: 10, background: "white",
+              marginTop: 10, background: "var(--paper)",
               border: "1px solid var(--hairline)", borderRadius: 10,
               boxShadow: "var(--shadow-md)", overflow: "hidden",
             }}>
               <div style={{
                 display: "flex", alignItems: "center", gap: 8,
                 padding: "8px 12px", background: "var(--orange-50)",
-                borderBottom: "1px solid #FBCEB9",
+                borderBottom: "1px solid var(--orange-100)",
               }}>
                 <Icon.alert size={12} style={{color: "var(--orange-700)"}}/>
                 <span style={{fontSize: 11.5, fontWeight: 600, color: "var(--orange-700)"}}>
@@ -188,8 +188,8 @@ function ModeFornecedores() {
           <div style={{fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".06em", fontWeight: 600, padding: "6px 4px 4px"}}>Recentes</div>
           {DATA.historicoCNPJ.map((c, i) => (
             <div key={i} style={{padding: "10px 12px", borderRadius: 8,
-              background: c.active ? "var(--orange-50)" : "white",
-              border: `1px solid ${c.active ? "#FBCEB9" : "var(--hairline)"}`, cursor: "pointer"}}>
+              background: c.active ? "var(--orange-50)" : "var(--paper)",
+              border: `1px solid ${c.active ? "var(--orange-100)" : "var(--hairline)"}`, cursor: "pointer"}}>
               <div className="mono" style={{fontSize: 12, fontWeight: 600, color: c.active ? "var(--orange-700)" : "var(--deep-blue)"}}>{c.cnpj}</div>
               <div style={{fontSize: 12, color: "var(--ink-2)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"}}>{c.name}</div>
               <div style={{fontSize: 11, color: "var(--ink-3)", marginTop: 2, display: "flex", gap: 6}}>
@@ -205,7 +205,7 @@ function ModeFornecedores() {
       <div style={{overflowY: "auto", padding: "20px 24px 40px", flex: 1}}>
         {/* Hero / profile card */}
         <div style={{
-          background: "white", border: "1px solid var(--hairline)", borderRadius: 12,
+          background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 12,
           boxShadow: "var(--shadow-sm)", overflow: "hidden", marginBottom: 18,
         }}>
           <div style={{padding: "20px 24px", background: "linear-gradient(135deg, #003A70 0%, #0B4A8A 60%, #1F6FD4 100%)", color: "white", display: "flex", gap: 20, alignItems: "center"}}>
@@ -303,7 +303,7 @@ function ModeFornecedores() {
                   <div key={i} style={{display: "flex", gap: 14, padding: "8px 0", position: "relative"}}>
                     <span style={{width: 10, height: 10, borderRadius: 99, marginLeft: 11, marginTop: 6,
                       background: t.tone === "orange" ? "var(--orange)" : t.tone === "green" ? "var(--green)" : "var(--deep-blue)",
-                      border: "2px solid white", boxShadow: "0 0 0 2px var(--hairline)", zIndex: 1}}/>
+                      border: "2px solid var(--paper)", boxShadow: "0 0 0 2px var(--hairline)", zIndex: 1}}/>
                     <div style={{width: 96, fontSize: 12, color: "var(--ink-3)"}} className="mono">{t.when}</div>
                     <div style={{flex: 1}}>
                       <div style={{fontSize: 13.5, fontWeight: 600, color: "var(--ink-1)"}}>{t.t}</div>
@@ -348,7 +348,7 @@ function ModeFornecedores() {
           <Card title="Editais aderentes ao perfil" extra={<Chip tone="orange">141 · score ≥ 0.80</Chip>}>
             <div style={{display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10}}>
               {DATA.editais.slice(0, 6).map(e => (
-                <div key={e.rank} style={{padding: 14, border: "1px solid var(--hairline)", borderRadius: 10, background: "white"}}>
+                <div key={e.rank} style={{padding: 14, border: "1px solid var(--hairline)", borderRadius: 10, background: "var(--paper)"}}>
                   <div style={{display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8}}>
                     <div style={{fontSize: 13.5, fontWeight: 600, color: "var(--ink-1)", flex: 1, lineHeight: 1.3}}>{e.org}</div>
                     <ScoreDot score={e.sim}/>
@@ -371,7 +371,7 @@ function ModeFornecedores() {
               <Chip>Matriz</Chip>
             </>}>
             <div style={{display: "grid", gridTemplateColumns: "1fr 240px", gap: 14}}>
-              <div style={{aspectRatio: "1", border: "1px solid var(--hairline)", borderRadius: 10, overflow: "hidden", background: "white"}}>
+              <div style={{aspectRatio: "1", border: "1px solid var(--hairline)", borderRadius: 10, overflow: "hidden", background: "var(--paper)"}}>
                 <BrazilMapSVG markers={DATA.mercado.mapRegioes}/>
               </div>
               <div style={{display: "flex", flexDirection: "column", gap: 10, fontSize: 13}}>

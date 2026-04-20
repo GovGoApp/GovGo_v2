@@ -79,9 +79,9 @@ function MercadoTabs({tabs, active, onActivate, onClose, onNew}) {
             style={{
               display: "inline-flex", alignItems: "center", gap: 8,
               padding: "9px 12px", marginTop: 6,
-              background: isActive ? "white" : "transparent",
+              background: isActive ? "var(--paper)" : "transparent",
               border: isActive ? "1px solid var(--hairline)" : "1px solid transparent",
-              borderBottom: isActive ? "1px solid white" : "1px solid transparent",
+              borderBottom: isActive ? "1px solid var(--paper)" : "1px solid transparent",
               borderRadius: "8px 8px 0 0",
               cursor: "pointer", position: "relative", top: 1,
               fontSize: 12.5, fontWeight: 500,
@@ -140,7 +140,7 @@ function ModeMercado() {
   return (
     <div style={{display: "grid", gridTemplateColumns: "320px 1fr", height: "100%", overflow: "hidden"}}>
       {/* Inspector — now on the LEFT, with search input */}
-      <aside style={{borderRight: "1px solid var(--hairline)", background: "white", overflowY: "auto"}}>
+      <aside style={{borderRight: "1px solid var(--hairline)", background: "var(--paper)", overflowY: "auto"}}>
         <div style={{padding: "12px 10px 10px", borderBottom: "1px solid var(--hairline)"}}>
           <div style={{fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".08em", fontWeight: 600, margin: "0 2px 8px"}}>MODO MERCADO</div>
           <Input size="sm" placeholder="Mercado, categoria, comprador ou UF…" icon={<Icon.chart size={14}/>} value={query} onChange={setQuery}/>
@@ -322,7 +322,7 @@ function ModeMercado() {
             {m.concorrentes.map((c, i) => (
               <div key={i} style={{display: "grid", gridTemplateColumns: "56px 2fr 100px 120px 100px 120px",
                 padding: "11px 14px", borderTop: "1px solid var(--hairline-soft)", fontSize: 13, alignItems: "center",
-                background: c.highlight ? "var(--orange-50)" : "white"}}>
+                background: c.highlight ? "var(--orange-50)" : "var(--paper)"}}>
                 <span style={{
                   display: "inline-flex", width: 26, height: 26, borderRadius: 6,
                   background: i === 0 ? "var(--deep-blue)" : "var(--surface-sunk)",
