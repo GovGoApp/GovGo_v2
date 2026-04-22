@@ -9,8 +9,9 @@ import unicodedata
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
-from threading import Lock
+from threading import Lock, Thread
 from typing import Any
+from wsgiref.simple_server import make_server
 
 from flask import Flask, Response, abort, render_template_string, request
 
@@ -902,7 +903,7 @@ def _default_columns() -> list[dict[str, Any]]:
 
 def default_form_state() -> dict[str, Any]:
     return {
-        "query": "alimentacao hospitalar",
+    "query": "alimentação hospitalar",
         "limit": DEFAULT_LIMIT,
         "column_count": DEFAULT_COLUMN_COUNT,
         "columns": _default_columns(),
@@ -919,7 +920,7 @@ def _prewarm_default_search() -> None:
       return
 
     warm_form = default_form_state()
-    warm_query = (os.environ.get("GOVGO_BROWSER_PREWARM_QUERY") or "alimentacao escolar").strip() or "alimentacao escolar"
+    warm_query = (os.environ.get("GOVGO_BROWSER_PREWARM_QUERY") or warm_form["query"]).strip() or warm_form["query"]
     _run_base_column(
       1,
       warm_query,
@@ -927,6 +928,13 @@ def _prewarm_default_search() -> None:
       dict(warm_form["columns"][0]),
     )
     SEARCH_WARMUP_DONE = True
+
+
+def _start_optional_prewarm() -> None:
+  if not _env_flag("GOVGO_BROWSER_PREWARM", False):
+    return
+
+  Thread(target=_prewarm_default_search, name="govgo-search-prewarm", daemon=True).start()
 
 
 def build_form_state_from_saved_payload(payload: dict[str, Any]) -> dict[str, Any]:
@@ -1255,14 +1263,20 @@ def run_parallel_columns(form: dict[str, Any]) -> tuple[list[dict[str, Any]], di
   if uses_relevance_filter:
     _reset_relevance_level()
 
-  base_results: list[dict[str, Any]] = []
-  with ThreadPoolExecutor(max_workers=len(active_columns) or 1) as executor:
-    futures = [
-      executor.submit(_run_base_column, column["index"], form["query"], form["limit"], column["config"])
+  if len(active_columns) <= 1:
+    base_results = [
+      _run_base_column(column["index"], form["query"], form["limit"], column["config"])
       for column in active_columns
     ]
-    for future in futures:
-      base_results.append(future.result())
+  else:
+    base_results = []
+    with ThreadPoolExecutor(max_workers=len(active_columns)) as executor:
+      futures = [
+        executor.submit(_run_base_column, column["index"], form["query"], form["limit"], column["config"])
+        for column in active_columns
+      ]
+      for future in futures:
+        base_results.append(future.result())
 
   base_results.sort(key=lambda item: int(item["index"]))
 
@@ -1423,21 +1437,46 @@ def _env_flag(name: str, default: bool) -> bool:
 
 
 def _run_options(port: int) -> dict[str, Any]:
-    debug_enabled = _env_flag("GOVGO_BROWSER_DEBUG", True)
-    reloader_default = os.name != "nt"
-    reloader_enabled = debug_enabled and _env_flag("GOVGO_BROWSER_RELOAD", reloader_default)
-    options: dict[str, Any] = {
-        "host": "127.0.0.1",
-        "port": port,
-        "debug": debug_enabled,
-        "use_reloader": reloader_enabled,
-    }
-    if reloader_enabled and os.name == "nt":
-        options["reloader_type"] = "stat"
-    return options
+  debug_enabled = _env_flag("GOVGO_BROWSER_DEBUG", True)
+  reloader_default = os.name != "nt"
+  reloader_enabled = debug_enabled and _env_flag("GOVGO_BROWSER_RELOAD", reloader_default)
+  threaded_enabled = _env_flag("GOVGO_BROWSER_THREADED", False)
+  options: dict[str, Any] = {
+    "host": "127.0.0.1",
+    "port": port,
+    "debug": debug_enabled,
+    "use_reloader": reloader_enabled,
+    "threaded": threaded_enabled,
+  }
+  if reloader_enabled and os.name == "nt":
+    options["reloader_type"] = "stat"
+  return options
+
+
+def _serve_browser(port: int) -> None:
+  options = _run_options(port)
+  if os.name != "nt":
+    APP.run(**options)
+    return
+
+  host = str(options["host"])
+  debug_enabled = bool(options["debug"])
+  server = make_server(host, port, APP)
+
+  print(" * Serving Flask app 'app_v1'")
+  print(f" * Debug mode: {'on' if debug_enabled else 'off'}")
+  print("WARNING: This is a local WSGI server for homologation on Windows.")
+  print(f" * Running on http://{host}:{port}")
+  print("Press CTRL+C to quit")
+
+  try:
+    server.serve_forever()
+  except KeyboardInterrupt:
+    print("\nEncerrando app_v1...")
+  finally:
+    server.server_close()
 
 
 if __name__ == "__main__":
-  if _env_flag("GOVGO_BROWSER_PREWARM", True):
-    _prewarm_default_search()
-    APP.run(**_run_options(8012))
+    _start_optional_prewarm()
+    _serve_browser(8012)

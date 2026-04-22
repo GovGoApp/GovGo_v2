@@ -37,7 +37,7 @@ Este documento deve ser atualizado sempre que houver novidade relevante, especia
 
 ### Data da ultima consolidacao
 
-2026-04-21
+2026-04-22
 
 ### Documento principal do projeto
 
@@ -92,7 +92,15 @@ Fase 0 de preparacao da migracao.
 
 Ainda estamos em documentacao, consolidacao de regras e definicao de como executar.
 
-A implementacao real do frontend ainda nao foi iniciada.
+A implementacao real do frontend foi iniciada de forma minima em `src/`, ainda derivada diretamente dos modos e componentes de `design/govgo` e dos estilos em `design/css`.
+
+Foi criada a estrutura inicial do frontend real em `src/`, com separacao entre `app/`, `design-system/`, `pages/`, `features/`, `services/`, `assets/`, `shared/` e `mocks/`.
+
+Tambem foram criados os documentos `docs/ESTRUTURA_FRONTEND_V2.md` e `docs/MAPA_TOKENS_RECIPES_V2.md` para fixar a traducao de `design/` para a arquitetura real da v2 e a separacao entre tokens, recipes, estilos globais e helpers de pagina.
+
+Foi criada uma entrada minima da app real em `src/app/boot/index.html`, com roteamento simples em `src/app/router/routes.jsx`, shell em `src/app/shell/AppShell.jsx` e wrappers de paginas em `src/pages/` para Inicio, Busca, Busca Detalhe, Empresas, Radar, Relatorios e Design System.
+
+Para operacao local da UI no browser externo, foi criado o launcher raiz `run.py`, que serve o repositorio em `http://127.0.0.1:8765` e abre a pagina inicial em `http://127.0.0.1:8765/src/app/boot/index.html#/inicio`.
 
 A homologacao tecnica operacional do Search do v1 foi validada no laboratorio `homologation/search/` do v2, com adapter, runner CMD, smoke runner e tester em browser.
 
@@ -154,25 +162,53 @@ Para deixar essa validacao repetivel dentro do repositorio, foi criado o runner 
 
 Na mesma rodada, tambem ficou registrado que o ambiente ainda usa `markitdown 0.1.2`, enquanto o upstream do repositorio ja tem testes e mudancas mais recentes para tabelas em PDF. Portanto, o estado oficial do laboratorio permanece este: no v2 atual, a exigencia do usuario ja esta atendida pelo pipeline local, mas a comparacao com artefatos antigos ou execucoes feitas antes do bootstrap corrigido pode induzir diagnostico errado.
 
+Na rodada de 2026-04-22, a camada visual dos browsers de homologacao foi consolidada no v2 com a mesma base canonica de `design/css`: `homologation/browser_design.py` passou a carregar `design/css/tokens.css` e `design/css/govgo.css`, a tela de Busca v1 em `homologation/search/browser/app_v1.py` foi refinada como bancada multi-coluna com carregamento de JSON salvo, e a tela de Documentos em `homologation/documents/browser/app.py` foi reescrita para seguir a mesma linguagem visual da Busca.
+
+Na mesma rodada, tambem foi corrigido um problema operacional no Windows: os browsers de Busca em `homologation/search/browser/app.py` e `homologation/search/browser/app_v1.py` passaram a desabilitar o Flask reloader por padrao no Windows, mantendo `debug` ativo, para permitir rodar Busca e Documentos lado a lado sem o `WinError 10038`.
+
+Depois disso, foi feita uma investigacao especifica do travamento do Search, porque o sintoma aparecia ao mesmo tempo na homologacao do v2 e no `govgo.com.br` (backend v1 compartilhado). O resultado da analise foi este: nao ha evidencia de indisponibilidade geral de IA nem de indisponibilidade geral do banco. A IA de embeddings respondeu em aproximadamente `0,69s` a `1,43s`; a conexao basica ao banco respondeu em aproximadamente `0,30s`; e `SELECT 1` respondeu em aproximadamente `0,08s`. O gargalo apareceu nas queries reais do modulo de Busca.
+
+Na busca por palavras-chave com a consulta `alimentacao escolar`, o preprocessamento inteligente foi bypassado e ainda assim o `db_fetch_all` da query principal consumiu cerca de `18,5s`, com tempo total da busca em cerca de `20,9s`. O `EXPLAIN ANALYZE` mostrou que a lentidao esta concentrada na query FTS da tabela `contratacao`, especialmente no caminho com `BitmapOr` + `Bitmap Heap Scan` + filtro por data de encerramento.
+
+No caminho que no produto aparece como progresso `20% - Buscando categorias`, o embedding da IA consumiu menos de `1s`, mas `get_top_categories_for_query` consumiu cerca de `158s` a `211s` no `db_read_df`. O plano observado para a query de categorias mostrou `Seq Scan on categoria`, apesar de existir indice vetorial `idx_categoria_cat_embeddings_h_hnsw`, o que indica que a forma atual da query de similaridade de categorias nao esta aproveitando o indice HNSW.
+
+Na verificacao seguinte, foi confirmado no proprio laboratorio que o v2 local continua delegando a Busca para `v1.gvg_search_core`, carregado a partir de `homologation/search/v1_copy/gvg_browser` via `homologation/search/core/adapter.py` e `homologation/search/core/bootstrap.py`. Ou seja: o sintoma observado no v2 local nao aponta para um backend novo isolado, mas para o mesmo caminho logico compartilhado da Busca.
+
+Tambem foi validado por execucao comparativa com a mesma consulta `alimentação hospitalar` que a busca `keyword` direta respondeu em cerca de `4,23s`, enquanto `category_filtered` com base `keyword` respondeu em cerca de `20,75s`. Isso reforca que o custo extra relevante entra no passo de categorias, antes da busca principal.
+
+Ao inspecionar o core, ficou claro que `get_top_categories_for_query` sempre executa a etapa vetorial de categorias por embedding e hoje ordena por `similarity DESC` sobre a expressao `1 - (cat_embeddings_hv <=> embedding)`. Essa forma de `ORDER BY` nao favorece o uso do indice HNSW do `pgvector`, o que fecha o diagnostico principal desta frente: o gargalo compartilhado entre homologacao v2 e `govgo.com.br` e estrutural no caminho de categorias e pode aparecer mesmo sem deploy recente, porque depende do estado atual do banco, do volume de dados e do plano escolhido pelo otimizador.
+
+Na verificacao seguinte, o diagnostico foi refinado para incluir tambem pressao operacional local sobre o banco na homologacao. Em `homologation/search/v1_copy/gvg_browser/gvg_database.py`, o caminho `db_read_df` estava criando um novo engine SQLAlchemy por chamada sem `dispose()` explicito, o que podia reter conexoes idle no pool entre execucoes repetidas do browser e agravar sintomas de saturacao no Supabase.
+
+Como mitigacao imediata no laboratorio local, o wrapper de banco passou a usar `NullPool`, `engine.dispose()` ao fim de `db_read_df`, `application_name` explicito e timeouts de sessao (`statement_timeout`, `lock_timeout` e `idle_in_transaction_session_timeout`) configuraveis por ambiente. Isso nao substitui a correcao estrutural da query de categorias, mas reduz o risco de degradacao acumulada por repeticao de testes na homologacao.
+
+Tambem foi identificado que o browser `homologation/search/browser/app_v1.py` adicionava sobrecarga local desnecessaria: fazia prewarm sincrono no startup, abria `ThreadPoolExecutor` mesmo quando havia apenas uma coluna ativa e rodava o servidor Flask com threading padrao. Esse conjunto piorava o startup, dificultava `Ctrl+C` e aumentava concorrencia desnecessaria contra o banco.
+
+Como correcao local do browser v1, o prewarm passou a ser opcional e nao bloqueante, a execucao de uma unica coluna passou a rodar inline sem `ThreadPoolExecutor`, o query default foi alinhado ao fluxo real com acento e o servidor ficou single-thread por padrao no laboratorio. Na validacao imediata apos essas mudancas, o caminho padrao de uma coluna no `app_v1.py` respondeu em aproximadamente `5,6s` a `7,3s`, abaixo da medicao local anterior de aproximadamente `16s` para o mesmo fluxo do browser.
+
+Na rodada seguinte, foi corrigido tambem o problema operacional de encerramento no Windows: `homologation/search/browser/app_v1.py` deixou de usar `APP.run()` no caminho principal do laboratorio local e passou a subir, no Windows, um servidor WSGI simples com encerramento explicito por `KeyboardInterrupt`. A validacao foi feita com interrupcao programatica equivalente a `Ctrl+C`, e o processo passou a sair limpo, imprimindo o encerramento e devolvendo o shell sem precisar fechar o terminal inteiro.
+
+Como mitigacao local na homologacao de Busca v1, o `app_v1.py` recebeu defaults mais leves, deixou de inicializar o filtro de relevancia quando nenhuma coluna ativa usa relevancia e ganhou prewarm opcional do caminho default. Isso melhora a experiencia do browser de homologacao, mas nao resolve a causa raiz compartilhada entre v2 e `govgo.com.br`.
+
 ## Prioridades imediatas
 
 As proximas prioridades concretas sao estas:
 
-1. iniciar a homologacao do v1 pelo modulo de Documentos;
-2. definir a stack real do frontend do v2;
-3. montar a estrutura real do frontend;
-4. implementar o shell real da aplicacao;
-5. implementar a tela Inicio real a partir da especificacao ja criada.
+1. corrigir o gargalo estrutural do Search compartilhado entre homologacao v2 e `govgo.com.br`;
+2. adicionar logs permanentes por etapa no core/adapter da Busca para separar bootstrap, IA, categorias, DB principal e relevancia;
+3. revisar a query de categorias para voltar a usar corretamente o indice HNSW existente;
+4. revisar a query FTS de `contratacao`, especialmente o caminho com `BitmapOr` e o filtro de encerramento;
+5. depois retomar a definicao da stack real do frontend do v2.
 
 ## Ordem pratica que deve ser seguida agora
 
 Se a retomada acontecer em um novo prompt, a IA deve continuar nesta ordem:
 
-1. homologacao de Documentos do v1;
-2. definicao da stack e estrutura do frontend real;
-3. implementacao do shell real;
-4. implementacao da tela Inicio;
-5. depois avancar para Busca real com backend.
+1. atacar o gargalo compartilhado do Search no core v1 usado por homologacao e producao;
+2. consolidar logs tecnicos por etapa e validar novamente keyword, semantic e category-filtered;
+3. corrigir o uso de indice na busca de categorias e revisar o plano da query FTS de `contratacao`;
+4. revalidar a Busca no browser de homologacao do v2 e comparar com o comportamento do produto;
+5. so depois retomar stack e estrutura do frontend real.
 
 ## Documentos que mandam em cada assunto
 
@@ -187,6 +223,8 @@ Se a retomada acontecer em um novo prompt, a IA deve continuar nesta ordem:
 ### Como traduzir `design/` para frontend real
 
 - `docs/CONVENCAO_ARQUITETURA_FRONTEND.md`
+- `docs/ESTRUTURA_FRONTEND_V2.md`
+- `docs/MAPA_TOKENS_RECIPES_V2.md`
 
 ### Como implementar uma tela do frontend
 
@@ -229,16 +267,21 @@ Se a retomada acontecer em um novo prompt, a IA deve continuar nesta ordem:
 - definicao de pronto por tela;
 - template de PR;
 - convencao de arquitetura frontend derivada de `design/`;
+- estrutura inicial do frontend real em `src/`;
+- mapa de tokens e recipes para a migracao de `design/css`;
 - especificacao da tela Inicio.
 - laboratorio inicial de homologacao da Busca em `homologation/search/`.
+- entrada minima da app real em `src/app/boot/index.html`, com roteamento simples e wrappers de paginas em `src/pages/`.
+- launcher local `run.py` para subir e abrir a UI da v2 no browser externo.
 
 ## O que ainda falta iniciar de verdade
 
-- homologacao operacional de Documentos do v1;
+- correcao estrutural do gargalo compartilhado do Search;
+- logs permanentes de performance no core da Busca;
 - definicao da stack final do frontend;
-- estrutura real do frontend no repositorio;
-- implementacao real do shell;
-- implementacao real da tela Inicio;
+- internalizacao do shell real em `src/`, sem depender diretamente de `design/govgo/shell.jsx`;
+- internalizacao real da tela Inicio em `src/pages/inicio` e `src/features/inicio`;
+- substituicao gradual dos wrappers que ainda reutilizam diretamente `design/govgo`;
 - integracao real do primeiro modulo do v1.
 - estabilizacao do comportamento do assistant de resumo quando recebe Markdown local curto.
 - ampliacao dos testes end-to-end do laboratorio de Documentos sobre as amostras locais ja geradas.
@@ -247,11 +290,11 @@ Se a retomada acontecer em um novo prompt, a IA deve continuar nesta ordem:
 
 O proximo passo oficial do projeto e:
 
-fechar a homologacao operacional do modulo de Documentos no v2, agora em pipeline MarkItDown-only, com foco em validacao reprodutivel do comportamento atual, limpeza de artefatos stale e consolidacao do runner de verificacao real.
+fechar o diagnostico tecnico do gargalo compartilhado do Search, com foco nas queries da tabela `contratacao` e da tabela `categoria`, consolidando logs por etapa e correcoes para uso correto dos indices no banco.
 
 Logo em seguida:
 
-definir a stack e a estrutura real do frontend do v2.
+revalidar a Busca no browser de homologacao e no fluxo do produto; depois disso, retomar a definicao da stack e da estrutura real do frontend do v2.
 
 ## Regra de atualizacao deste diario
 
@@ -264,6 +307,12 @@ Sempre que houver novidade relevante, atualizar pelo menos estes blocos:
 5. resumo do que mudou.
 
 ## Resumo do que mudou nesta consolidacao
+
+- foi iniciada a estrutura real do frontend em `src/`, com arvore base para `app`, `design-system`, `pages`, `features`, `services`, `assets`, `shared` e `mocks`.
+- foram criados os documentos `docs/ESTRUTURA_FRONTEND_V2.md` e `docs/MAPA_TOKENS_RECIPES_V2.md` para orientar a migracao do design para a app real.
+- foi criada uma entrada minima da UI em `src/app/boot/index.html`, apoiada por `src/app/router/routes.jsx` e `src/app/shell/AppShell.jsx`.
+- foram criados wrappers de paginas em `src/pages/` para Inicio, Busca, Busca Detalhe, Empresas, Radar, Relatorios e Design System, mantendo a linguagem visual original de `design/`.
+- foi criado o launcher raiz `run.py`, que sobe a pagina inicial da v2 em `http://127.0.0.1:8765/src/app/boot/index.html#/inicio`.
 
 - o comportamento atual de `pdf`, `docx` e `pptx` foi revalidado por execucao real no v2;
 - foi confirmado que o PDF real do PNCP atual gera tabelas Markdown no pipeline do laboratorio;

@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<title>GovGo v2</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../design/css/tokens.css" />
+<link rel="stylesheet" href="../../../design/css/govgo.css" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<style>
+  :root { --surface: var(--workspace); }
+  [data-theme="dark"] { --surface: var(--workspace); }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--workspace);
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    color: var(--ink-1);
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  #root { min-height: 100vh; }
+  ::selection { background: color-mix(in oklab, var(--orange) 30%, transparent); }
+  a { color: inherit; }
+  .govgo-page-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100%;
+    padding: 32px;
+  }
+  .govgo-page-fallback__card {
+    width: min(480px, 100%);
+    background: var(--paper);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 24px;
+  }
+  .govgo-page-fallback__title {
+    margin: 0 0 8px;
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--ink-1);
+  }
+  .govgo-page-fallback__desc {
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--ink-2);
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+  try {
+    var theme = localStorage.getItem('govgo-theme') || 'light';
+    if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  } catch (error) {}
+</script>
+
+<script type="text/babel" src="../../../design/govgo/icons.jsx"></script>
+<script type="text/babel" src="../../../design/govgo/primitives.jsx"></script>
+<script type="text/babel" src="../../../design/govgo/data.jsx"></script>
+<script type="text/babel" src="../../../design/govgo/shell.jsx"></script>
+<script type="text/babel" src="../../../design/govgo/mode_oportunidades.jsx"></script>
+<script type="text/babel" src="../../../design/govgo/mode_oportunidades_detail.jsx"></script>
+<script type="text/babel" src="../../../design/govgo/mode_fornecedores.jsx"></script>
+<script type="text/babel" src="../../../design/govgo/mode_mercado.jsx"></script>
+<script type="text/babel" src="../../../design/govgo/mode_relatorios.jsx"></script>
+<script type="text/babel" src="../../../design/govgo/mode_designsystem.jsx"></script>
+<script type="text/babel" src="../../../design/govgo/mode_home.jsx"></script>
+
+<script type="text/babel" src="../../pages/inicio/InicioPage.jsx"></script>
+<script type="text/babel" src="../../pages/busca/BuscaPage.jsx"></script>
+<script type="text/babel" src="../../pages/busca-detalhe/BuscaDetalhePage.jsx"></script>
+<script type="text/babel" src="../../pages/empresas/EmpresasPage.jsx"></script>
+<script type="text/babel" src="../../pages/radar/RadarPage.jsx"></script>
+<script type="text/babel" src="../../pages/relatorios/RelatoriosPage.jsx"></script>
+<script type="text/babel" src="../../pages/design-system/DesignSystemPage.jsx"></script>
+
+<script type="text/babel" src="../router/routes.jsx"></script>
+<script type="text/babel" src="../shell/AppShell.jsx"></script>
+<script type="text/babel" src="GovGoV2App.jsx"></script>
+</body>
+</html>

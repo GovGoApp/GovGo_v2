@@ -21,6 +21,7 @@ from typing import Any, Iterable, List, Optional, Sequence
 import psycopg2
 import requests
 from sqlalchemy import create_engine
+from sqlalchemy.pool import NullPool
 from dotenv import load_dotenv
 
 try:
@@ -56,18 +57,59 @@ def _load_env_priority() -> None:
 # Conexões
 # =====================
 
+def _env_int(name: str, default: int) -> int:
+    raw_value = os.getenv(name)
+    if raw_value is None:
+        return default
+    try:
+        return int(str(raw_value).strip())
+    except (TypeError, ValueError):
+        return default
+
+
+def _db_application_name() -> str:
+    value = str(os.getenv("GVG_DB_APPLICATION_NAME", "govgo-search-homologation") or "").strip()
+    return value or "govgo-search-homologation"
+
+
+def _db_session_options() -> str:
+    options: list[str] = []
+
+    statement_timeout_ms = _env_int("GVG_DB_STATEMENT_TIMEOUT_MS", 20000)
+    if statement_timeout_ms > 0:
+        options.append(f"-c statement_timeout={statement_timeout_ms}")
+
+    lock_timeout_ms = _env_int("GVG_DB_LOCK_TIMEOUT_MS", 5000)
+    if lock_timeout_ms > 0:
+        options.append(f"-c lock_timeout={lock_timeout_ms}")
+
+    idle_in_tx_timeout_ms = _env_int("GVG_DB_IDLE_IN_TX_TIMEOUT_MS", 15000)
+    if idle_in_tx_timeout_ms > 0:
+        options.append(f"-c idle_in_transaction_session_timeout={idle_in_tx_timeout_ms}")
+
+    return " ".join(options)
+
+
+def _db_connect_kwargs() -> dict[str, Any]:
+    kwargs: dict[str, Any] = {
+        "host": os.getenv("SUPABASE_HOST", "aws-0-sa-east-1.pooler.supabase.com"),
+        "database": os.getenv("SUPABASE_DBNAME", os.getenv("SUPABASE_DB_NAME", "postgres")),
+        "user": os.getenv("SUPABASE_USER"),
+        "password": os.getenv("SUPABASE_PASSWORD"),
+        "port": os.getenv("SUPABASE_PORT", "6543"),
+        "connect_timeout": _env_int("GVG_DB_CONNECT_TIMEOUT_SECONDS", 10),
+        "application_name": _db_application_name(),
+    }
+    options = _db_session_options()
+    if options:
+        kwargs["options"] = options
+    return kwargs
+
 def create_connection() -> Optional[psycopg2.extensions.connection]:
     """Cria conexão psycopg2 com base V1."""
     try:
         _load_env_priority()
-        connection = psycopg2.connect(
-            host=os.getenv("SUPABASE_HOST", "aws-0-sa-east-1.pooler.supabase.com"),
-            database=os.getenv("SUPABASE_DBNAME", os.getenv("SUPABASE_DB_NAME", "postgres")),
-            user=os.getenv("SUPABASE_USER"),
-            password=os.getenv("SUPABASE_PASSWORD"),
-            port=os.getenv("SUPABASE_PORT", "6543"),
-            connect_timeout=10,
-        )
+        connection = psycopg2.connect(**_db_connect_kwargs())
         return connection
     except Exception as e:
         try:
@@ -87,7 +129,20 @@ def create_engine_connection():
         port = os.getenv('SUPABASE_PORT', '6543')
         dbname = os.getenv('SUPABASE_DBNAME', os.getenv('SUPABASE_DB_NAME', 'postgres'))
         connection_string = f"postgresql://{user}:{password}@{host}:{port}/{dbname}"
-        return create_engine(connection_string, pool_pre_ping=True)
+        connect_args = {
+            'connect_timeout': _env_int('GVG_DB_CONNECT_TIMEOUT_SECONDS', 10),
+            'application_name': _db_application_name(),
+        }
+        options = _db_session_options()
+        if options:
+            connect_args['options'] = options
+
+        return create_engine(
+            connection_string,
+            pool_pre_ping=True,
+            poolclass=NullPool,
+            connect_args=connect_args,
+        )
     except Exception as e:
         try:
             dbg('SQL', f"Erro ao criar engine SQLAlchemy: {e}")
@@ -429,6 +484,11 @@ def db_read_df(sql: str, params: Optional[Sequence[Any]] = None, *, ctx: Optiona
     except Exception as e:
         dbg('DB', f'read_df{("="+ctx) if ctx else ""} ERRO: {e}')
         return None
+    finally:
+        try:
+            engine.dispose()
+        except Exception:
+            pass
 
 # =====================
 # Documentos — best-effort (DB -> fallback API PNCP)
