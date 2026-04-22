@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import sys
 import time
@@ -19,7 +20,7 @@ HOMOLOGATION_ROOT = PROJECT_ROOT / "homologation" / "search"
 TESTS_ROOT = HOMOLOGATION_ROOT / "tests"
 TEST_RUNS_DIR = TESTS_ROOT / "runs"
 DEFAULT_LIMIT = 10
-DEFAULT_COLUMN_COUNT = 3
+DEFAULT_COLUMN_COUNT = 1
 DEFAULT_TOP_CATEGORIES = 10
 MAX_COLUMNS = 4
 V1_LOGO_URL = "https://hemztmtbejcbhgfmsvfq.supabase.co/storage/v1/object/public/govgo/LOGO/LOGO_TEXTO_GOvGO_TRIM_v3.png"
@@ -44,6 +45,8 @@ from homologation.search.core.contracts import SearchRequest
 
 APP = Flask(__name__)
 RELEVANCE_FILTER_LOCK = Lock()
+SEARCH_WARMUP_LOCK = Lock()
+SEARCH_WARMUP_DONE = False
 
 SEARCH_TYPES = {
     1: {"name": "Semantica", "request_type": "semantic"},
@@ -66,10 +69,10 @@ RELEVANCE_LEVELS = {
 TOP_CATEGORIES_OPTIONS = [5, 10, 15, 20, 30, 50]
 
 DEFAULT_COLUMN_CONFIGS = [
-    {"search_type": 1, "approach": 3, "relevance": 2, "top_categories_count": 10},
-    {"search_type": 2, "approach": 1, "relevance": 2, "top_categories_count": 10},
-    {"search_type": 3, "approach": 1, "relevance": 2, "top_categories_count": 10},
-    {"search_type": 1, "approach": 2, "relevance": 2, "top_categories_count": 10},
+  {"search_type": 2, "approach": 1, "relevance": 1, "top_categories_count": 10},
+  {"search_type": 1, "approach": 1, "relevance": 1, "top_categories_count": 10},
+  {"search_type": 3, "approach": 1, "relevance": 1, "top_categories_count": 10},
+  {"search_type": 1, "approach": 2, "relevance": 2, "top_categories_count": 10},
 ]
 
 
@@ -906,6 +909,26 @@ def default_form_state() -> dict[str, Any]:
     }
 
 
+def _prewarm_default_search() -> None:
+  global SEARCH_WARMUP_DONE
+  if SEARCH_WARMUP_DONE:
+    return
+
+  with SEARCH_WARMUP_LOCK:
+    if SEARCH_WARMUP_DONE:
+      return
+
+    warm_form = default_form_state()
+    warm_query = (os.environ.get("GOVGO_BROWSER_PREWARM_QUERY") or "alimentacao escolar").strip() or "alimentacao escolar"
+    _run_base_column(
+      1,
+      warm_query,
+      min(int(warm_form["limit"]), 3),
+      dict(warm_form["columns"][0]),
+    )
+    SEARCH_WARMUP_DONE = True
+
+
 def build_form_state_from_saved_payload(payload: dict[str, Any]) -> dict[str, Any]:
   form = default_form_state()
   form["query"] = str(payload.get("query") or form["query"]).strip()
@@ -1223,50 +1246,53 @@ def _apply_relevance(base_result: dict[str, Any], query: str, adapter: SearchAda
 
 
 def run_parallel_columns(form: dict[str, Any]) -> tuple[list[dict[str, Any]], dict[str, Any], dict[str, str]]:
-    active_columns = [
-        {"index": index + 1, "config": dict(form["columns"][index])}
-        for index in range(int(form["column_count"]))
-    ]
+  active_columns = [
+    {"index": index + 1, "config": dict(form["columns"][index])}
+    for index in range(int(form["column_count"]))
+  ]
+  uses_relevance_filter = any(int(column["config"].get("relevance") or 1) > 1 for column in active_columns)
 
+  if uses_relevance_filter:
     _reset_relevance_level()
 
-    base_results: list[dict[str, Any]] = []
-    with ThreadPoolExecutor(max_workers=len(active_columns) or 1) as executor:
-        futures = [
-            executor.submit(_run_base_column, column["index"], form["query"], form["limit"], column["config"])
-            for column in active_columns
-        ]
-        for future in futures:
-            base_results.append(future.result())
+  base_results: list[dict[str, Any]] = []
+  with ThreadPoolExecutor(max_workers=len(active_columns) or 1) as executor:
+    futures = [
+      executor.submit(_run_base_column, column["index"], form["query"], form["limit"], column["config"])
+      for column in active_columns
+    ]
+    for future in futures:
+      base_results.append(future.result())
 
-    base_results.sort(key=lambda item: int(item["index"]))
+  base_results.sort(key=lambda item: int(item["index"]))
 
-    post_adapter = SearchAdapter()
+  post_adapter = SearchAdapter()
+  if uses_relevance_filter:
     post_adapter._load_modules()
-    finalized_results = [_apply_relevance(item, form["query"], post_adapter) for item in base_results]
-    _apply_ensemble_palette(finalized_results, int(form["limit"]), len(active_columns))
+  finalized_results = [_apply_relevance(item, form["query"], post_adapter) for item in base_results]
+  _apply_ensemble_palette(finalized_results, int(form["limit"]), len(active_columns))
 
-    elapsed_values = [int(item.get("elapsed_ms", 0) or 0) for item in finalized_results]
-    summary = {
-        "query": form["query"],
-        "limit": int(form["limit"]),
-        "column_count": len(finalized_results),
-        "fastest_ms": min(elapsed_values) if elapsed_values else 0,
-        "slowest_ms": max(elapsed_values) if elapsed_values else 0,
-    }
+  elapsed_values = [int(item.get("elapsed_ms", 0) or 0) for item in finalized_results]
+  summary = {
+    "query": form["query"],
+    "limit": int(form["limit"]),
+    "column_count": len(finalized_results),
+    "fastest_ms": min(elapsed_values) if elapsed_values else 0,
+    "slowest_ms": max(elapsed_values) if elapsed_values else 0,
+  }
 
-    payload = {
-        "saved_at": datetime.now().isoformat(timespec="seconds"),
-        "kind": "parallel-grid-v1",
-        "label": form["query"] or "busca-v1",
-        "query": form["query"],
-        "limit": int(form["limit"]),
-        "column_count": len(finalized_results),
-        "columns": finalized_results,
-        "summary": summary,
-    }
-    saved_run = save_test_run(f"v1-{form['query'] or 'busca'}", payload)
-    return finalized_results, summary, saved_run
+  payload = {
+    "saved_at": datetime.now().isoformat(timespec="seconds"),
+    "kind": "parallel-grid-v1",
+    "label": form["query"] or "busca-v1",
+    "query": form["query"],
+    "limit": int(form["limit"]),
+    "column_count": len(finalized_results),
+    "columns": finalized_results,
+    "summary": summary,
+  }
+  saved_run = save_test_run(f"v1-{form['query'] or 'busca'}", payload)
+  return finalized_results, summary, saved_run
 
 
 def hydrate_loaded_columns(payload: dict[str, Any], form: dict[str, Any]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
@@ -1389,5 +1415,29 @@ def index() -> str:
     )
 
 
+def _env_flag(name: str, default: bool) -> bool:
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() not in {"0", "false", "no", "off"}
+
+
+def _run_options(port: int) -> dict[str, Any]:
+    debug_enabled = _env_flag("GOVGO_BROWSER_DEBUG", True)
+    reloader_default = os.name != "nt"
+    reloader_enabled = debug_enabled and _env_flag("GOVGO_BROWSER_RELOAD", reloader_default)
+    options: dict[str, Any] = {
+        "host": "127.0.0.1",
+        "port": port,
+        "debug": debug_enabled,
+        "use_reloader": reloader_enabled,
+    }
+    if reloader_enabled and os.name == "nt":
+        options["reloader_type"] = "stat"
+    return options
+
+
 if __name__ == "__main__":
-    APP.run(host="127.0.0.1", port=8012, debug=True)
+  if _env_flag("GOVGO_BROWSER_PREWARM", True):
+    _prewarm_default_search()
+    APP.run(**_run_options(8012))

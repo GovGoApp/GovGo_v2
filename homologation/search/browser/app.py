@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import sys
 from datetime import datetime
@@ -1011,5 +1012,27 @@ def index() -> str:
     )
 
 
+def _env_flag(name: str, default: bool) -> bool:
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() not in {"0", "false", "no", "off"}
+
+
+def _run_options(port: int) -> dict[str, Any]:
+    debug_enabled = _env_flag("GOVGO_BROWSER_DEBUG", True)
+    reloader_default = os.name != "nt"
+    reloader_enabled = debug_enabled and _env_flag("GOVGO_BROWSER_RELOAD", reloader_default)
+    options: dict[str, Any] = {
+        "host": "127.0.0.1",
+        "port": port,
+        "debug": debug_enabled,
+        "use_reloader": reloader_enabled,
+    }
+    if reloader_enabled and os.name == "nt":
+        options["reloader_type"] = "stat"
+    return options
+
+
 if __name__ == "__main__":
-    APP.run(host="127.0.0.1", port=8011, debug=True)
+    APP.run(**_run_options(8011))

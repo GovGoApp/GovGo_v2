@@ -307,15 +307,15 @@ HTML = """
     .doc-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 12px;
+      gap: 10px;
     }
     .doc-card,
     .text-block,
     .saved-link {
       border: 1px solid var(--hairline-soft);
-      border-radius: 18px;
+      border-radius: 14px;
       background: var(--paper);
-      padding: 16px;
+      padding: 10px;
     }
     .doc-card h3,
     .text-block h3,
@@ -329,14 +329,14 @@ HTML = """
     .empty-state p {
       margin: 6px 0 0;
       color: var(--ink-2);
-      font-size: 13px;
-      line-height: 1.5;
+      font-size: 10.4px;
+      line-height: 1.45;
     }
     .doc-meta {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 10px;
+      gap: 6px;
+      margin-top: 8px;
     }
     .result-header {
       display: grid;
@@ -349,10 +349,15 @@ HTML = """
       gap: 14px;
       align-items: flex-start;
     }
+    .result-title-row > div {
+      min-width: 0;
+    }
     .saved-link {
       background: var(--blue-50);
       border-color: var(--blue-200);
       color: var(--deep-blue);
+      padding: 10px 12px;
+      border-radius: 14px;
     }
     .saved-link strong {
       display: block;
@@ -365,17 +370,17 @@ HTML = """
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     }
     .text-content {
-      margin-top: 12px;
-      padding: 14px;
+      margin-top: 8px;
+      padding: 10px;
       border: 1px solid var(--hairline-soft);
-      border-radius: 16px;
+      border-radius: 12px;
       background: var(--rail);
       white-space: pre-wrap;
       overflow-wrap: anywhere;
-      max-height: 520px;
+      max-height: 420px;
       overflow: auto;
-      font-size: 13px;
-      line-height: 1.6;
+      font-size: 10.4px;
+      line-height: 1.45;
     }
     .error-box {
       padding: 10px 12px;
@@ -463,12 +468,12 @@ HTML = """
       <div>
         <div class="eyebrow">GovGo v2 · Homologação</div>
         <h1 class="page-title">Documentos</h1>
-        <p class="page-lede">Teste documentos reais com a mesma estética da página design: um arquivo, vários arquivos de uma vez, pacote zip ou um documento publicado no PNCP.</p>
+        <p class="page-lede">Teste um arquivo, um lote ou um documento publicado no PNCP com a mesma linguagem visual da Busca.</p>
       </div>
       <div class="top-tags">
-        <span class="tag tag--accent">1 arquivo</span>
+        <span class="tag tag--accent">Documento real</span>
         <span class="tag tag--blue">Lote</span>
-        <span class="tag">Zip</span>
+        <span class="tag">PNCP</span>
       </div>
     </header>
 
@@ -613,7 +618,7 @@ HTML = """
                 {% if item.sequencialDocumento %}<span class="mini-tag">Seq. {{ item.sequencialDocumento }}</span>{% endif %}
                 {% if item.origem %}<span class="mini-tag">{{ item.origem }}</span>{% endif %}
               </div>
-              <form method="post" action="/process-pncp-document" class="field-stack" style="margin-top: 12px;" data-busy-label="Processando arquivo escolhido no PNCP...">
+              <form method="post" action="/process-pncp-document" class="field-stack" data-busy-label="Processando arquivo escolhido no PNCP...">
                 <input type="hidden" name="document_url" value="{{ item.url or '' }}">
                 <input type="hidden" name="document_name" value="{{ item.nome or '' }}">
                 <input type="hidden" name="pncp_id" value="{{ result.request.pncp_id or form_state.pncp_id }}">
