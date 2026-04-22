@@ -6,7 +6,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-###
+
 try:
     from flask import Flask, Response, abort, render_template_string, request
 except Exception as exc:  # pragma: no cover
