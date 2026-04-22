@@ -21,3 +21,9 @@ node_modules/
 dist/
 build/
 coverage/
+
+# Homologation generated outputs
+homologation/**/artifacts/
+homologation/**/tests/runs/
+homologation/**/scripts/**/logs/
+homologation/**/scripts/**/output/

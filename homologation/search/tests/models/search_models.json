@@ -1,0 +1,72 @@
+[
+  {
+    "id": "semantic_fast",
+    "label": "Semantico rapido",
+    "description": "Busca semantica padrao da homologacao.",
+    "request": {
+      "search_type": "semantic",
+      "limit": 5,
+      "preprocess": true,
+      "prefer_preproc_v2": true,
+      "filter_expired": true,
+      "use_negation": true,
+      "category_search_base": "semantic"
+    }
+  },
+  {
+    "id": "keyword_fast",
+    "label": "Keyword rapido",
+    "description": "Busca por palavras-chave para comparacao direta.",
+    "request": {
+      "search_type": "keyword",
+      "limit": 5,
+      "preprocess": true,
+      "prefer_preproc_v2": true,
+      "filter_expired": true,
+      "use_negation": true,
+      "category_search_base": "semantic"
+    }
+  },
+  {
+    "id": "hybrid_fusion",
+    "label": "Hibrido fusao",
+    "description": "Busca hibrida otimizada por fusao rapida.",
+    "request": {
+      "search_type": "hybrid",
+      "limit": 5,
+      "preprocess": true,
+      "prefer_preproc_v2": true,
+      "filter_expired": true,
+      "use_negation": true,
+      "category_search_base": "semantic"
+    }
+  },
+  {
+    "id": "correspondence_semantic",
+    "label": "Correspondencia",
+    "description": "Busca por correspondencia de categorias com base semantica.",
+    "request": {
+      "search_type": "correspondence",
+      "limit": 5,
+      "preprocess": true,
+      "prefer_preproc_v2": true,
+      "filter_expired": true,
+      "use_negation": true,
+      "category_search_base": "semantic"
+    }
+  },
+  {
+    "id": "category_filtered_hybrid",
+    "label": "Categoria filtrada",
+    "description": "Busca filtrada por categorias usando base hibrida.",
+    "request": {
+      "search_type": "category_filtered",
+      "limit": 5,
+      "preprocess": true,
+      "prefer_preproc_v2": true,
+      "filter_expired": true,
+      "use_negation": true,
+      "category_search_base": "hybrid"
+    }
+  }
+]

@@ -1,0 +1,75 @@
+[
+  {
+    "name": "healthcheck-documents-core",
+    "title": "Healthcheck do core local de Documentos",
+    "description": "Confere se o laboratorio de Documentos sobe dentro do v2, encontra o core copiado e enxerga a configuracao minima do ambiente.",
+    "validates": [
+      "bootstrap local do modulo de Documentos",
+      "paths de artifacts dentro de homologation/documents",
+      "visibilidade das configuracoes de OpenAI e assistant"
+    ],
+    "enabled": true,
+    "action": "healthcheck",
+    "save_artifacts": false
+  },
+  {
+    "name": "list-documents-igarape-acu",
+    "title": "Listagem real de documentos do PNCP de Igarape-Acu",
+    "description": "Consulta um PNCP real ja validado pela Busca homologada e confirma que o adapter local devolve pelo menos um documento publicado.",
+    "validates": [
+      "fetch_documentos no core legado copiado",
+      "fallback para API PNCP",
+      "normalizacao da lista de documentos retornada"
+    ],
+    "enabled": true,
+    "action": "list_documents",
+    "pncp_id": "05149117000155-1-000014/2026",
+    "expected_min_documents": 1
+  },
+  {
+    "name": "example-list-documents",
+    "title": "Exemplo de listagem por PNCP para editar manualmente",
+    "description": "Fixture de apoio para quando voce quiser trocar o numero controle PNCP e testar outro processo.",
+    "validates": [
+      "entrada manual de PNCP",
+      "consulta de lista_documentos para outro processo",
+      "normalizacao da resposta do adapter"
+    ],
+    "enabled": false,
+    "action": "list_documents",
+    "pncp_id": "PREENCHER_NUMERO_CONTROLE_PNCP",
+    "expected_min_documents": 1
+  },
+  {
+    "name": "example-process-public-pdf",
+    "title": "Exemplo de processamento de PDF publico simples",
+    "description": "Fixture de exemplo para testar o fluxo de processamento em um PDF publico pequeno, fora do PNCP.",
+    "validates": [
+      "download de arquivo publico simples",
+      "processamento por URL com resumo",
+      "teste rapido sem depender de documento governamental"
+    ],
+    "enabled": false,
+    "action": "process_url",
+    "document_url": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+    "document_name": "dummy.pdf",
+    "save_artifacts": false,
+    "expected_contains": "dummy"
+  },
+  {
+    "name": "example-process-real-pncp-pdf",
+    "title": "Processamento real de edital do PNCP",
+    "description": "Fixture real para baixar um edital publicado no PNCP e executar o fluxo oficial com conversao MarkItDown antes do resumo.",
+    "validates": [
+      "download de documento real do PNCP",
+      "fluxo process_url com conversao MarkItDown",
+      "geracao de resumo textual a partir de um edital real"
+    ],
+    "enabled": false,
+    "action": "process_url",
+    "document_url": "https://pncp.gov.br/pncp-api/v1/orgaos/05149117000155/compras/2026/000014/arquivos/1",
+    "document_name": "edital_alimentacao_hospitalar.pdf",
+    "pncp_id": "05149117000155-1-000014/2026",
+    "save_artifacts": false
+  }
+]

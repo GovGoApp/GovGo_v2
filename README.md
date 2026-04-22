@@ -37,3 +37,49 @@ Regra central do projeto: tudo no v1 que ainda for util para o funcionamento do 
 2. Fazer o primeiro commit desta base inicial.
 3. Definir a stack oficial da aplicacao v2.
 4. Migrar o prototipo de `design/` para a estrutura definitiva do projeto.
+
+## Homologacao inicial do v1 no v2
+
+O primeiro laboratorio concreto de homologacao foi criado em `homologation/search/`.
+
+Ele traz a Busca do v1 para dentro do v2 por adapter, sem depender da UI Dash.
+
+Comandos previstos:
+
+```powershell
+python homologation/search/cmd/run_search.py "alimentacao hospitalar" --search-type hybrid
+python homologation/search/cmd/smoke_search.py
+python homologation/search/browser/app.py
+```
+
+Uso rapido do browser de homologacao:
+
+Diretorio:
+
+`C:\Users\Haroldo Duraes\Desktop\Scripts\GovGo\v2\homologation\search\browser`
+
+Comando:
+
+```powershell
+Set-Location "C:\Users\Haroldo Duraes\Desktop\Scripts\GovGo\v2\homologation\search\browser"
+python .\app.py
+```
+
+Depois abra `http://127.0.0.1:8011`.
+
+Fluxo atual do browser:
+
+1. escreva uma `Consulta base`
+2. selecione os modelos que quer comparar na mesma consulta
+3. clique em `Comparar modelos`
+4. use `Rodar suite simples` para executar os casos-base do laboratorio
+5. carregue um `Caso base` quando quiser partir de um teste predefinido
+
+Persistencia dos testes:
+
+- modelos de teste: `homologation/search/tests/models/search_models.json`
+- execucoes salvas: `homologation/search/tests/runs/`
+
+Observacao:
+
+- esses comandos dependem de um ambiente Python configurado com as dependencias do core do v1.
