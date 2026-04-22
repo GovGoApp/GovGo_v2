@@ -7,13 +7,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-try:
-    from flask import Flask, Response, abort, render_template_string, request
-except Exception as exc:  # pragma: no cover
-    raise SystemExit(
-        "Flask nao esta disponivel no ambiente atual. "
-        "Instale as dependencias Python antes de rodar o browser tester."
-    ) from exc
+from flask import Flask, Response, abort, render_template_string, request
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -23,7 +17,8 @@ TESTS_ROOT = HOMOLOGATION_ROOT / "tests"
 TEST_MODELS_PATH = TESTS_ROOT / "models" / "search_models.json"
 TEST_RUNS_DIR = TESTS_ROOT / "runs"
 ACTIVE_SEARCH_ROOT = HOMOLOGATION_ROOT / "v1_copy" / "gvg_browser"
-DEFAULT_SELECTED_MODELS = ["semantic_fast", "hybrid_fusion", "keyword_fast"]
+DEFAULT_SELECTED_MODELS = ["semantic_fast", "keyword_fast", "hybrid_fusion", "correspondence_semantic"]
+VISIBLE_STRATEGY_IDS = ["semantic_fast", "keyword_fast", "hybrid_fusion", "correspondence_semantic"]
 SEARCH_TYPES = ["semantic", "keyword", "hybrid", "correspondence", "category_filtered"]
 CATEGORY_BASES = ["semantic", "keyword", "hybrid"]
 MAX_RECENT_RUNS = 8
@@ -31,6 +26,7 @@ MAX_RECENT_RUNS = 8
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from homologation.browser_design import get_browser_design_css
 from homologation.search.core.adapter import SearchAdapter
 from homologation.search.core.contracts import SearchRequest
 
@@ -118,486 +114,495 @@ HTML = """
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>GovGo v2 :: Laboratorio de Busca</title>
+  <title>GovGo v2 :: Busca</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Sora:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --bg: #eef2f7;
-      --card: #ffffff;
-      --panel: #f9fbff;
-      --line: #d7deeb;
-      --text: #152033;
-      --muted: #61708d;
-      --accent: #0f6fff;
-      --accent-2: #ff6b3d;
-      --accent-3: #11356b;
-      --ok-bg: #ebf8ef;
-      --ok-text: #12653f;
-      --fail-bg: #fdeaea;
-      --fail-text: #b42318;
-      --shadow: 0 12px 32px rgba(15, 26, 48, 0.08);
+    {{ design_css|safe }}
+    .search-browser {
+      font-size: 80%;
     }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: linear-gradient(180deg, #f6f8fc 0%, var(--bg) 100%);
-      color: var(--text);
-      font-family: Segoe UI, Tahoma, sans-serif;
+    .search-browser .page-shell {
+      padding: 10px;
     }
-    .page {
-      width: 100%;
-      padding: 14px;
-    }
-    .hero {
-      background: linear-gradient(135deg, #0f2340 0%, #1b4f9c 100%);
-      color: #fff;
+    .search-browser .topbar {
+      margin-bottom: 10px;
+      padding: 14px 18px;
       border-radius: 18px;
-      padding: 18px 22px;
-      box-shadow: var(--shadow);
-      margin-bottom: 16px;
     }
-    .hero p {
-      margin: 8px 0 0;
-      color: rgba(255, 255, 255, 0.82);
+    .search-browser .workspace-grid {
+      gap: 10px;
     }
-    .hero-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 14px;
-      margin-top: 12px;
-      font-size: 13px;
-      color: rgba(255, 255, 255, 0.82);
+    .search-browser .sidebar-panel,
+    .search-browser .result-panel {
+      padding: 10px;
     }
-    .workspace {
-      display: grid;
-      grid-template-columns: minmax(360px, 430px) minmax(0, 1fr);
-      gap: 16px;
-      align-items: start;
+    .search-browser .panel,
+    .search-browser .panel-block,
+    .search-browser .saved-link,
+    .search-browser .result-card,
+    .search-browser .stat-box,
+    .search-browser .run-row,
+    .search-browser .results-scroll {
+      border-radius: 14px;
     }
-    .left-col,
-    .right-col {
-      display: grid;
-      gap: 16px;
+    .search-browser .panel-block,
+    .search-browser .saved-link,
+    .search-browser .result-card,
+    .search-browser .stat-box,
+    .search-browser .run-row {
+      padding: 10px;
     }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 18px;
-      box-shadow: var(--shadow);
+    .search-browser .sidebar-panel {
+      gap: 10px;
     }
-    .card h2,
-    .card h3 {
-      margin: 0;
+    .search-browser .result-panel {
+      min-height: 0;
     }
-    .muted {
-      color: var(--muted);
+    .search-browser .empty-state {
+      min-height: 260px;
+      padding: 16px;
+      border-radius: 16px;
     }
-    .small {
+    .search-browser .eyebrow {
+      font-size: 8.8px;
+      margin-bottom: 4px;
+    }
+    .search-browser .page-title {
+      font-size: clamp(24px, 2.4vw, 33.6px);
+    }
+    .search-browser .page-lede {
       font-size: 12px;
-      color: var(--muted);
+      margin-top: 6px;
+      line-height: 1.45;
     }
-    .section-head {
+    .search-browser .tag,
+    .search-browser .soft-chip,
+    .search-browser .status-pill {
+      font-size: 9.6px;
+    }
+    .search-browser .field-label,
+    .search-browser .stat-box .stat-label,
+    .search-browser .results-table th {
+      font-size: 8.8px;
+    }
+    .search-browser .section-headline {
+      margin-bottom: 8px;
+      gap: 8px;
+    }
+    .search-browser .section-headline h2,
+    .search-browser .result-header h2,
+    .search-browser .result-card h3,
+    .search-browser .empty-state h2 {
+      font-size: 15px;
+      line-height: 1.15;
+    }
+    .search-browser .section-headline p,
+    .search-browser .muted-copy,
+    .search-browser .result-card p,
+    .search-browser .small-note,
+    .search-browser .empty-state p {
+      font-size: 10.4px;
+      line-height: 1.45;
+    }
+    .search-browser .field-stack,
+    .search-browser .checkbox-grid,
+    .search-browser .result-grid,
+    .search-browser .stat-grid,
+    .search-browser .link-row,
+    .search-browser .run-list,
+    .search-browser .action-row,
+    .search-browser .result-header,
+    .search-browser .collapsible-body {
+      gap: 8px;
+    }
+    .search-browser .field {
+      gap: 5px;
+    }
+    .search-browser .control,
+    .search-browser .control-select,
+    .search-browser .control-textarea {
+      border-radius: 12px;
+      padding: 9px 10px;
+    }
+    .search-browser .button,
+    .search-browser .button-ghost,
+    .search-browser .button-soft {
+      min-height: 36px;
+      padding: 0 12px;
+      border-radius: 12px;
+    }
+    .search-browser .saved-link {
+      padding: 10px 12px;
+    }
+    .search-browser .saved-link strong,
+    .search-browser .stat-box strong {
+      font-size: 19.2px;
+    }
+    .search-browser .checkbox-card {
+      gap: 8px;
+      padding: 10px;
+      border-radius: 14px;
+    }
+    .search-browser .checkbox-card-top strong {
+      font-size: 13px;
+    }
+    .search-browser .helper-line {
+      margin-top: 6px;
+      font-size: 10px;
+    }
+    .result-header {
       display: grid;
-      gap: 6px;
+      gap: 14px;
       margin-bottom: 14px;
     }
-    label {
+    .saved-link {
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1px solid var(--blue-200);
+      background: var(--blue-50);
+      color: var(--deep-blue);
+    }
+    .saved-link strong {
       display: block;
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 6px;
+      margin-bottom: 4px;
+      font-family: var(--font-display);
     }
-    input,
-    select,
-    textarea {
-      width: 100%;
-      border: 1px solid var(--line);
+    .result-card .error-box {
+      margin-top: 8px;
+      padding: 10px;
       border-radius: 12px;
-      padding: 11px 12px;
-      font-size: 14px;
-      color: var(--text);
-      background: #fff;
+      background: var(--risk-50);
+      border: 1px solid color-mix(in srgb, var(--risk) 18%, white);
+      color: var(--risk);
+      font-size: 10.4px;
+      font-weight: 600;
     }
-    textarea {
-      min-height: 90px;
-      resize: vertical;
+    .result-card .small-note {
+      margin-top: 6px;
+      color: var(--ink-3);
+      font-size: 10.4px;
+      line-height: 1.5;
     }
-    .stack {
-      display: grid;
-      gap: 12px;
+    .result-card .small-note strong {
+      color: var(--ink-2);
     }
-    .inline-grid {
-      display: grid;
-      grid-template-columns: 1.5fr 1fr;
-      gap: 12px;
+    .results-scroll {
+      overflow-x: auto;
+      margin-top: 8px;
+      border: 1px solid var(--hairline-soft);
+      border-radius: 16px;
+      background: var(--rail);
     }
-    .model-grid,
-    .fixture-grid,
-    .result-grid,
-    .summary-grid {
-      display: grid;
-      gap: 12px;
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 640px;
     }
-    .model-grid,
-    .fixture-grid {
-      grid-template-columns: 1fr;
+    .results-table th,
+    .results-table td {
+      padding: 8px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--hairline-soft);
+      vertical-align: top;
+      font-size: 10.4px;
     }
-    .result-grid {
-      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    .results-table th {
+      color: var(--ink-3);
+      font-size: 8.8px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
     }
-    .summary-grid {
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    .sidebar-collapsible {
+      overflow: hidden;
     }
-    .select-card,
-    .fixture-card,
-    .summary-box,
-    .result-card,
-    .run-item {
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: var(--panel);
+    .section-headline--toggle {
+      align-items: center;
     }
-    .select-card,
-    .fixture-card,
-    .summary-box,
-    .run-item {
-      padding: 12px;
+    .section-headline--toggle > div {
+      min-width: 0;
     }
-    .model-toggle {
-      display: grid;
-      grid-template-columns: 24px minmax(0, 1fr);
-      gap: 10px;
-      align-items: start;
-    }
-    .model-toggle input {
-      width: 18px;
-      height: 18px;
-      margin-top: 3px;
-    }
-    .pill {
+    .collapse-toggle {
+      flex: none;
+      width: 26px;
+      height: 26px;
+      min-height: 26px;
+      padding: 0;
+      border: 1px solid var(--hairline);
+      border-radius: 999px;
+      background: var(--paper);
+      color: var(--deep-blue);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1;
+      cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 4px 8px;
+      justify-content: center;
+    }
+    .collapse-toggle:hover {
+      background: var(--blue-50);
+      border-color: var(--blue-200);
+    }
+    .collapse-toggle .toggle-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transform: translateY(-1px);
+    }
+    .collapsible-body {
+      display: grid;
+      min-width: 0;
+    }
+    .sidebar-collapsible.is-collapsed .collapsible-body {
+      display: none;
+    }
+    .busy-overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(20, 32, 51, 0.38);
+      backdrop-filter: blur(4px);
+      z-index: 999;
+      padding: 18px;
+    }
+    .busy-overlay.is-visible {
+      display: flex;
+    }
+    .busy-card {
+      width: min(360px, 100%);
+      padding: 16px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid rgba(214, 222, 231, 0.9);
+      box-shadow: 0 20px 40px rgba(16, 24, 40, 0.18);
+      display: grid;
+      gap: 10px;
+      text-align: center;
+    }
+    .busy-spinner {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 4px solid rgba(255, 87, 34, 0.14);
+      border-top-color: var(--orange);
+      margin: 0 auto;
+      animation: spin 1s linear infinite;
+    }
+    .busy-bar {
+      height: 6px;
       border-radius: 999px;
-      background: #e7efff;
-      color: #1e4ea3;
-      font-size: 12px;
-      font-weight: 700;
+      background: #e8eef8;
+      overflow: hidden;
     }
-    .pill.ok {
-      background: var(--ok-bg);
-      color: var(--ok-text);
-    }
-    .pill.fail {
-      background: var(--fail-bg);
-      color: var(--fail-text);
-    }
-    .action-row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    button {
-      border: 0;
-      border-radius: 12px;
-      padding: 11px 14px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      background: var(--accent);
-      color: #fff;
-    }
-    button.secondary {
-      background: var(--accent-2);
-    }
-    button.ghost {
-      background: #eef3ff;
-      color: #24448a;
-    }
-    .summary-box strong {
+    .busy-bar::after {
+      content: "";
       display: block;
-      margin-top: 6px;
-      font-size: 23px;
-      line-height: 1.1;
+      height: 100%;
+      width: 36%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--orange) 0%, #ff936a 100%);
+      animation: busy-slide 1.2s ease-in-out infinite;
     }
-    .result-card {
-      padding: 14px;
-      background: #fff;
-    }
-    .result-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: start;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-    .result-title {
+    .busy-text {
       display: grid;
       gap: 4px;
     }
-    .result-table-wrap {
-      overflow-x: auto;
-      margin-top: 12px;
+    .busy-text strong {
+      font-size: 17.6px;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
+    .busy-text span {
+      color: var(--ink-2);
+      font-size: 11.2px;
     }
-    th,
-    td {
-      padding: 9px 7px;
-      border-bottom: 1px solid #ebeff6;
-      text-align: left;
-      vertical-align: top;
-      font-size: 13px;
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
     }
-    th {
-      font-size: 12px;
-      color: var(--muted);
-      text-transform: uppercase;
-    }
-    .mono {
-      font-family: Consolas, monospace;
-    }
-    .title {
-      font-weight: 700;
-    }
-    .error {
-      margin-top: 10px;
-      padding: 11px 12px;
-      border: 1px solid #f4c2c0;
-      border-radius: 12px;
-      background: var(--fail-bg);
-      color: var(--fail-text);
-    }
-    .path-box {
-      padding: 10px 12px;
-      border-radius: 12px;
-      background: #f2f6ff;
-      border: 1px solid #d7e4ff;
-      color: #24448a;
-      font-size: 13px;
-      overflow-wrap: anywhere;
-    }
-    .run-list {
-      display: grid;
-      gap: 10px;
-    }
-    .run-item a {
-      color: #1c4b9c;
-      text-decoration: none;
-      font-weight: 700;
-    }
-    .empty {
-      min-height: 280px;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      color: var(--muted);
-      border: 1px dashed var(--line);
-      border-radius: 18px;
-      background: rgba(255, 255, 255, 0.64);
-      padding: 20px;
-    }
-    @media (max-width: 1080px) {
-      .workspace {
-        grid-template-columns: 1fr;
-      }
-      .result-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-    @media (max-width: 720px) {
-      .inline-grid {
-        grid-template-columns: 1fr;
-      }
-      .page {
-        padding: 10px;
-      }
+    @keyframes busy-slide {
+      0% { transform: translateX(-120%); }
+      50% { transform: translateX(110%); }
+      100% { transform: translateX(260%); }
     }
   </style>
 </head>
-<body>
-  <div class="page">
-    <div class="hero">
-      <h1>GovGo v2 :: Laboratorio de Busca</h1>
-      <p>Bancada de homologacao para comparar o mesmo input entre modelos diferentes, rodar suites simples e salvar tudo dentro da homologacao.</p>
-      <div class="hero-meta">
-        <div><strong>Core ativo:</strong> {{ active_search_root }}</div>
-        <div><strong>Diretorio de testes:</strong> {{ tests_root }}</div>
-        <div><strong>Porta:</strong> 8011</div>
+<body class="search-browser">
+  <div class="page-shell">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">GovGo v2 · Homologação</div>
+        <h1 class="page-title">Busca</h1>
+        <p class="page-lede">Digite a consulta e compare até quatro leituras da mesma busca.</p>
       </div>
-    </div>
+      <div class="top-tags">
+        <span class="tag tag--accent">Busca real</span>
+        <span class="tag tag--blue">Quatro leituras</span>
+        <span class="tag">GovGo v2</span>
+      </div>
+    </header>
 
-    <div class="workspace">
-      <div class="left-col">
-        <div class="card">
-          <div class="section-head">
-            <h2>Busca</h2>
-            <div class="muted">Altere a consulta e rode o mesmo input em varios modelos ao mesmo tempo.</div>
-          </div>
-          <form method="post" class="stack">
-            <input type="hidden" name="action" value="compare">
-            <div>
-              <label for="query">Consulta base</label>
-              <input id="query" name="query" value="{{ form.query }}" placeholder="Ex.: alimentacao hospitalar">
-            </div>
-            <div class="inline-grid">
+    <div class="workspace-grid">
+      <aside class="panel sidebar-panel">
+        <form method="post" class="field-stack" data-busy-label="Buscando oportunidades...">
+          <input type="hidden" name="action" value="compare">
+          <section class="panel-block panel-block--tinted sidebar-collapsible" data-collapsible>
+            <div class="section-headline section-headline--toggle">
               <div>
-                <label for="test_label">Nome do teste</label>
-                <input id="test_label" name="test_label" value="{{ form.test_label }}" placeholder="Ex.: comparacao alimentacao hospitalar">
+                <h2>Nova busca</h2>
+                <p>Digite a consulta e monte esta rodada.</p>
               </div>
-              <div>
-                <label for="limit">Limite</label>
-                <input id="limit" name="limit" type="number" min="1" max="20" value="{{ form.limit }}">
-              </div>
+              <button type="button" class="collapse-toggle" data-collapse-toggle aria-expanded="true" aria-label="Recolher Nova busca" title="Recolher Nova busca"><span class="toggle-icon" aria-hidden="true">▴</span></button>
             </div>
-            <div>
-              <label>Modelos para comparar</label>
-              <div class="model-grid">
-                {% for model in test_models %}
-                <div class="select-card">
-                  <label class="model-toggle">
-                    <input type="checkbox" name="model_ids" value="{{ model.id }}" {% if model.id in form.selected_model_ids %}checked{% endif %}>
-                    <span>
-                      <span class="title">{{ model.label }}</span>
-                      <span class="small">{{ model.description }}</span>
-                      <div class="small">tipo={{ model.request.search_type }} | base={{ model.request.category_search_base or '-' }} | preproc={{ 'on' if model.request.preprocess else 'off' }}</div>
-                    </span>
+            <div class="collapsible-body">
+              <div class="field-stack">
+                <label class="field">
+                  <span class="field-label">Consulta</span>
+                  <input class="control" id="query" name="query" value="{{ form.query }}" placeholder="Ex.: alimentação hospitalar" autocomplete="off">
+                </label>
+                <div class="field-grid">
+                  <label class="field">
+                    <span class="field-label">Resultados</span>
+                    <input class="control" id="limit" name="limit" type="number" min="1" max="20" value="{{ form.limit }}">
+                  </label>
+                  <label class="field">
+                    <span class="field-label">Rótulo</span>
+                    <input class="control" id="test_label" name="test_label" value="{{ form.test_label }}" placeholder="Nome curto desta rodada">
                   </label>
                 </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel-block sidebar-collapsible" data-collapsible>
+            <div class="section-headline section-headline--toggle">
+              <div>
+                <h2>Filtros</h2>
+                <p>Escolha até quatro leituras para a mesma busca.</p>
+              </div>
+              <button type="button" class="collapse-toggle" data-collapse-toggle aria-expanded="true" aria-label="Recolher Filtros" title="Recolher Filtros"><span class="toggle-icon" aria-hidden="true">▴</span></button>
+            </div>
+            <div class="collapsible-body">
+              <div class="checkbox-grid">
+                {% for model in strategy_cards %}
+                <label class="checkbox-card {% if model.id in form.selected_model_ids %}is-selected{% endif %}">
+                  <input type="checkbox" name="model_ids" value="{{ model.id }}" {% if model.id in form.selected_model_ids %}checked{% endif %}>
+                  <span>
+                    <span class="checkbox-card-top">
+                      <strong>{{ model.short_label }}</strong>
+                    </span>
+                    <p class="muted-copy">{{ model.description }}</p>
+                    <div class="helper-line">{{ model.summary_line }}</div>
+                  </span>
+                </label>
                 {% endfor %}
               </div>
             </div>
-            <div class="action-row">
-              <button type="submit">Comparar modelos</button>
-              <button type="submit" formaction="/" name="action" value="smoke" class="secondary">Rodar suite simples</button>
-            </div>
-          </form>
-        </div>
+          </section>
 
-        <div class="card">
-          <div class="section-head">
-            <h2>Casos base</h2>
-            <div class="muted">Carregue um caso pronto e use como ponto de partida para varios testes do mesmo modelo.</div>
+          <div class="action-row">
+            <button type="submit" class="button">Buscar</button>
           </div>
-          <div class="fixture-grid">
-            {% for case in fixture_cases %}
-            <div class="fixture-card">
-              <div class="title">{{ case.name }}</div>
-              <div style="margin-top: 6px; font-size: 18px; font-weight: 700;">{{ case.query }}</div>
-              <div style="margin-top: 8px;" class="small">tipo={{ case.search_type }} | limite={{ case.limit }} | minimo esperado={{ case.expected_min_results }}</div>
-              <form method="post" style="margin-top: 10px;">
-                <input type="hidden" name="action" value="load_fixture">
-                <input type="hidden" name="fixture_name" value="{{ case.name }}">
-                <button type="submit" class="ghost">Carregar e comparar</button>
-              </form>
-            </div>
-            {% endfor %}
-          </div>
-        </div>
+        </form>
 
-        <div class="card">
-          <div class="section-head">
-            <h2>Ultimos testes salvos</h2>
-            <div class="muted">Cada comparacao e cada suite salva um JSON automaticamente em homologation/search/tests/runs.</div>
+        <section class="panel-block sidebar-collapsible" data-collapsible>
+          <div class="section-headline section-headline--toggle">
+            <div>
+              <h2>Recentes</h2>
+              <p>Últimos resultados salvos.</p>
+            </div>
+            <button type="button" class="collapse-toggle" data-collapse-toggle aria-expanded="true" aria-label="Recolher Recentes" title="Recolher Recentes"><span class="toggle-icon" aria-hidden="true">▴</span></button>
           </div>
-          <div class="run-list">
-            {% if recent_runs %}
-              {% for item in recent_runs %}
-              <div class="run-item">
-                <div class="title">{{ item.label }}</div>
-                <div class="small">{{ item.kind }} | {{ item.saved_at or '-' }}</div>
-                <div class="small">{{ item.query or item.file_name }}</div>
-                <div style="margin-top: 6px;"><a href="/runs/{{ item.file_name }}" target="_blank">Abrir JSON salvo</a></div>
-              </div>
-              {% endfor %}
-            {% else %}
-              <div class="small">Nenhum teste salvo ainda.</div>
+          <div class="collapsible-body">
+            <div class="run-list">
+              {% if recent_runs %}
+                {% for item in recent_runs %}
+                <div class="run-row">
+                  <strong>{{ item.label }}</strong>
+                  <div class="muted-copy">{{ item.query or 'Busca salva' }}</div>
+                  <div class="link-row">
+                    <span class="soft-chip mono">{{ item.saved_at or '-' }}</span>
+                    <a href="/runs/{{ item.file_name }}" target="_blank" rel="noreferrer">Abrir resultado</a>
+                  </div>
+                </div>
+                {% endfor %}
+              {% else %}
+                <div class="muted-copy">Nenhuma execução salva ainda.</div>
+              {% endif %}
+            </div>
+          </div>
+        </section>
+      </aside>
+
+      <main class="panel result-panel">
+        {% if compare_summary %}
+        <div class="result-header">
+          <div class="section-headline">
+            <div>
+              <h2>Resultado da rodada</h2>
+              <p>A mesma consulta foi executada nas leituras escolhidas. Compare velocidade, volume e aderência.</p>
+            </div>
+            {% if saved_run %}
+            <a class="saved-link" href="/runs/{{ saved_run.file_name }}" target="_blank" rel="noreferrer">
+              <strong>Resultado salvo</strong>
+              <span>{{ saved_run.relative_path }}</span>
+            </a>
             {% endif %}
           </div>
-        </div>
-      </div>
-
-      <div class="right-col">
-        {% if saved_run %}
-        <div class="card">
-          <div class="section-head">
-            <h2>Teste salvo</h2>
-            <div class="muted">O resultado desta execucao foi guardado dentro da homologacao.</div>
-          </div>
-          <div class="path-box">{{ saved_run.absolute_path }}</div>
-          <div style="margin-top: 10px;"><a href="/runs/{{ saved_run.file_name }}" target="_blank">Abrir JSON salvo</a></div>
-        </div>
-        {% endif %}
-
-        {% if compare_summary %}
-        <div class="card">
-          <div class="section-head">
-            <h2>Comparacao atual</h2>
-            <div class="muted">Mesmo input executado em varios modelos. Compare tempo, confianca e resultado de cada abordagem.</div>
-          </div>
-          <div class="summary-grid">
-            <div class="summary-box"><span class="small">Consulta</span><strong>{{ compare_summary.query }}</strong></div>
-            <div class="summary-box"><span class="small">Modelos</span><strong>{{ compare_summary.total_models }}</strong></div>
-            <div class="summary-box"><span class="small">Mais rapido</span><strong>{{ compare_summary.fastest_ms }} ms</strong></div>
-            <div class="summary-box"><span class="small">Mais lento</span><strong>{{ compare_summary.slowest_ms }} ms</strong></div>
+          <div class="stat-grid">
+            <div class="stat-box"><span class="stat-label">Consulta</span><strong>{{ compare_summary.query }}</strong></div>
+            <div class="stat-box"><span class="stat-label">Leituras</span><strong>{{ compare_summary.total_models }}</strong></div>
+            <div class="stat-box"><span class="stat-label">Mais rápida</span><strong class="mono">{{ compare_summary.fastest_ms }} ms</strong></div>
+            <div class="stat-box"><span class="stat-label">Mais lenta</span><strong class="mono">{{ compare_summary.slowest_ms }} ms</strong></div>
           </div>
         </div>
 
         <div class="result-grid">
           {% for item in compare_results %}
-          <div class="result-card">
-            <div class="result-head">
-              <div class="result-title">
-                <h3>{{ item.model.label }}</h3>
-                <div class="small">{{ item.model.description }}</div>
-                <div class="small">tipo={{ item.response.request.search_type }} | base={{ item.response.request.category_search_base }}</div>
+          <article class="result-card">
+            <div class="result-card-head">
+              <div>
+                <h3>{{ item.model.short_label or item.model.label }}</h3>
+                <p>{{ item.model.description }}</p>
               </div>
-              <span class="pill">{{ item.model.id }}</span>
+              <span class="soft-chip">{{ item.model.mode_label or item.model.id }}</span>
             </div>
-            <div class="summary-grid">
-              <div class="summary-box"><span class="small">Tempo</span><strong>{{ item.response.elapsed_ms }} ms</strong></div>
-              <div class="summary-box"><span class="small">Resultados</span><strong>{{ item.response.result_count }}</strong></div>
-              <div class="summary-box"><span class="small">Confianca</span><strong>{{ '%.2f'|format(item.response.confidence) }}</strong></div>
-              <div class="summary-box"><span class="small">Preproc</span><strong>{{ 'on' if item.response.preprocessing.enabled else 'off' }}</strong></div>
+
+            <div class="stat-grid">
+              <div class="stat-box"><span class="stat-label">Tempo</span><strong class="mono">{{ item.response.elapsed_ms }} ms</strong></div>
+              <div class="stat-box"><span class="stat-label">Resultados</span><strong class="mono">{{ item.response.result_count }}</strong></div>
+              <div class="stat-box"><span class="stat-label">Confiança</span><strong class="mono">{{ '%.2f'|format(item.response.confidence) }}</strong></div>
             </div>
 
             {% if item.response.preprocessing %}
-            <div style="margin-top: 10px;" class="small">
-              <strong>Termos:</strong> {{ item.response.preprocessing.search_terms or '-' }}
-              {% if item.response.preprocessing.skip_reason %}
-               | <strong>bypass:</strong> {{ item.response.preprocessing.skip_reason }}
-              {% endif %}
-            </div>
-            {% endif %}
-
-            {% if item.response.error %}
-            <div class="error">{{ item.response.error }}</div>
+            <div class="small-note"><strong>Termos usados:</strong> {{ item.response.preprocessing.search_terms or '-' }}</div>
             {% endif %}
 
             {% if item.response.meta.top_categories_preview %}
-            <div style="margin-top: 10px;" class="small">
-              <strong>Top categorias:</strong>
+            <div class="small-note"><strong>Categorias em destaque:</strong>
               {% for top in item.response.meta.top_categories_preview %}
-                {% if not loop.first %} | {% endif %}{{ top.codigo }}
+                {% if not loop.first %} · {% endif %}{{ top.codigo }}
               {% endfor %}
             </div>
             {% endif %}
 
+            {% if item.response.error %}
+            <div class="error-box">{{ item.response.error }}</div>
+            {% endif %}
+
             {% if item.response.results %}
-            <div class="result-table-wrap">
-              <table>
+            <div class="results-scroll">
+              <table class="results-table">
                 <thead>
                   <tr>
-                    <th>#</th>
-                    <th>Sim</th>
+                    <th>Posição</th>
+                    <th>Aderência</th>
                     <th>Objeto</th>
-                    <th>Orgao</th>
-                    <th>Municipio/UF</th>
+                    <th>Órgão</th>
+                    <th>Local</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -606,8 +611,8 @@ HTML = """
                     <td class="mono">{{ result.rank }}</td>
                     <td class="mono">{{ '%.4f'|format(result.similarity) }}</td>
                     <td>
-                      <div class="title">{{ result.title or '-' }}</div>
-                      <div class="small mono">{{ result.item_id or '-' }}</div>
+                      <strong>{{ result.title or '-' }}</strong>
+                      <div class="helper-line mono">{{ result.item_id or '-' }}</div>
                     </td>
                     <td>{{ result.organization or '-' }}</td>
                     <td>{{ result.municipality or '-' }}{% if result.uf %}/{{ result.uf }}{% endif %}</td>
@@ -616,61 +621,78 @@ HTML = """
                 </tbody>
               </table>
             </div>
+            {% else %}
+            <div class="small-note">Nenhum resultado retornado nesta leitura.</div>
             {% endif %}
-          </div>
+          </article>
           {% endfor %}
         </div>
-        {% elif smoke_summary %}
-        <div class="card">
-          <div class="section-head">
-            <h2>Suite simples</h2>
-            <div class="muted">Execucao dos casos base do laboratorio para checagem rapida de comportamento.</div>
-          </div>
-          <div class="summary-grid">
-            <div class="summary-box"><span class="small">Casos</span><strong>{{ smoke_summary.total }}</strong></div>
-            <div class="summary-box"><span class="small">Passaram</span><strong>{{ smoke_summary.passed }}</strong></div>
-            <div class="summary-box"><span class="small">Falharam</span><strong>{{ smoke_summary.failed }}</strong></div>
-            <div class="summary-box"><span class="small">Tempo total</span><strong>{{ smoke_summary.elapsed_ms }} ms</strong></div>
-          </div>
-          <div class="result-table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Caso</th>
-                  <th>Status</th>
-                  <th>Tempo</th>
-                  <th>Resultados</th>
-                  <th>Primeiro resultado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for item in smoke_report %}
-                <tr>
-                  <td>
-                    <div class="title">{{ item.name }}</div>
-                    <div class="small">{{ item.query }} | {{ item.search_type }}</div>
-                  </td>
-                  <td><span class="pill {% if item.passed %}ok{% else %}fail{% endif %}">{{ 'OK' if item.passed else 'FAIL' }}</span></td>
-                  <td class="mono">{{ item.elapsed_ms }} ms</td>
-                  <td class="mono">{{ item.result_count }}</td>
-                  <td>{{ item.top_title or '-' }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </div>
         {% else %}
-        <div class="empty">
+        <div class="empty-state">
           <div>
-            <h2>Nenhum resultado carregado</h2>
-            <p>Escolha uma consulta, selecione modelos na coluna esquerda e execute a comparacao. Cada teste sera salvo automaticamente em homologation/search/tests/runs.</p>
+            <h2>Digite e escolha as leituras</h2>
+            <p>Esta página foi refeita para seguir o visual do design. Você só precisa digitar a consulta, marcar até quatro filtros de busca e rodar.</p>
           </div>
         </div>
         {% endif %}
-      </div>
+      </main>
     </div>
   </div>
+  <div id="busy-overlay" class="busy-overlay" aria-hidden="true">
+    <div class="busy-card">
+      <div class="busy-spinner" aria-hidden="true"></div>
+      <div class="busy-text">
+        <strong id="busy-title">Buscando...</strong>
+        <span id="busy-copy">Aguarde o resultado aparecer na área da direita.</span>
+      </div>
+      <div class="busy-bar" aria-hidden="true"></div>
+    </div>
+  </div>
+  <script>
+    (() => {
+      const overlay = document.getElementById('busy-overlay');
+      const title = document.getElementById('busy-title');
+      const forms = Array.from(document.querySelectorAll('form[data-busy-label]'));
+      const toggles = Array.from(document.querySelectorAll('[data-collapse-toggle]'));
+
+      const activateBusyState = (form) => {
+        const label = form.getAttribute('data-busy-label') || 'Processando...';
+        title.textContent = label;
+        overlay.classList.add('is-visible');
+        overlay.setAttribute('aria-hidden', 'false');
+      };
+
+      forms.forEach((form) => {
+        let isSubmitting = false;
+        form.addEventListener('submit', () => {
+          if (isSubmitting) {
+            return;
+          }
+          isSubmitting = true;
+          activateBusyState(form);
+        });
+      });
+
+      toggles.forEach((toggle) => {
+        toggle.addEventListener('click', () => {
+          const section = toggle.closest('[data-collapsible]');
+          if (!section) {
+            return;
+          }
+          const icon = toggle.querySelector('.toggle-icon');
+          const titleRoot = section.querySelector('.section-headline h2');
+          const sectionTitle = titleRoot ? titleRoot.textContent.trim() : 'seção';
+          const isCollapsed = section.classList.toggle('is-collapsed');
+          toggle.setAttribute('aria-expanded', String(!isCollapsed));
+          toggle.setAttribute('aria-label', (isCollapsed ? 'Expandir ' : 'Recolher ') + sectionTitle);
+          toggle.setAttribute('title', (isCollapsed ? 'Expandir ' : 'Recolher ') + sectionTitle);
+          if (icon) {
+            icon.textContent = isCollapsed ? '▾' : '▴';
+          }
+        });
+      });
+    })();
+  </script>
 </body>
 </html>
 """
@@ -704,6 +726,43 @@ def model_index(test_models: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     return {str(model.get("id")): model for model in test_models}
 
 
+def visible_strategy_cards(test_models: list[dict[str, Any]]) -> list[dict[str, Any]]:
+  indexed = model_index(test_models)
+  short_labels = {
+    "semantic_fast": "Semântica",
+    "keyword_fast": "Palavras-chave",
+    "hybrid_fusion": "Híbrida",
+    "correspondence_semantic": "Correspondência",
+  }
+  mode_labels = {
+    "semantic": "Sentido",
+    "keyword": "Termos",
+    "hybrid": "Mista",
+    "correspondence": "Categoria",
+  }
+  cards: list[dict[str, Any]] = []
+  for model_id in VISIBLE_STRATEGY_IDS:
+    model = indexed.get(model_id)
+    if model is None:
+      continue
+    request_cfg = dict(model.get("request") or {})
+    search_type = str(request_cfg.get("search_type") or "semantic")
+    cards.append(
+      {
+        **model,
+        "short_label": short_labels.get(model_id, str(model.get("label") or model_id)),
+        "mode_label": mode_labels.get(search_type, search_type.title()),
+        "summary_line": (
+          "Base "
+          + str(request_cfg.get("category_search_base") or search_type)
+          + " · limite padrão "
+          + str(request_cfg.get("limit") or 5)
+        ),
+      }
+    )
+  return cards
+
+
 
 def slugify(value: str) -> str:
     text = re.sub(r"[^a-zA-Z0-9]+", "-", (value or "").strip().lower()).strip("-")
@@ -715,8 +774,8 @@ def default_form_state() -> dict[str, Any]:
     return {
         "query": "alimentacao hospitalar",
         "limit": 5,
-        "test_label": "comparacao alimentacao hospitalar",
-        "selected_model_ids": list(DEFAULT_SELECTED_MODELS),
+      "test_label": "busca alimentacao hospitalar",
+      "selected_model_ids": list(DEFAULT_SELECTED_MODELS),
     }
 
 
@@ -821,35 +880,36 @@ def load_recent_runs(limit: int = MAX_RECENT_RUNS) -> list[dict[str, Any]]:
 
 
 def run_compare(form: dict[str, Any], test_models: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any], dict[str, str]]:
-    models_by_id = model_index(test_models)
-    compare_results = []
-    elapsed_values = []
-    for model_id in form["selected_model_ids"]:
-        model = models_by_id.get(model_id)
-        if model is None:
-            continue
-        response = ADAPTER.run(build_request_from_model(model, form["query"], form["limit"])).to_dict()
-        compare_results.append({"model": model, "response": response})
-        elapsed_values.append(int(response.get("elapsed_ms", 0) or 0))
+  models_by_id = model_index(test_models)
+  display_by_id = {str(model.get("id")): model for model in visible_strategy_cards(test_models)}
+  compare_results = []
+  elapsed_values = []
+  for model_id in form["selected_model_ids"]:
+    model = models_by_id.get(model_id)
+    if model is None:
+      continue
+    response = ADAPTER.run(build_request_from_model(model, form["query"], form["limit"])).to_dict()
+    compare_results.append({"model": display_by_id.get(model_id, model), "response": response})
+    elapsed_values.append(int(response.get("elapsed_ms", 0) or 0))
 
-    compare_summary = {
-        "query": form["query"],
-        "total_models": len(compare_results),
-        "fastest_ms": min(elapsed_values) if elapsed_values else 0,
-        "slowest_ms": max(elapsed_values) if elapsed_values else 0,
-    }
-    run_payload = {
-        "saved_at": datetime.now().isoformat(timespec="seconds"),
-        "kind": "compare",
-        "label": form["test_label"] or form["query"],
-        "query": form["query"],
-        "limit": form["limit"],
-        "selected_model_ids": form["selected_model_ids"],
-        "results": compare_results,
-        "summary": compare_summary,
-    }
-    saved_run = save_test_run("compare", form["test_label"] or form["query"], run_payload)
-    return compare_results, compare_summary, saved_run
+  compare_summary = {
+    "query": form["query"],
+    "total_models": len(compare_results),
+    "fastest_ms": min(elapsed_values) if elapsed_values else 0,
+    "slowest_ms": max(elapsed_values) if elapsed_values else 0,
+  }
+  run_payload = {
+    "saved_at": datetime.now().isoformat(timespec="seconds"),
+    "kind": "compare",
+    "label": form["test_label"] or form["query"],
+    "query": form["query"],
+    "limit": form["limit"],
+    "selected_model_ids": form["selected_model_ids"],
+    "results": compare_results,
+    "summary": compare_summary,
+  }
+  saved_run = save_test_run("compare", form["test_label"] or form["query"], run_payload)
+  return compare_results, compare_summary, saved_run
 
 
 
@@ -935,10 +995,10 @@ def index() -> str:
 
     return render_template_string(
         HTML,
-        active_search_root=str(ACTIVE_SEARCH_ROOT),
-        tests_root=str(TESTS_ROOT),
+      design_css=get_browser_design_css(),
         fixture_cases=fixture_cases,
         test_models=test_models,
+      strategy_cards=visible_strategy_cards(test_models),
         form=form,
         compare_results=compare_results,
         compare_summary=compare_summary,

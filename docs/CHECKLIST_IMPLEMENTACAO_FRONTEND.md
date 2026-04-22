@@ -33,6 +33,16 @@ O codigo final pode ter outra organizacao de componentes, outra estrutura de arq
 
 O que nao pode acontecer e a interface ser redefinida visualmente fora do que `design/` estabelece.
 
+Isso vale tambem para paginas internas de homologacao, laboratorios e bancadas de teste.
+
+Mesmo quando a tela for operacional ou temporaria, ela deve seguir a mesma linguagem de layout, tipografia, fontes, organizacao e densidade visual derivada de `design/`.
+
+Regra adicional para esse tipo de pagina:
+
+- a interface deve falar a linguagem do usuario e da tarefa que ele esta executando;
+- termos tecnicos de implementacao como `fixture`, `bootstrap`, `core ativo`, caminhos internos, JSON bruto e detalhes operacionais equivalentes nao devem aparecer como bloco principal da UI;
+- esses detalhes podem existir em logs, arquivos salvos, rotas auxiliares ou diagnosticos, mas nao como texto dominante da pagina.
+
 ## Checklist antes de implementar
 
 1. Identificar qual arquivo em `design/` e a referencia exata da tela ou do componente.
@@ -53,6 +63,7 @@ O que nao pode acontecer e a interface ser redefinida visualmente fora do que `d
 8. Usar componentes compartilhados quando a mesma solucao visual aparecer em mais de um ponto.
 9. Encapsular comportamento e dados sem duplicar definicoes visuais.
 10. Se um valor visual nao existir no padrao atual, nao inventar localmente; primeiro promover esse valor ao sistema de design.
+11. Em paginas de homologacao e teste, expor os fluxos como acoes de usuario reais, e nao como jargao tecnico de implementacao.
 
 ## Proibicoes explicitas
 
@@ -64,6 +75,7 @@ Nao fazer:
 - trocar espacamento, raio, sombra ou borda por preferencia local;
 - recriar a tela por interpretacao livre, sem partir da base definida em `design/`;
 - duplicar CSS equivalente em outro lugar se a regra ja existe no design;
+- usar em destaque na interface termos internos como `fixture`, `bootstrap`, `core`, paths locais ou JSON bruto quando isso nao for a tarefa principal do usuario;
 - introduzir biblioteca visual ou tema paralelo que brigue com o padrao existente.
 
 ## Regra para novos componentes

@@ -9,6 +9,8 @@ import zipfile
 from pathlib import Path
 from typing import Any
 
+from werkzeug.datastructures import MultiDict
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 if str(PROJECT_ROOT) not in sys.path:
@@ -33,7 +35,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _capture_new_run(client: Any, route: str, data: dict[str, Any], *, multipart: bool = False):
+def _capture_new_run(client: Any, route: str, data: Any, *, multipart: bool = False):
     RUNS_DIR.mkdir(parents=True, exist_ok=True)
     before = {path.name for path in RUNS_DIR.glob("*.json")}
     kwargs: dict[str, Any] = {"data": data}
@@ -77,6 +79,22 @@ def _build_extensionless_zip_upload(samples: list[dict[str, Any]]) -> Path:
     return archive_path
 
 
+def _build_multi_file_payload(samples: list[dict[str, Any]]) -> tuple[MultiDict, list[str], list[Any]]:
+    txt_case = next(case for case in samples if case["name"] == "txt-local")
+    docx_case = next(case for case in samples if case["name"] == "docx-local")
+    txt_handle = Path(txt_case["path"]).open("rb")
+    docx_handle = Path(docx_case["path"]).open("rb")
+    payload = MultiDict(
+        [
+            ("pncp_id", ""),
+            ("user_id", ""),
+            ("local_files", (txt_handle, txt_case["filename"])),
+            ("local_files", (docx_handle, docx_case["filename"])),
+        ]
+    )
+    return payload, [txt_case["filename"], docx_case["filename"]], [txt_handle, docx_handle]
+
+
 def main() -> int:
     args = build_parser().parse_args()
     output_path = Path(args.output)
@@ -101,17 +119,20 @@ def main() -> int:
     html = response.get_data(as_text=True)
     ui_passed = (
         response.status_code == 200
-        and "Arquivo local" in html
-        and "Processar arquivo do PNCP" in html
-        and "Rodar este teste com arquivo local" in html
+        and "Arquivos do seu computador" in html
+        and "Buscar no PNCP" in html
+        and "Processar arquivos" in html
         and "busy-overlay" in html
+        and "local_files" in html
+        and "multiple" in html
         and ".zip,.rar,.7z,.tar,.gz,.gzip,.bz2" in html
     )
     ui_notes = [
         "rota / respondeu 200" if response.status_code == 200 else f"HTTP {response.status_code}",
-        "card do teste local visivel" if "Arquivo local" in html else "card do teste local ausente",
-        "card do teste PNCP visivel" if "Processar arquivo do PNCP" in html else "card do teste PNCP ausente",
+        "card de upload visivel" if "Arquivos do seu computador" in html else "card de upload ausente",
+        "card do teste PNCP visivel" if "Buscar no PNCP" in html else "card do teste PNCP ausente",
         "indicador de execucao presente" if "busy-overlay" in html else "indicador de execucao ausente",
+        "input de upload aceita multiplos arquivos" if "multiple" in html and "local_files" in html else "input de upload sem suporte multiplo",
         "input de upload aceita arquivos compactados" if ".zip,.rar,.7z,.tar,.gz,.gzip,.bz2" in html else "input de upload sem extensoes de arquivo compactado",
     ]
     report.append(_build_case_report("browser-explicit-source-tests", response, None, {}, ui_passed, ui_notes))
@@ -130,12 +151,12 @@ def main() -> int:
         response.status_code == 200
         and response_payload.get("status") == "ok"
         and int(response_payload.get("result_count", 0) or 0) >= 1
-        and "Rodar Teste 6 com este documento" in html
+        and "Abrir este arquivo" in html
     )
     list_notes = [
         "rota /list-documents respondeu 200" if response.status_code == 200 else f"HTTP {response.status_code}",
         f"result_count={response_payload.get('result_count', 0)}",
-        "botao explicito do Teste 6 visivel" if "Rodar Teste 6 com este documento" in html else "botao explicito do Teste 6 ausente",
+        "botao de abertura do arquivo visivel" if "Abrir este arquivo" in html else "botao de abertura do arquivo ausente",
     ]
     report.append(_build_case_report("list-pncp-documents", response, latest_run, run_payload, list_passed, list_notes))
     print(f"[{'OK' if list_passed else 'FAIL'}] list-pncp-documents")
@@ -154,7 +175,7 @@ def main() -> int:
             {
                 "pncp_id": "",
                 "user_id": "",
-                "local_file": (handle, local_pdf["filename"]),
+                "local_files": (handle, local_pdf["filename"]),
             },
             multipart=True,
         )
@@ -179,6 +200,42 @@ def main() -> int:
     if not upload_passed:
         failures += 1
 
+    multi_payload, expected_names, handles = _build_multi_file_payload(samples)
+    try:
+        response, latest_run, run_payload = _capture_new_run(
+            client,
+            "/process-upload",
+            multi_payload,
+            multipart=True,
+        )
+    finally:
+        for handle in handles:
+            handle.close()
+    response_payload = run_payload.get("response") or {}
+    request_payload = run_payload.get("request") or {}
+    source_kind = ((request_payload.get("extra") or {}).get("source_kind") or "").strip()
+    extracted_text = str(response_payload.get("extracted_text") or "")
+    multi_passed = (
+        response.status_code == 200
+        and response_payload.get("status") == "ok"
+        and source_kind == "upload-multi-local"
+        and "ZIP/PKZIP com arquivos extraídos" in extracted_text
+        and all(name in extracted_text for name in expected_names)
+        and COMMON_TOKEN in extracted_text
+    )
+    multi_notes = [
+        "rota /process-upload respondeu 200" if response.status_code == 200 else f"HTTP {response.status_code}",
+        f"source_kind={source_kind or '-'}",
+        f"status={response_payload.get('status')}",
+        f"extracted_text_length={len(extracted_text)}",
+        "lote de arquivos virou zip interno" if "ZIP/PKZIP com arquivos extraídos" in extracted_text else "lote nao apareceu como zip interno",
+        "nomes dos arquivos apareceram no markdown" if all(name in extracted_text for name in expected_names) else "nomes dos arquivos ausentes no markdown",
+    ]
+    report.append(_build_case_report("process-upload-multi-local", response, latest_run, run_payload, multi_passed, multi_notes))
+    print(f"[{'OK' if multi_passed else 'FAIL'}] process-upload-multi-local")
+    if not multi_passed:
+        failures += 1
+
     archive_upload_path = _build_extensionless_zip_upload(samples)
     try:
         with archive_upload_path.open("rb") as handle:
@@ -188,7 +245,7 @@ def main() -> int:
                 {
                     "pncp_id": "",
                     "user_id": "",
-                    "local_file": (handle, archive_upload_path.name),
+                    "local_files": (handle, archive_upload_path.name),
                 },
                 multipart=True,
             )
