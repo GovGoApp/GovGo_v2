@@ -166,4 +166,5 @@ function ModeOportunidades() {
   );
 }
 
+window.WorkspaceTabs = WorkspaceTabs;
 window.ModeOportunidades = ModeOportunidades;

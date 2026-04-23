@@ -190,25 +190,37 @@ Na rodada seguinte, foi corrigido tambem o problema operacional de encerramento 
 
 Como mitigacao local na homologacao de Busca v1, o `app_v1.py` recebeu defaults mais leves, deixou de inicializar o filtro de relevancia quando nenhuma coluna ativa usa relevancia e ganhou prewarm opcional do caminho default. Isso melhora a experiencia do browser de homologacao, mas nao resolve a causa raiz compartilhada entre v2 e `govgo.com.br`.
 
+Na retomada seguinte, o usuario confirmou que o problema compartilhado de Search foi resolvido no banco e recolocou a prioridade oficial do projeto no frontend do v2. A diretriz arquitetural fechada passou a ser esta: o codigo homologado que vai sustentar a Busca real nao deve ficar dependente de `homologation/`; ele deve existir dentro de `src/`.
+
+Com isso, foi criada a arvore real inicial da Busca em `src/backend/search/` e `src/devtools/search/`. O core homologado foi copiado para `src/backend/search/core/` e `src/backend/search/v1_copy/gvg_browser/`; os runners e browsers de apoio foram copiados para `src/devtools/search/`; e o helper visual compartilhado foi copiado para `src/devtools/browser_design.py`.
+
+Na mesma rodada, os imports e bootstraps do Search copiado foram ajustados para apontar para `src.backend...` e `src.devtools...`, sem dependencia runtime de `homologation`. A validacao minima ja foi feita no caminho novo: `src/devtools/search/cmd/run_search.py` executou a consulta `alimentação hospitalar` com `search_type=keyword`, gravou artefato em `src/devtools/search/artifacts/` e respondeu com 10 resultados em cerca de `4,1s`; alem disso, `src/devtools/search/browser/app_v1.py` tambem subiu corretamente no caminho novo e encerrou limpo no Windows sob interrupcao programatica equivalente a `Ctrl+C`.
+
+Depois disso, a tela real de Busca do frontend foi ligada pela primeira vez ao Search migrado para `src/`. O launcher raiz `run.py` deixou de ser apenas servidor estatico e passou a expor tambem o endpoint `POST /api/search`, que delega para `src/backend/search/api/service.py` e para o adapter homologado em `src/backend/search/core/`.
+
+Tambem foi criada a ponte minima do frontend em `src/services/contracts/searchContracts.jsx`, `src/services/api/searchApi.jsx`, `src/services/adapters/searchAdapter.jsx` e `src/features/busca/BuscaWorkspace.jsx`. Com isso, `src/pages/busca/BuscaPage.jsx` deixou de ser apenas um wrapper visual e passou a consultar resultados reais do Search no browser externo pelo caminho `http://127.0.0.1:8765/src/app/boot/index.html#/busca`.
+
+Essa integracao ja foi validada ponta a ponta no caminho real do v2: o `run.py` subiu o frontend, o `POST /api/search` respondeu com `source = v1.gvg_search_core`, `result_count = 10`, `elapsed_ms = 506` e `search_root` apontando para `src/backend/search/v1_copy/gvg_browser`.
+
 ## Prioridades imediatas
 
 As proximas prioridades concretas sao estas:
 
-1. corrigir o gargalo estrutural do Search compartilhado entre homologacao v2 e `govgo.com.br`;
-2. adicionar logs permanentes por etapa no core/adapter da Busca para separar bootstrap, IA, categorias, DB principal e relevancia;
-3. revisar a query de categorias para voltar a usar corretamente o indice HNSW existente;
-4. revisar a query FTS de `contratacao`, especialmente o caminho com `BitmapOr` e o filtro de encerramento;
-5. depois retomar a definicao da stack real do frontend do v2.
+1. refinar a UX da tela real de Busca agora que ela ja consulta o backend em tempo real;
+2. decidir como a tela de detalhe da Busca vai consumir os resultados reais em vez do mock visual atual;
+3. manter `homologation/` apenas como laboratorio legado e referencia historica, sem dependencia runtime do fluxo real do v2;
+4. estabilizar logs, tratamento de erro e estados vazios da integracao frontend-backend da Busca;
+5. so depois expandir o mesmo padrao para os demais modulos homologados.
 
 ## Ordem pratica que deve ser seguida agora
 
 Se a retomada acontecer em um novo prompt, a IA deve continuar nesta ordem:
 
-1. atacar o gargalo compartilhado do Search no core v1 usado por homologacao e producao;
-2. consolidar logs tecnicos por etapa e validar novamente keyword, semantic e category-filtered;
-3. corrigir o uso de indice na busca de categorias e revisar o plano da query FTS de `contratacao`;
-4. revalidar a Busca no browser de homologacao do v2 e comparar com o comportamento do produto;
-5. so depois retomar stack e estrutura do frontend real.
+1. continuar evoluindo a Busca a partir da pagina real `#/busca`, ja conectada ao Search em `src/`;
+2. definir o fluxo da tela `#/busca/detalhe` com dados reais ou estado compartilhado entre pagina de lista e detalhe;
+3. reforcar estados de erro, carregamento e vazios da UX da Busca no frontend real;
+4. manter a validacao sempre pelo browser externo no launcher raiz `run.py` e pelo endpoint `POST /api/search`;
+5. so depois seguir para refinamentos adicionais ou para o proximo modulo homologado.
 
 ## Documentos que mandam em cada assunto
 

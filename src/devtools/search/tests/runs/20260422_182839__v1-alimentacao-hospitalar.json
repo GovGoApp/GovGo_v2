@@ -1,0 +1,72 @@
+{
+  "saved_at": "2026-04-22T18:28:39",
+  "kind": "parallel-grid-v1",
+  "label": "alimentacao hospitalar",
+  "query": "alimentacao hospitalar",
+  "limit": 10,
+  "column_count": 1,
+  "columns": [
+    {
+      "index": 1,
+      "config": {
+        "search_type": 2,
+        "approach": 1,
+        "relevance": 1,
+        "top_categories_count": 10
+      },
+      "request": {
+        "query": "alimentacao hospitalar",
+        "search_type": "keyword",
+        "limit": 10,
+        "preprocess": true,
+        "prefer_preproc_v2": true,
+        "intelligent_mode": true,
+        "filter_expired": true,
+        "use_negation": true,
+        "sql_debug": false,
+        "filters": [],
+        "where_sql": [],
+        "top_categories_limit": 10,
+        "category_search_base": "keyword"
+      },
+      "elapsed_ms": 8806,
+      "confidence": 0.0,
+      "result_count": 0,
+      "preprocessing": {
+        "enabled": false,
+        "skipped": true,
+        "skip_reason": "simple_query_bypass",
+        "search_terms": "alimentacao hospitalar",
+        "negative_terms": "",
+        "sql_conditions": [],
+        "filters": [],
+        "preprocessing_version": "bypass"
+      },
+      "meta": {
+        "v2_root": "C:\\Users\\Haroldo Duraes\\Desktop\\Scripts\\GovGo\\v2",
+        "v1_root": "C:\\Users\\Haroldo Duraes\\Desktop\\Scripts\\GovGo\\v2\\homologation\\search",
+        "search_root": "C:\\Users\\Haroldo Duraes\\Desktop\\Scripts\\GovGo\\v2\\homologation\\search\\v1_copy\\gvg_browser",
+        "relevance_filter": {
+          "filter_applied": false,
+          "level": 1
+        },
+        "column_config": {
+          "type": "Palavras-chave",
+          "approach": "Direta",
+          "relevance": "Sem filtro",
+          "top_categories_count": 10
+        }
+      },
+      "error": null,
+      "results": [],
+      "relevance_label": "Sem filtro"
+    }
+  ],
+  "summary": {
+    "query": "alimentacao hospitalar",
+    "limit": 10,
+    "column_count": 1,
+    "fastest_ms": 8806,
+    "slowest_ms": 8806
+  }
+}

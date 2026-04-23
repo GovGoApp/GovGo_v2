@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import json
 import os
 import socket
 import subprocess
@@ -25,6 +26,67 @@ URL = f"http://{HOST}:{PORT}{ROUTE}"
 class QuietStaticHandler(SimpleHTTPRequestHandler):
     def log_message(self, format: str, *args) -> None:
         return
+
+    def _write_json(self, status_code: int, payload: dict) -> None:
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        self.send_response(status_code)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _read_json(self) -> dict:
+        content_length = self.headers.get("Content-Length", "0")
+        try:
+            size = max(0, int(content_length))
+        except ValueError as exc:
+            raise ValueError("Cabecalho Content-Length invalido.") from exc
+
+        raw_body = self.rfile.read(size) if size else b"{}"
+        if not raw_body.strip():
+            return {}
+
+        try:
+            payload = json.loads(raw_body.decode("utf-8"))
+        except Exception as exc:
+            raise ValueError("Corpo JSON invalido.") from exc
+
+        if not isinstance(payload, dict):
+            raise ValueError("O corpo JSON deve ser um objeto.")
+        return payload
+
+    def do_OPTIONS(self) -> None:
+        if self.path.split("?", 1)[0] != "/api/search":
+            self.send_error(404, "Endpoint nao encontrado.")
+            return
+
+        self.send_response(204)
+        self.send_header("Allow", "OPTIONS, POST")
+        self.end_headers()
+
+    def do_POST(self) -> None:
+        if self.path.split("?", 1)[0] != "/api/search":
+            self.send_error(404, "Endpoint nao encontrado.")
+            return
+
+        try:
+            payload = self._read_json()
+        except ValueError as exc:
+            self._write_json(400, {"error": str(exc)})
+            return
+
+        try:
+            from src.backend.search.api.service import run_search
+
+            response = run_search(payload)
+        except Exception as exc:
+            self._write_json(500, {"error": str(exc)})
+            return
+
+        status_code = 200
+        if response.get("error") == "Informe uma consulta para buscar.":
+            status_code = 400
+        self._write_json(status_code, response)
 
 
 def _find_chrome() -> str | None:

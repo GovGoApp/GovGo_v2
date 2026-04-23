@@ -118,6 +118,19 @@ function LeftRail({mode, onMode}) {
 // ---------- Search rail (LEFT in Busca mode) ----------
 function SearchRail() {
   const [filtersOpen, setFiltersOpen] = uS(false);
+  const [query, setQuery] = uS("alimentação hospitalar");
+  const [semantic, setSemantic] = uS(true);
+
+  const handleBuscar = () => {
+    if (window._govgoBuscaSearch) {
+      window._govgoBuscaSearch(query, semantic ? "semantic" : "keyword");
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") handleBuscar();
+  };
+
   return (
     <aside style={{
       minWidth: 0, background: "var(--rail)", borderRight: "1px solid var(--hairline)",
@@ -127,12 +140,12 @@ function SearchRail() {
       <div style={{background: "var(--paper)", borderBottom: "1px solid var(--hairline)"}}>
         <div style={{padding: "12px 10px 10px"}}>
           <div style={{fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".08em", fontWeight: 600, margin: "0 2px 8px"}}>MODO BUSCA</div>
-          <Input size="sm" placeholder="Buscar editais, objeto, palavra-chave…" icon={<Icon.search size={14}/>} value="alimentação hospitalar"/>
+          <Input size="sm" placeholder="Buscar editais, objeto, palavra-chave…" icon={<Icon.search size={14}/>} value={query} onChange={setQuery} onKeyDown={handleKeyDown}/>
           <div style={{display: "flex", gap: 6, marginTop: 8, alignItems: "center"}}>
-            <Chip tone="blue" icon={<Icon.sparkle size={10}/>}>IA semântica</Chip>
+            <Chip tone={semantic ? "blue" : "default"} icon={<Icon.sparkle size={10}/>} onClick={() => setSemantic(!semantic)}>IA semântica</Chip>
             <Chip>sinônimos</Chip>
             <span style={{flex: 1}}/>
-            <Button kind="primary" size="sm">Buscar</Button>
+            <Button kind="primary" size="sm" onClick={handleBuscar}>Buscar</Button>
           </div>
         </div>
       </div>

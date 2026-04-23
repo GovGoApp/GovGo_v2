@@ -73,7 +73,7 @@ function Chip({children, onRemove, tone = "default", icon, active, onClick}) {
 }
 
 // ---------- Input ----------
-function Input({icon, iconRight, placeholder, value, onChange, size = "md", mono, style}) {
+function Input({icon, iconRight, placeholder, value, onChange, onKeyDown, size = "md", mono, style}) {
   const [focus, setFocus] = useState(false);
   return (
     <div style={{
@@ -92,6 +92,7 @@ function Input({icon, iconRight, placeholder, value, onChange, size = "md", mono
         fontFamily: mono ? "var(--font-mono)" : "var(--font-body)",
         color: "var(--ink-1)",
       }} placeholder={placeholder} value={value || ""} onChange={e => onChange && onChange(e.target.value)}
+         onKeyDown={onKeyDown}
          onFocus={() => setFocus(true)} onBlur={() => setFocus(false)}/>
       {iconRight}
     </div>

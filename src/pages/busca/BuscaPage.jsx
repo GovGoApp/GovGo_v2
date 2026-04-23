@@ -1,5 +1,5 @@
 function BuscaPage() {
-  return <ModeOportunidades />;
+  return <BuscaWorkspace />;
 }
 
 window.BuscaPage = BuscaPage;

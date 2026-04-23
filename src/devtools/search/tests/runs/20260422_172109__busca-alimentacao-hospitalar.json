@@ -1,0 +1,195 @@
+{
+  "saved_at": "2026-04-22T17:21:09",
+  "kind": "compare",
+  "label": "busca alimentacao hospitalar",
+  "query": "alimentacao hospitalar",
+  "limit": 5,
+  "selected_model_ids": [
+    "semantic_fast",
+    "hybrid_fusion",
+    "correspondence_semantic"
+  ],
+  "results": [
+    {
+      "model": {
+        "id": "semantic_fast",
+        "label": "Semantico rapido",
+        "description": "Busca semantica padrao da homologacao.",
+        "request": {
+          "search_type": "semantic",
+          "limit": 5,
+          "preprocess": true,
+          "prefer_preproc_v2": true,
+          "filter_expired": true,
+          "use_negation": true,
+          "category_search_base": "semantic"
+        },
+        "short_label": "Semântica",
+        "mode_label": "Sentido",
+        "summary_line": "Base semantic · limite padrão 5"
+      },
+      "response": {
+        "request": {
+          "query": "alimentacao hospitalar",
+          "search_type": "semantic",
+          "limit": 5,
+          "preprocess": true,
+          "prefer_preproc_v2": true,
+          "intelligent_mode": true,
+          "filter_expired": true,
+          "use_negation": true,
+          "sql_debug": false,
+          "filters": [],
+          "where_sql": [],
+          "top_categories_limit": 10,
+          "category_search_base": "semantic"
+        },
+        "source": "v1.gvg_search_core",
+        "elapsed_ms": 1420037,
+        "confidence": 0.0,
+        "result_count": 0,
+        "preprocessing": {
+          "enabled": false,
+          "skipped": true,
+          "skip_reason": "simple_query_bypass",
+          "search_terms": "alimentacao hospitalar",
+          "negative_terms": "",
+          "sql_conditions": [],
+          "filters": [],
+          "preprocessing_version": "bypass"
+        },
+        "meta": {
+          "v2_root": "C:\\Users\\Haroldo Duraes\\Desktop\\Scripts\\GovGo\\v2",
+          "v1_root": "C:\\Users\\Haroldo Duraes\\Desktop\\Scripts\\GovGo\\v2\\homologation\\search",
+          "search_root": "C:\\Users\\Haroldo Duraes\\Desktop\\Scripts\\GovGo\\v2\\homologation\\search\\v1_copy\\gvg_browser"
+        },
+        "results": [],
+        "error": null
+      }
+    },
+    {
+      "model": {
+        "id": "hybrid_fusion",
+        "label": "Hibrido fusao",
+        "description": "Busca hibrida otimizada por fusao rapida.",
+        "request": {
+          "search_type": "hybrid",
+          "limit": 5,
+          "preprocess": true,
+          "prefer_preproc_v2": true,
+          "filter_expired": true,
+          "use_negation": true,
+          "category_search_base": "semantic"
+        },
+        "short_label": "Híbrida",
+        "mode_label": "Mista",
+        "summary_line": "Base semantic · limite padrão 5"
+      },
+      "response": {
+        "request": {
+          "query": "alimentacao hospitalar",
+          "search_type": "hybrid",
+          "limit": 5,
+          "preprocess": true,
+          "prefer_preproc_v2": true,
+          "intelligent_mode": true,
+          "filter_expired": true,
+          "use_negation": true,
+          "sql_debug": false,
+          "filters": [],
+          "where_sql": [],
+          "top_categories_limit": 10,
+          "category_search_base": "semantic"
+        },
+        "source": "v1.gvg_search_core",
+        "elapsed_ms": 5827,
+        "confidence": 0.0,
+        "result_count": 0,
+        "preprocessing": {
+          "enabled": false,
+          "skipped": true,
+          "skip_reason": "simple_query_bypass",
+          "search_terms": "alimentacao hospitalar",
+          "negative_terms": "",
+          "sql_conditions": [],
+          "filters": [],
+          "preprocessing_version": "bypass"
+        },
+        "meta": {
+          "v2_root": "C:\\Users\\Haroldo Duraes\\Desktop\\Scripts\\GovGo\\v2",
+          "v1_root": "C:\\Users\\Haroldo Duraes\\Desktop\\Scripts\\GovGo\\v2\\homologation\\search",
+          "search_root": "C:\\Users\\Haroldo Duraes\\Desktop\\Scripts\\GovGo\\v2\\homologation\\search\\v1_copy\\gvg_browser"
+        },
+        "results": [],
+        "error": null
+      }
+    },
+    {
+      "model": {
+        "id": "correspondence_semantic",
+        "label": "Correspondencia",
+        "description": "Busca por correspondencia de categorias com base semantica.",
+        "request": {
+          "search_type": "correspondence",
+          "limit": 5,
+          "preprocess": true,
+          "prefer_preproc_v2": true,
+          "filter_expired": true,
+          "use_negation": true,
+          "category_search_base": "semantic"
+        },
+        "short_label": "Correspondência",
+        "mode_label": "Categoria",
+        "summary_line": "Base semantic · limite padrão 5"
+      },
+      "response": {
+        "request": {
+          "query": "alimentacao hospitalar",
+          "search_type": "correspondence",
+          "limit": 5,
+          "preprocess": true,
+          "prefer_preproc_v2": true,
+          "intelligent_mode": true,
+          "filter_expired": true,
+          "use_negation": true,
+          "sql_debug": false,
+          "filters": [],
+          "where_sql": [],
+          "top_categories_limit": 10,
+          "category_search_base": "semantic"
+        },
+        "source": "v1.gvg_search_core",
+        "elapsed_ms": 1275,
+        "confidence": 0.0,
+        "result_count": 0,
+        "preprocessing": {
+          "enabled": false,
+          "skipped": true,
+          "skip_reason": "simple_query_bypass",
+          "search_terms": "alimentacao hospitalar",
+          "negative_terms": "",
+          "sql_conditions": [],
+          "filters": [],
+          "preprocessing_version": "bypass"
+        },
+        "meta": {
+          "top_categories_count": 0,
+          "top_categories_preview": [],
+          "category_search_base": "semantic",
+          "reason": "no_categories",
+          "v2_root": "C:\\Users\\Haroldo Duraes\\Desktop\\Scripts\\GovGo\\v2",
+          "v1_root": "C:\\Users\\Haroldo Duraes\\Desktop\\Scripts\\GovGo\\v2\\homologation\\search",
+          "search_root": "C:\\Users\\Haroldo Duraes\\Desktop\\Scripts\\GovGo\\v2\\homologation\\search\\v1_copy\\gvg_browser"
+        },
+        "results": [],
+        "error": null
+      }
+    }
+  ],
+  "summary": {
+    "query": "alimentacao hospitalar",
+    "total_models": 3,
+    "fastest_ms": 1275,
+    "slowest_ms": 1420037
+  }
+}

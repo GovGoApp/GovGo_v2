@@ -1,0 +1,44 @@
+[
+  {
+    "name": "semantic-alimentacao-hospitalar",
+    "query": "alimentacao hospitalar",
+    "search_type": "semantic",
+    "limit": 5,
+    "expected_min_results": 1,
+    "preprocess": true
+  },
+  {
+    "name": "keyword-limpeza-escolar",
+    "query": "servico de limpeza escolar",
+    "search_type": "keyword",
+    "limit": 5,
+    "expected_min_results": 1,
+    "preprocess": true
+  },
+  {
+    "name": "hybrid-locacao-veiculos",
+    "query": "locacao de veiculos",
+    "search_type": "hybrid",
+    "limit": 5,
+    "expected_min_results": 1,
+    "preprocess": true
+  },
+  {
+    "name": "correspondence-merenda-escolar",
+    "query": "merenda escolar",
+    "search_type": "correspondence",
+    "limit": 5,
+    "expected_min_results": 1,
+    "preprocess": true,
+    "category_search_base": "semantic"
+  },
+  {
+    "name": "category-filtered-alimentacao",
+    "query": "alimentacao hospitalar",
+    "search_type": "category_filtered",
+    "limit": 5,
+    "expected_min_results": 1,
+    "preprocess": true,
+    "category_search_base": "hybrid"
+  }
+]
