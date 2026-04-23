@@ -6,9 +6,20 @@ function EditalDetail({ edital }) {
   if (!edital) return null;
 
   const e = edital;
-  const today = new Date("2026-04-12");
-  const endDate = new Date(e.end.split("/").reverse().join("-"));
-  const daysLeft = Math.max(0, Math.round((endDate - today) / 86400000));
+  const details = e.details || e.raw?.details || {};
+  const pickDetail = (...keys) => {
+    for (const key of keys) {
+      const value = details[key] ?? e[key];
+      if (value !== null && value !== undefined && value !== "") return value;
+    }
+    return "";
+  };
+  const rank = Math.max(1, Number(e.rank || 1));
+  const rankIndex = Math.min(9, rank - 1);
+  const today = new Date();
+  const endParts = String(e.end || "").split("/");
+  const endDate = endParts.length === 3 ? new Date(endParts.reverse().join("-")) : new Date(e.end || "");
+  const daysLeft = Number.isNaN(endDate.getTime()) ? 0 : Math.max(0, Math.round((endDate - today) / 86400000));
   const urgent = daysLeft <= 10;
 
   // Fake derived data (consistent per rank)
@@ -20,6 +31,8 @@ function EditalDetail({ edital }) {
   const fonte = ["PNCP", "ComprasNet", "BLL", "Licitações-e", "PNCP", "ComprasNet", "PNCP", "ComprasNet", "PNCP", "ComprasNet"][e.rank - 1];
 
   const objeto = `Registro de preços para aquisição de gêneros alimentícios destinados ao fornecimento de refeições hospitalares e dietas especiais, conforme especificações constantes no Termo de Referência — Anexo I do edital, com entrega parcelada pelo período de 12 (doze) meses.`;
+
+  const objetoReal = e.objeto || details.objeto_compra || e.title || objeto;
 
   const items = [
     { lote: 1, desc: "Dieta enteral padrão — 500ml · Polimérica · Isenta de sacarose", qtd: "14.400 un", valor: "R$ 38,90", total: "R$ 560.160,00", match: 0.98 },
@@ -178,7 +191,7 @@ function EditalDetail({ edital }) {
             <div style={{display: "grid", gridTemplateColumns: "1fr 280px", gap: 18}}>
               <div>
                 <div style={{fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".06em", fontWeight: 600, margin: "0 0 6px"}}>Objeto</div>
-                <p style={{margin: 0, fontSize: 13.5, color: "var(--ink-2)", lineHeight: 1.6, textWrap: "pretty"}}>{objeto}</p>
+                <p style={{margin: 0, fontSize: 13.5, color: "var(--ink-2)", lineHeight: 1.6, textWrap: "pretty"}}>{objetoReal}</p>
 
                 <div style={{fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".06em", fontWeight: 600, margin: "18px 0 8px"}}>Por que este edital foi recomendado</div>
                 <div style={{display: "flex", flexDirection: "column", gap: 8}}>

@@ -51,6 +51,14 @@
     },
   };
 
+  function decodeRouteSegment(value) {
+    try {
+      return decodeURIComponent(value || "");
+    } catch (error) {
+      return value || "";
+    }
+  }
+
   const legacyModeToRoute = {
     home: "inicio",
     oportunidades: "busca",
@@ -73,10 +81,10 @@
 
     const parts = normalized.split("/").filter(Boolean);
     if (parts[0] === "busca" && parts[1] === "detalhe") {
-      return { key: "busca-detalhe", params: { rank: parts[2] || "1" } };
+      return { key: "busca-detalhe", params: { rank: decodeRouteSegment(parts[2] || "1") } };
     }
     if (parts[0] === "busca-detalhe") {
-      return { key: "busca-detalhe", params: { rank: parts[1] || "1" } };
+      return { key: "busca-detalhe", params: { rank: decodeRouteSegment(parts[1] || "1") } };
     }
     if (routeConfig[parts[0]]) {
       return { key: parts[0], params: {} };
@@ -86,7 +94,8 @@
 
   function buildHash(routeKey, params = {}) {
     if (routeKey === "busca-detalhe") {
-      return `#/busca/detalhe/${params.rank || 1}`;
+      const key = params.id || params.rank || 1;
+      return `#/busca/detalhe/${encodeURIComponent(String(key))}`;
     }
     if (routeConfig[routeKey]) {
       return `#/${routeKey}`;

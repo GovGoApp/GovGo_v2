@@ -6,19 +6,23 @@ const { useState: uSo, useEffect: uEf } = React;
 
 // ─── Normaliza item real da API → shape do design ────────────────────────────
 function toEditaisShape(results) {
-  return results.map(item => ({
-    rank: item.rank,
-    org: item.organization || item.title || "—",
-    mun: item.municipality || "—",
-    uf: item.uf || "—",
-    sim: typeof item.similarityRatio === "number" ? item.similarityRatio : 0,
-    val: item.raw?.valor_total_estimado ?? item.raw?.valor_global ?? 0,
-    end: item.closingDateLabel || "—",
-    modal: item.modality || item.raw?.modalidade_nome || "—",
-    items: item.raw?.numero_itens ?? 0,
-    docs: item.raw?.numero_documentos ?? 0,
-    status: item.raw?.situacao_edital || "aberto",
-  }));
+  return results.map(item => (
+    window.GovGoSearchUiAdapter?.toEditalShape
+      ? window.GovGoSearchUiAdapter.toEditalShape(item)
+      : {
+        rank: item.rank,
+        org: item.organization || item.title || "—",
+        mun: item.municipality || "—",
+        uf: item.uf || "—",
+        sim: typeof item.similarityRatio === "number" ? item.similarityRatio : 0,
+        val: item.raw?.valor_total_estimado ?? item.raw?.valor_global ?? 0,
+        end: item.closingDateLabel || "—",
+        modal: item.modality || item.raw?.modalidade_nome || "—",
+        items: item.raw?.numero_itens ?? 0,
+        docs: item.raw?.numero_documentos ?? 0,
+        status: item.raw?.situacao_edital || "aberto",
+      }
+  ));
 }
 
 // ─── Tabela de editais (grid idêntico ao design) ─────────────────────────────
@@ -118,7 +122,7 @@ function EmptyState({ query }) {
 }
 
 // ─── Componente principal ─────────────────────────────────────────────────────
-function BuscaWorkspace() {
+function BuscaWorkspace({ navigate }) {
   const defaultQuery = "alimentação hospitalar";
 
   const [tabs, setTabs] = uSo([
@@ -163,6 +167,10 @@ function BuscaWorkspace() {
         return;
       }
 
+      if (window.GovGoSearchUiAdapter?.rememberResponse) {
+        window.GovGoSearchUiAdapter.rememberResponse(normalized);
+      }
+
       const editais = toEditaisShape(normalized.results || []);
       const count = editais.length;
       setSearchState(s => ({ ...s, loading: false, results: editais, count, query: q }));
@@ -172,7 +180,12 @@ function BuscaWorkspace() {
     });
   };
 
-  uEf(() => { runSearch(defaultQuery, "keyword"); }, []);
+  uEf(() => {
+    const pending = window.GovGoSearchUiAdapter?.consumePendingSearch
+      ? window.GovGoSearchUiAdapter.consumePendingSearch()
+      : null;
+    runSearch(pending?.query || defaultQuery, pending?.searchType || "keyword");
+  }, []);
 
   uEf(() => {
     window._govgoBuscaSearch = (query, searchType) => {
@@ -189,6 +202,15 @@ function BuscaWorkspace() {
   });
 
   const openEdital = (e) => {
+    if (window.GovGoSearchUiAdapter?.rememberEdital) {
+      window.GovGoSearchUiAdapter.rememberEdital(e);
+    }
+
+    if (navigate) {
+      navigate("busca-detalhe", { params: { rank: e.itemId || e.id || e.rank } });
+      return;
+    }
+
     const id = "ed-" + e.rank;
     if (tabs.find(t => t.id === id)) { setActiveTab(id); return; }
     const orgShort = e.org.replace(/^(MUNICÍPIO DE |ESTADO DO |EMPRESA |INSTITUTO DE |SEC\. )/, "");
@@ -304,4 +326,3 @@ function BuscaWorkspace() {
 }
 
 window.BuscaWorkspace = BuscaWorkspace;
-
