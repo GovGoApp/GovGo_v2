@@ -306,11 +306,11 @@ Se a retomada acontecer em um novo prompt, a IA deve continuar nesta ordem:
 
 O proximo passo oficial do projeto e:
 
-fechar o diagnostico tecnico do gargalo compartilhado do Search, com foco nas queries da tabela `contratacao` e da tabela `categoria`, consolidando logs por etapa e correcoes para uso correto dos indices no banco.
+refinar a UX da tela real de Busca em `#/busca`, agora conectada ao backend em `src/`, com foco em estados de carregamento, erro, vazio, filtros e acoes da lista.
 
 Logo em seguida:
 
-revalidar a Busca no browser de homologacao e no fluxo do produto; depois disso, retomar a definicao da stack e da estrutura real do frontend do v2.
+criar o contrato de detalhe por `numero_controle_pncp` para que `#/busca/detalhe` deixe de depender apenas do item selecionado na ultima busca e passe a buscar itens, documentos e metadados oficiais sob demanda.
 
 ## Regra de atualizacao deste diario
 
@@ -324,6 +324,9 @@ Sempre que houver novidade relevante, atualizar pelo menos estes blocos:
 
 ## Resumo do que mudou nesta consolidacao
 
+- a pagina real `#/busca/detalhe` passou a consumir o edital selecionado da ultima Busca real via estado compartilhado em `sessionStorage`, deixando de usar mock visual como fallback silencioso.
+- a lista de Busca passou a abrir o detalhe por rota e identificador do edital, preservando o padrao visual existente do design.
+- o trilho lateral de Busca passou a conseguir disparar uma nova consulta a partir do detalhe, levando a busca pendente de volta para `#/busca`.
 - foi iniciada a estrutura real do frontend em `src/`, com arvore base para `app`, `design-system`, `pages`, `features`, `services`, `assets`, `shared` e `mocks`.
 - foram criados os documentos `docs/ESTRUTURA_FRONTEND_V2.md` e `docs/MAPA_TOKENS_RECIPES_V2.md` para orientar a migracao do design para a app real.
 - foi criada uma entrada minima da UI em `src/app/boot/index.html`, apoiada por `src/app/router/routes.jsx` e `src/app/shell/AppShell.jsx`.
