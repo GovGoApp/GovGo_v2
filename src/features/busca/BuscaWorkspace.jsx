@@ -106,6 +106,25 @@ function createDefaultSearchFormState() {
   };
 }
 
+function createDefaultSearchFiltersState() {
+  if (window.GovGoSearchContracts?.createDefaultSearchFilters) {
+    return window.GovGoSearchContracts.createDefaultSearchFilters();
+  }
+  return {
+    pncp: "",
+    orgao: "",
+    cnpj: "",
+    uasg: "",
+    uf: [],
+    municipio: "",
+    modalidade: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14"],
+    modo: ["1", "2", "3", "4", "5", "6"],
+    dateField: "encerramento",
+    startDate: "",
+    endDate: "",
+  };
+}
+
 function normalizeSearchFormState(formState) {
   if (window.GovGoSearchContracts?.normalizeFormState) {
     return window.GovGoSearchContracts.normalizeFormState(formState);
@@ -113,10 +132,29 @@ function normalizeSearchFormState(formState) {
   return { ...createDefaultSearchFormState(), ...(formState || {}) };
 }
 
+function normalizeSearchFiltersState(filters) {
+  if (window.GovGoSearchContracts?.normalizeFilters) {
+    return window.GovGoSearchContracts.normalizeFilters(filters);
+  }
+  return { ...createDefaultSearchFiltersState(), ...(filters || {}) };
+}
+
+function hasActiveSearchFiltersState(filters) {
+  if (window.GovGoSearchContracts?.hasActiveFilters) {
+    return window.GovGoSearchContracts.hasActiveFilters(filters);
+  }
+  return false;
+}
+
 function resolveSearchFormState(query, searchInput) {
   const defaults = createDefaultSearchFormState();
   if (searchInput && typeof searchInput === "object" && !Array.isArray(searchInput)) {
-    return normalizeSearchFormState({ ...defaults, ...searchInput, query });
+    return normalizeSearchFormState({
+      ...defaults,
+      ...searchInput,
+      query,
+      uiFilters: normalizeSearchFiltersState(searchInput.uiFilters),
+    });
   }
   if (typeof searchInput === "string" && searchInput) {
     return normalizeSearchFormState({
@@ -125,9 +163,10 @@ function resolveSearchFormState(query, searchInput) {
       searchType: searchInput,
       searchApproach: "direct",
       categorySearchBase: searchInput,
+      uiFilters: createDefaultSearchFiltersState(),
     });
   }
-  return normalizeSearchFormState({ ...defaults, query });
+  return normalizeSearchFormState({ ...defaults, query, uiFilters: createDefaultSearchFiltersState() });
 }
 
 // ─── Normaliza item real da API → shape do design ────────────────────────────
@@ -254,10 +293,15 @@ function ErrorState({ message, onRetry }) {
   );
 }
 
-function EmptyState({ query }) {
+function EmptyState({ query, hasFilters }) {
+  const title = query
+    ? `Nenhum resultado para "${query}"`
+    : hasFilters
+    ? "Nenhum resultado com os filtros atuais"
+    : "Nenhum resultado encontrado";
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flex: 1, flexDirection: "column", gap: 12, color: "var(--ink-3)", padding: 48 }}>
-      <div style={{ fontSize: 14, fontWeight: 500 }}>Nenhum resultado para "{query}"</div>
+      <div style={{ fontSize: 14, fontWeight: 500 }}>{title}</div>
       <div style={{ fontSize: 12 }}>Tente outros termos ou ajuste os filtros.</div>
     </div>
   );
@@ -296,6 +340,7 @@ function BuscaWorkspace({ navigate }) {
     error: null,
     count: null,
     config: createDefaultSearchFormState(),
+    filters: createDefaultSearchFiltersState(),
   });
 
   const [editalMap, setEditalMap] = uSo({});
@@ -303,17 +348,45 @@ function BuscaWorkspace({ navigate }) {
   const current = tabs.find(t => t.id === activeTab) || tabs[0];
 
   const runSearch = (query, searchInput, targetTabId = activeTab) => {
-    const q = String(query || searchState.query || "").trim();
-    if (!q) {
-      emitSearchState({ loading: false, error: "", count: null, query: "", status: "idle", config: searchState.config });
+    const q = query === undefined || query === null
+      ? String(searchState.query || "").trim()
+      : String(query || "").trim();
+    const form = resolveSearchFormState(q, searchInput || { ...searchState.config, uiFilters: searchState.filters });
+    const normalizedFilters = normalizeSearchFiltersState(form.uiFilters);
+    const hasFilters = hasActiveSearchFiltersState(normalizedFilters);
+    if (!q && !hasFilters) {
+      emitSearchState({
+        loading: false,
+        error: "",
+        count: null,
+        query: "",
+        status: "idle",
+        config: searchState.config,
+        filters: searchState.filters,
+      });
       return Promise.resolve({ results: [], error: "" });
     }
 
-    const form = resolveSearchFormState(q, searchInput || searchState.config);
+    const tabTitle = q || "Busca filtrada";
 
-    setSearchState(s => ({ ...s, query: q, loading: true, error: null, config: form }));
-    setTabs(prev => prev.map(t => t.id === targetTabId && t.kind === "busca" ? { ...t, title: q, count: null } : t));
-    emitSearchState({ loading: true, error: "", count: null, query: q, status: "loading", config: form });
+    setSearchState(s => ({
+      ...s,
+      query: q,
+      loading: true,
+      error: null,
+      config: form,
+      filters: normalizedFilters,
+    }));
+    setTabs(prev => prev.map(t => t.id === targetTabId && t.kind === "busca" ? { ...t, title: tabTitle, count: null } : t));
+    emitSearchState({
+      loading: true,
+      error: "",
+      count: null,
+      query: q,
+      status: "loading",
+      config: form,
+      filters: normalizedFilters,
+    });
 
     const apiCall = window.GovGoSearchApi
       ? window.GovGoSearchApi.runSearch(form)
@@ -333,8 +406,16 @@ function BuscaWorkspace({ navigate }) {
         : { results: response.results || [], error: response.error };
 
       if (normalized.error) {
-        setSearchState(s => ({ ...s, loading: false, error: normalized.error, config: form }));
-        emitSearchState({ loading: false, error: normalized.error, count: null, query: q, status: "error", config: form });
+        setSearchState(s => ({ ...s, loading: false, error: normalized.error, config: form, filters: normalizedFilters }));
+        emitSearchState({
+          loading: false,
+          error: normalized.error,
+          count: null,
+          query: q,
+          status: "error",
+          config: form,
+          filters: normalizedFilters,
+        });
         return normalized;
       }
 
@@ -344,14 +425,38 @@ function BuscaWorkspace({ navigate }) {
 
       const editais = toEditaisShape(normalized.results || []);
       const count = editais.length;
-      setSearchState(s => ({ ...s, loading: false, results: editais, count, query: q, config: form }));
-      setTabs(prev => prev.map(t => t.id === targetTabId && t.kind === "busca" ? { ...t, count, title: q } : t));
-      emitSearchState({ loading: false, error: "", count, query: q, status: count > 0 ? "success" : "empty", config: form });
+      setSearchState(s => ({
+        ...s,
+        loading: false,
+        results: editais,
+        count,
+        query: q,
+        config: form,
+        filters: normalizedFilters,
+      }));
+      setTabs(prev => prev.map(t => t.id === targetTabId && t.kind === "busca" ? { ...t, count, title: tabTitle } : t));
+      emitSearchState({
+        loading: false,
+        error: "",
+        count,
+        query: q,
+        status: count > 0 ? "success" : "empty",
+        config: form,
+        filters: normalizedFilters,
+      });
       return normalized;
     }).catch(err => {
       const message = String(err);
-      setSearchState(s => ({ ...s, loading: false, error: message, config: form }));
-      emitSearchState({ loading: false, error: message, count: null, query: q, status: "error", config: form });
+      setSearchState(s => ({ ...s, loading: false, error: message, config: form, filters: normalizedFilters }));
+      emitSearchState({
+        loading: false,
+        error: message,
+        count: null,
+        query: q,
+        status: "error",
+        config: form,
+        filters: normalizedFilters,
+      });
       return { results: [], error: message };
     });
   };
@@ -360,11 +465,20 @@ function BuscaWorkspace({ navigate }) {
     const pending = window.GovGoSearchUiAdapter?.consumePendingSearch
       ? window.GovGoSearchUiAdapter.consumePendingSearch()
       : null;
-    if (pending?.query) {
-      runSearch(pending.query, pending.config || pending.searchType || null);
+    const pendingHasFilters = hasActiveSearchFiltersState(pending?.config?.uiFilters);
+    if (pending?.query || pendingHasFilters) {
+      runSearch(pending?.query || "", pending.config || pending.searchType || null);
       return;
     }
-    emitSearchState({ loading: false, error: "", count: null, query: "", status: "idle", config: createDefaultSearchFormState() });
+    emitSearchState({
+      loading: false,
+      error: "",
+      count: null,
+      query: "",
+      status: "idle",
+      config: createDefaultSearchFormState(),
+      filters: createDefaultSearchFiltersState(),
+    });
   }, []);
 
   uEf(() => {
@@ -374,7 +488,15 @@ function BuscaWorkspace({ navigate }) {
       }
 
       const id = "t" + Date.now();
-      setTabs(prev => [...prev, { id, title: query || "Nova busca", icon: React.createElement(Icon.search, { size: 12 }), tone: "orange", count: null, kind: "busca" }]);
+      const hasIncomingFilters = hasActiveSearchFiltersState(searchInput?.uiFilters);
+      setTabs(prev => [...prev, {
+        id,
+        title: query || (hasIncomingFilters ? "Busca filtrada" : "Nova busca"),
+        icon: React.createElement(Icon.search, { size: 12 }),
+        tone: "orange",
+        count: null,
+        kind: "busca",
+      }]);
       setActiveTab(id);
       return runSearch(query, searchInput, id);
     };
@@ -441,6 +563,10 @@ function BuscaWorkspace({ navigate }) {
         limitLabel: "10",
         topCategoriesLabel: "10",
       };
+  const activeFilterSummary = window.GovGoSearchContracts?.describeActiveFilters
+    ? window.GovGoSearchContracts.describeActiveFilters(searchState.filters)
+    : [];
+  const searchHasActiveFilters = hasActiveSearchFiltersState(searchState.filters);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
@@ -464,6 +590,8 @@ function BuscaWorkspace({ navigate }) {
                 current?.kind === "busca"
                   ? searchState.query
                     ? `Editais aderentes a "${searchState.query}"`
+                    : searchHasActiveFilters
+                    ? "Editais aderentes aos filtros selecionados"
                     : "Busca de editais"
                   : current?.title
               }
@@ -488,7 +616,7 @@ function BuscaWorkspace({ navigate }) {
                 </>
               }
             />
-            {current?.kind === "busca" && searchState.query && (
+            {current?.kind === "busca" && (searchState.query || activeFilterSummary.length > 0) && (
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "12px 14px", background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 10, marginBottom: 14 }}>
                 <span style={{ fontSize: 11.5, color: "var(--ink-3)", fontWeight: 600, textTransform: "uppercase", letterSpacing: ".06em", alignSelf: "center", marginRight: 4 }}>Configuracao da busca</span>
                 <Chip tone="blue">Tipo: {searchConfigSummary.typeLabel}</Chip>
@@ -503,17 +631,25 @@ function BuscaWorkspace({ navigate }) {
                 )}
                 <Chip tone="blue">Resultados: {searchConfigSummary.limitLabel}</Chip>
                 {searchState.config?.filterExpired && <Chip tone="blue">Filtra encerrados</Chip>}
+                {activeFilterSummary.length > 0 && (
+                  <span style={{ fontSize: 11.5, color: "var(--ink-3)", fontWeight: 600, textTransform: "uppercase", letterSpacing: ".06em", alignSelf: "center", marginLeft: 8 }}>
+                    Filtros
+                  </span>
+                )}
+                {activeFilterSummary.map((item) => (
+                  <Chip key={item.id} tone={item.tone || "blue"}>{item.label}</Chip>
+                ))}
               </div>
             )}
             {current?.kind === "busca" ? (
               searchState.loading ? (
                 <LoadingState />
               ) : searchState.error ? (
-                <ErrorState message={searchState.error} onRetry={() => runSearch(searchState.query)} />
+                <ErrorState message={searchState.error} onRetry={() => runSearch(searchState.query, { ...searchState.config, uiFilters: searchState.filters })} />
               ) : searchState.results && searchState.results.length > 0 ? (
                 <EditaisTable editais={searchState.results} onOpen={openEdital} />
               ) : searchState.results && searchState.results.length === 0 ? (
-                <EmptyState query={searchState.query} />
+                <EmptyState query={searchState.query} hasFilters={searchHasActiveFilters} />
               ) : (
                 <IdleState />
               )

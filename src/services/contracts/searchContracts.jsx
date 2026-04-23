@@ -36,21 +36,29 @@
   ];
 
   const FILTER_MODALIDADE_OPTIONS = [
-    { value: "1", label: "01 - Pregao" },
-    { value: "2", label: "02 - Concorrencia" },
+    { value: "1", label: "01 - Leilao - Eletronico" },
+    { value: "2", label: "02 - Dialogo Competitivo" },
     { value: "3", label: "03 - Concurso" },
-    { value: "4", label: "04 - Leilao" },
-    { value: "5", label: "05 - Dialogo Competitivo" },
-    { value: "6", label: "06 - Dispensa de Licitacao" },
-    { value: "7", label: "07 - Inexigibilidade de Licitacao" },
-    { value: "8", label: "08 - Credenciamento" },
+    { value: "4", label: "04 - Concorrencia - Eletronica" },
+    { value: "5", label: "05 - Concorrencia - Presencial" },
+    { value: "6", label: "06 - Pregao - Eletronico" },
+    { value: "7", label: "07 - Pregao - Presencial" },
+    { value: "8", label: "08 - Dispensa" },
+    { value: "9", label: "09 - Inexigibilidade" },
+    { value: "10", label: "10 - Manifestacao de Interesse" },
+    { value: "11", label: "11 - Pre-qualificacao" },
+    { value: "12", label: "12 - Credenciamento" },
+    { value: "13", label: "13 - Leilao - Presencial" },
+    { value: "14", label: "14 - Inaplicabilidade da Licitacao" },
   ];
 
   const FILTER_MODO_OPTIONS = [
     { value: "1", label: "01 - Aberto" },
     { value: "2", label: "02 - Fechado" },
-    { value: "3", label: "03 - Aberto/Fechado" },
-    { value: "4", label: "04 - Fechado/Aberto" },
+    { value: "3", label: "03 - Aberto-Fechado" },
+    { value: "4", label: "04 - Dispensa Com Disputa" },
+    { value: "5", label: "05 - Nao se aplica" },
+    { value: "6", label: "06 - Fechado-Aberto" },
   ];
 
   const FILTER_DATE_FIELD_OPTIONS = [
@@ -234,8 +242,8 @@
   function normalizeFilters(filterState) {
     const defaults = createDefaultSearchFilters();
     const filter = { ...defaults, ...(filterState || {}) };
-    const startDate = normalizeDate(filter.startDate);
-    let endDate = normalizeDate(filter.endDate);
+    const startDate = normalizeDate(filter.startDate || filter.date_start);
+    let endDate = normalizeDate(filter.endDate || filter.date_end);
     if (startDate && endDate && endDate < startDate) {
       endDate = startDate;
     }
@@ -249,10 +257,10 @@
       uasg: normalizeText(filter.uasg),
       uf: normalizeMultiValue(filter.uf, VALID_UFS),
       municipio: normalizeText(filter.municipio),
-      modalidade: normalizeMultiValue(filter.modalidade, VALID_MODALIDADES),
-      modo: normalizeMultiValue(filter.modo, VALID_MODOS),
-      dateField: VALID_DATE_FIELDS.has(String(filter.dateField || "").trim())
-        ? String(filter.dateField || "").trim()
+      modalidade: normalizeMultiValue(filter.modalidade || filter.modalidade_id, VALID_MODALIDADES),
+      modo: normalizeMultiValue(filter.modo || filter.modo_id, VALID_MODOS),
+      dateField: VALID_DATE_FIELDS.has(String(filter.dateField || filter.date_field || "").trim())
+        ? String(filter.dateField || filter.date_field || "").trim()
         : defaults.dateField,
       startDate,
       endDate,

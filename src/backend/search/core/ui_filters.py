@@ -10,8 +10,11 @@ FILTER_UF_OPTIONS = (
     "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO",
 )
 
-FILTER_MODALIDADE_VALUES = ("1", "2", "3", "4", "5", "6", "7", "8")
-FILTER_MODO_VALUES = ("1", "2", "3", "4")
+FILTER_MODALIDADE_VALUES = (
+    "1", "2", "3", "4", "5", "6", "7",
+    "8", "9", "10", "11", "12", "13", "14",
+)
+FILTER_MODO_VALUES = ("1", "2", "3", "4", "5", "6")
 FILTER_DATE_FIELDS = {
     "encerramento": "data_encerramento_proposta",
     "abertura": "data_abertura_proposta",
@@ -74,12 +77,12 @@ def _normalize_multi(value: Any, valid_values: tuple[str, ...]) -> list[str]:
 def normalize_ui_filters(payload: dict[str, Any] | None) -> dict[str, Any]:
     defaults = create_default_ui_filters()
     source = payload if isinstance(payload, dict) else {}
-    start_date = _normalize_date(source.get("date_start"))
-    end_date = _normalize_date(source.get("date_end"))
+    start_date = _normalize_date(source.get("date_start", source.get("startDate")))
+    end_date = _normalize_date(source.get("date_end", source.get("endDate")))
     if start_date and end_date and end_date < start_date:
         end_date = start_date
 
-    date_field = _normalize_text(source.get("date_field")) or defaults["date_field"]
+    date_field = _normalize_text(source.get("date_field", source.get("dateField"))) or defaults["date_field"]
     if date_field not in FILTER_DATE_FIELDS:
         date_field = defaults["date_field"]
 

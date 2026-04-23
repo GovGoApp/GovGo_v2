@@ -74,7 +74,7 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
     def do_GET(self) -> None:
         route = self.path.split("?", 1)[0]
         if route not in {"/api/search-config", "/api/search-filters"}:
-            self.send_error(404, "Endpoint nao encontrado.")
+            super().do_GET()
             return
 
         try:
@@ -167,15 +167,30 @@ def _existing_server_works(url: str) -> bool:
     return _wait_until_reachable(url, timeout_seconds=1.0)
 
 
+def _existing_server_matches_current_api() -> bool:
+    required_urls = [
+        f"http://{HOST}:{PORT}/api/search-config",
+        f"http://{HOST}:{PORT}/api/search-filters",
+    ]
+    return all(_wait_until_reachable(endpoint, timeout_seconds=1.0) for endpoint in required_urls)
+
+
 def _serve_forever() -> int:
     handler = partial(QuietStaticHandler, directory=str(PROJECT_ROOT))
     try:
         httpd = ThreadingHTTPServer((HOST, PORT), handler)
     except OSError as error:
-        if error.errno == 10048 and _existing_server_works(URL):
-            print(f"GovGo v2 ja esta servido em: {URL}")
-            _open_browser(URL)
-            return 0
+        if error.errno == 10048:
+            if _existing_server_works(URL) and _existing_server_matches_current_api():
+                print(f"GovGo v2 ja esta servido em: {URL}")
+                _open_browser(URL)
+                return 0
+            print(
+                "A porta 8765 ja esta ocupada por um servidor incompatível com o GovGo v2 atual.\n"
+                "Encerre a instancia antiga e rode novamente `python .\\run.py`.",
+                file=sys.stderr,
+            )
+            return 1
         raise
 
     print(f"GovGo v2 servido em: {URL}")
