@@ -37,7 +37,7 @@ Este documento deve ser atualizado sempre que houver novidade relevante, especia
 
 ### Data da ultima consolidacao
 
-2026-04-22
+2026-04-23
 
 ### Documento principal do projeto
 
