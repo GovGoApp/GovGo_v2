@@ -244,11 +244,15 @@
     return found ? toEditalShape(found) : null;
   }
 
-  function setPendingSearch(query, searchType) {
-    safeWriteJson(PENDING_SEARCH_STORAGE_KEY, {
-      query,
-      searchType: searchType || "keyword",
-    });
+  function setPendingSearch(query, searchInput) {
+    const pending = { query };
+    if (searchInput && typeof searchInput === "object" && !Array.isArray(searchInput)) {
+      pending.config = searchInput;
+      pending.searchType = searchInput.searchType || "semantic";
+    } else {
+      pending.searchType = searchInput || "semantic";
+    }
+    safeWriteJson(PENDING_SEARCH_STORAGE_KEY, pending);
   }
 
   function consumePendingSearch() {

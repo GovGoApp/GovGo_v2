@@ -45,8 +45,12 @@ class SearchRequest:
     sql_debug: bool = False
     filters: List[str] = field(default_factory=list)
     where_sql: List[str] = field(default_factory=list)
+    ui_filters: Dict[str, Any] = field(default_factory=dict)
     top_categories_limit: int = 10
     category_search_base: str = "semantic"
+    relevance_level: int = 1
+    sort_mode: int = 1
+    min_similarity: float = 0.0
 
     def normalized_search_type(self) -> str:
         value = (self.search_type or "semantic").strip().lower()
@@ -74,8 +78,12 @@ class SearchRequest:
             sql_debug=bool(data.get("sql_debug", False)),
             filters=list(data.get("filters", []) or []),
             where_sql=list(data.get("where_sql", []) or []),
+            ui_filters=dict(data.get("ui_filters", {}) or {}),
             top_categories_limit=int(data.get("top_categories_limit", 10) or 10),
             category_search_base=str(data.get("category_search_base", "semantic")).strip(),
+            relevance_level=int(data.get("relevance_level", 1) or 1),
+            sort_mode=int(data.get("sort_mode", 1) or 1),
+            min_similarity=float(data.get("min_similarity", 0) or 0),
         )
 
     def to_dict(self) -> Dict[str, Any]:

@@ -14,9 +14,10 @@ function BuscaDetalhePage({ route, navigate }) {
 
       if (navigate) {
         navigate("busca");
-        return;
+        return Promise.resolve({ pending: true });
       }
       window.location.hash = "#/busca";
+      return Promise.resolve({ pending: true });
     };
 
     return () => { window._govgoBuscaSearch = null; };

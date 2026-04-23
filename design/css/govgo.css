@@ -1106,6 +1106,58 @@ a:hover { text-decoration: underline; }
   outline: none; box-shadow: var(--ring-focus);
 }
 
+.gg-spin {
+  animation: gg-spin .85s linear infinite;
+  transform-origin: center;
+}
+
+.gg-search-progress {
+  height: 3px;
+  margin: 8px 2px 0;
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  background: transparent;
+}
+
+.gg-search-progress::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--hairline-soft);
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.gg-search-progress__bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 42%;
+  border-radius: inherit;
+  background: var(--orange);
+  opacity: 0;
+  transform: translateX(-120%);
+}
+
+.gg-search-progress.is-active::before,
+.gg-search-progress.is-active .gg-search-progress__bar {
+  opacity: 1;
+}
+
+.gg-search-progress.is-active .gg-search-progress__bar {
+  animation: gg-search-progress 1.1s ease-in-out infinite;
+}
+
+@keyframes gg-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes gg-search-progress {
+  0% { transform: translateX(-120%); }
+  55% { transform: translateX(75%); }
+  100% { transform: translateX(250%); }
+}
+
 /* ------------------------------------------------------------------ */
 /* 8. Responsive                                                       */
 /* ------------------------------------------------------------------ */

@@ -1,8 +1,32 @@
 // Reusable primitives — buttons, inputs, chips, cards, kpi, table, sparklines
 const { useState, useEffect, useRef, useMemo } = React;
 
+// ---------- Circular progress ----------
+function CircularProgress({size = 14, stroke = 2, style}) {
+  const radius = (size - stroke) / 2;
+  const center = size / 2;
+  return (
+    <span className="gg-spin" aria-hidden="true" style={{width: size, height: size, display: "inline-flex", ...style}}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{display: "block"}}>
+        <circle cx={center} cy={center} r={radius} fill="none" stroke="currentColor" strokeWidth={stroke} opacity=".28"/>
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={`${Math.PI * radius} ${Math.PI * radius * 2}`}
+        />
+      </svg>
+    </span>
+  );
+}
+
 // ---------- Button ----------
-function Button({kind = "default", size = "md", icon, iconRight, children, onClick, active, style, disabled, title}) {
+function Button({kind = "default", size = "md", icon, iconRight, children, onClick, active, style, disabled, title, loading}) {
+  const isDisabled = disabled || loading;
   const base = {
     display: "inline-flex", alignItems: "center", gap: 8,
     padding: size === "sm" ? "6px 10px" : size === "lg" ? "11px 18px" : "8px 14px",
@@ -11,11 +35,11 @@ function Button({kind = "default", size = "md", icon, iconRight, children, onCli
     fontFamily: "var(--font-body)",
     borderRadius: "var(--r-md)",
     border: "1px solid transparent",
-    cursor: disabled ? "not-allowed" : "pointer",
+    cursor: isDisabled ? "not-allowed" : "pointer",
     transition: "background 120ms, border-color 120ms, box-shadow 120ms, transform 80ms",
     lineHeight: 1.2,
     whiteSpace: "nowrap",
-    opacity: disabled ? 0.5 : 1,
+    opacity: isDisabled ? 0.62 : 1,
   };
   const variants = {
     primary: { background: "var(--orange)", color: "white", boxShadow: "0 1px 0 rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,.18)" },
@@ -27,11 +51,11 @@ function Button({kind = "default", size = "md", icon, iconRight, children, onCli
   };
   const activeStyle = active ? (kind === "ghost" ? { background: "var(--blue-50)", color: "var(--deep-blue)" } : {}) : {};
   return (
-    <button onClick={onClick} disabled={disabled} title={title}
+    <button onClick={onClick} disabled={isDisabled} title={title}
             style={{...base, ...variants[kind], ...activeStyle, ...style}}
             onMouseDown={e => e.currentTarget.style.transform = "translateY(0.5px)"}
             onMouseUp={e => e.currentTarget.style.transform = "translateY(0)"}>
-      {icon}
+      {loading ? <CircularProgress size={size === "sm" ? 12 : 14}/> : icon}
       {children}
       {iconRight}
     </button>
@@ -73,7 +97,7 @@ function Chip({children, onRemove, tone = "default", icon, active, onClick}) {
 }
 
 // ---------- Input ----------
-function Input({icon, iconRight, placeholder, value, onChange, onKeyDown, size = "md", mono, style}) {
+function Input({icon, iconRight, placeholder, value, onChange, onKeyDown, size = "md", mono, style, autoComplete = "off", name}) {
   const [focus, setFocus] = useState(false);
   return (
     <div style={{
@@ -91,7 +115,7 @@ function Input({icon, iconRight, placeholder, value, onChange, onKeyDown, size =
         fontSize: size === "sm" ? 12.5 : 13.5,
         fontFamily: mono ? "var(--font-mono)" : "var(--font-body)",
         color: "var(--ink-1)",
-      }} placeholder={placeholder} value={value || ""} onChange={e => onChange && onChange(e.target.value)}
+      }} placeholder={placeholder} value={value || ""} autoComplete={autoComplete} name={name || "govgo-input"} spellCheck={false} onChange={e => onChange && onChange(e.target.value)}
          onKeyDown={onKeyDown}
          onFocus={() => setFocus(true)} onBlur={() => setFocus(false)}/>
       {iconRight}

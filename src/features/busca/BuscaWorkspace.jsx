@@ -4,6 +4,132 @@
 
 const { useState: uSo, useEffect: uEf } = React;
 
+const EDITAIS_GRID_COLUMNS = "44px 56px minmax(190px,1.15fr) minmax(170px,1fr) minmax(110px,.8fr) 44px 130px 120px 112px";
+
+function normalizeObjectText(value) {
+  const text = String(value || "").replace(/\s+/g, " ").trim();
+  return text || "—";
+}
+
+function truncateObjectText(value, max = 170) {
+  const text = normalizeObjectText(value);
+  if (text.length <= max) {
+    return text;
+  }
+  return `${text.slice(0, max - 3).trimEnd()}...`;
+}
+
+function ObjectCell({ text }) {
+  const fullText = normalizeObjectText(text);
+  const shortText = truncateObjectText(fullText);
+  const [tooltip, setTooltip] = uSo(null);
+
+  const moveTooltip = (event) => {
+    if (fullText === "—") {
+      return;
+    }
+    setTooltip({ x: event.clientX + 14, y: event.clientY + 14 });
+  };
+
+  return (
+    <span
+      onMouseEnter={moveTooltip}
+      onMouseMove={moveTooltip}
+      onMouseLeave={() => setTooltip(null)}
+      style={{
+        minWidth: 0,
+        display: "block",
+        cursor: fullText === "—" ? "default" : "help",
+      }}
+    >
+      <span
+        style={{
+          minWidth: 0,
+          display: "-webkit-box",
+          color: "var(--ink-2)",
+          fontSize: 11.5,
+          lineHeight: 1.25,
+          WebkitLineClamp: 3,
+          WebkitBoxOrient: "vertical",
+          overflow: "hidden",
+          whiteSpace: "normal",
+        }}
+      >
+        {shortText}
+      </span>
+      {tooltip && (
+        <span
+          style={{
+            position: "fixed",
+            left: tooltip.x,
+            top: tooltip.y,
+            zIndex: 2000,
+            width: 360,
+            maxWidth: "calc(100vw - 32px)",
+            padding: "10px 12px",
+            background: "var(--paper)",
+            border: "1px solid var(--hairline)",
+            borderRadius: 8,
+            boxShadow: "var(--shadow-md)",
+            color: "var(--ink-1)",
+            fontSize: 12.5,
+            lineHeight: 1.45,
+            whiteSpace: "normal",
+            pointerEvents: "none",
+          }}
+        >
+          {fullText}
+        </span>
+      )}
+    </span>
+  );
+}
+
+function createDefaultSearchFormState() {
+  if (window.GovGoSearchContracts?.createDefaultSearchForm) {
+    return window.GovGoSearchContracts.createDefaultSearchForm();
+  }
+
+  return {
+    query: "",
+    searchType: "semantic",
+    searchApproach: "direct",
+    relevanceLevel: 1,
+    sortMode: 1,
+    limit: 10,
+    categorySearchBase: "semantic",
+    topCategoriesLimit: 10,
+    preprocess: true,
+    filterExpired: true,
+    useNegation: true,
+    minSimilarity: 0,
+  };
+}
+
+function normalizeSearchFormState(formState) {
+  if (window.GovGoSearchContracts?.normalizeFormState) {
+    return window.GovGoSearchContracts.normalizeFormState(formState);
+  }
+  return { ...createDefaultSearchFormState(), ...(formState || {}) };
+}
+
+function resolveSearchFormState(query, searchInput) {
+  const defaults = createDefaultSearchFormState();
+  if (searchInput && typeof searchInput === "object" && !Array.isArray(searchInput)) {
+    return normalizeSearchFormState({ ...defaults, ...searchInput, query });
+  }
+  if (typeof searchInput === "string" && searchInput) {
+    return normalizeSearchFormState({
+      ...defaults,
+      query,
+      searchType: searchInput,
+      searchApproach: "direct",
+      categorySearchBase: searchInput,
+    });
+  }
+  return normalizeSearchFormState({ ...defaults, query });
+}
+
 // ─── Normaliza item real da API → shape do design ────────────────────────────
 function toEditaisShape(results) {
   return results.map(item => (
@@ -21,6 +147,7 @@ function toEditaisShape(results) {
         items: item.raw?.numero_itens ?? 0,
         docs: item.raw?.numero_documentos ?? 0,
         status: item.raw?.situacao_edital || "aberto",
+        objeto: item.title || item.raw?.details?.objeto_compra || item.raw?.objeto_compra || "",
       }
   ));
 }
@@ -31,7 +158,8 @@ function EditaisTable({ editais, onOpen }) {
     <div style={{ background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 10, overflow: "hidden" }}>
       <div style={{
         display: "grid",
-        gridTemplateColumns: "44px 56px minmax(0,2.2fr) 1fr 56px 150px 140px 120px",
+        gridTemplateColumns: EDITAIS_GRID_COLUMNS,
+        columnGap: 10,
         fontSize: 11, color: "var(--ink-3)", textTransform: "uppercase",
         letterSpacing: ".04em", fontWeight: 600,
         padding: "10px 16px", background: "var(--rail)", borderBottom: "1px solid var(--hairline)",
@@ -39,6 +167,7 @@ function EditaisTable({ editais, onOpen }) {
       }}>
         <span></span>
         <span>Rank</span>
+        <span>Objeto</span>
         <span>Órgão</span>
         <span>Município</span>
         <span>UF</span>
@@ -60,7 +189,8 @@ function EditaisTable({ editais, onOpen }) {
           <div key={e.rank} onClick={() => onOpen(e)}
             style={{
               display: "grid",
-              gridTemplateColumns: "44px 56px minmax(0,2.2fr) 1fr 56px 150px 140px 120px",
+              gridTemplateColumns: EDITAIS_GRID_COLUMNS,
+              columnGap: 10,
               padding: "12px 16px", borderBottom: "1px solid var(--hairline-soft)",
               alignItems: "center", cursor: "pointer",
               background: "var(--paper)", fontSize: 13,
@@ -70,8 +200,20 @@ function EditaisTable({ editais, onOpen }) {
           >
             <span style={{ color: "var(--ink-3)", display: "inline-flex" }}><Icon.bookmark size={14} /></span>
             <span className="mono" style={{ color: "var(--ink-2)", fontWeight: 500 }}>{String(e.rank).padStart(2, "0")}</span>
+            <ObjectCell text={e.objeto || e.title || e.raw?.details?.objeto_compra || e.raw?.objeto_compra} />
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontWeight: 600, color: "var(--ink-1)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.org}</div>
+              <div style={{
+                fontWeight: 600,
+                color: "var(--ink-1)",
+                fontSize: 10,
+                lineHeight: 1.25,
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "normal",
+              }}>{e.org}</div>
               <div style={{ fontSize: 11.5, color: "var(--ink-3)", display: "flex", gap: 6, marginTop: 2 }}>
                 <span>{e.modal}</span>
                 {e.items > 0 && <><span>·</span><span>{e.items} itens</span></>}
@@ -121,12 +263,26 @@ function EmptyState({ query }) {
   );
 }
 
+function IdleState() {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flex: 1, flexDirection: "column", gap: 12, color: "var(--ink-3)", padding: 48, minHeight: 260 }}>
+      <Icon.search size={28} />
+      <div style={{ fontSize: 14, fontWeight: 500 }}>Digite uma consulta para iniciar a busca</div>
+      <div style={{ fontSize: 12 }}>Use o campo no painel esquerdo para buscar editais, objetos ou palavras-chave.</div>
+    </div>
+  );
+}
+
 // ─── Componente principal ─────────────────────────────────────────────────────
 function BuscaWorkspace({ navigate }) {
-  const defaultQuery = "alimentação hospitalar";
+  const emitSearchState = (detail) => {
+    if (typeof window !== "undefined" && window.dispatchEvent) {
+      window.dispatchEvent(new CustomEvent("govgo:search-state", { detail }));
+    }
+  };
 
   const [tabs, setTabs] = uSo([
-    { id: "t1", title: defaultQuery, icon: React.createElement(Icon.search, { size: 12 }), tone: "orange", count: null, kind: "busca", closable: false },
+    { id: "t1", title: "Nova busca", icon: React.createElement(Icon.search, { size: 12 }), tone: "orange", count: null, kind: "busca", closable: false },
     { id: "t2", title: "Compra de produtos de padaria", icon: React.createElement(Icon.starFill, { size: 12 }), tone: "orange", kind: "favorito" },
     { id: "t3", title: "Alimentação escolar integral", icon: React.createElement(Icon.starFill, { size: 12 }), tone: "blue", kind: "favorito" },
     { id: "t4", title: "Boletim diário — Saúde/SP", icon: React.createElement(Icon.brief, { size: 12 }), tone: "blue", kind: "boletim" },
@@ -134,37 +290,52 @@ function BuscaWorkspace({ navigate }) {
   const [activeTab, setActiveTab] = uSo("t1");
 
   const [searchState, setSearchState] = uSo({
-    query: defaultQuery,
+    query: "",
     loading: false,
     results: null,
     error: null,
     count: null,
+    config: createDefaultSearchFormState(),
   });
 
   const [editalMap, setEditalMap] = uSo({});
 
   const current = tabs.find(t => t.id === activeTab) || tabs[0];
 
-  const runSearch = (query, searchType) => {
-    const q = query || searchState.query;
-    const form = window.GovGoSearchContracts
-      ? { ...window.GovGoSearchContracts.createDefaultSearchForm(), query: q, searchType: searchType || "keyword" }
-      : { query: q, searchType: "keyword", limit: 10 };
+  const runSearch = (query, searchInput, targetTabId = activeTab) => {
+    const q = String(query || searchState.query || "").trim();
+    if (!q) {
+      emitSearchState({ loading: false, error: "", count: null, query: "", status: "idle", config: searchState.config });
+      return Promise.resolve({ results: [], error: "" });
+    }
 
-    setSearchState(s => ({ ...s, query: q, loading: true, error: null }));
+    const form = resolveSearchFormState(q, searchInput || searchState.config);
+
+    setSearchState(s => ({ ...s, query: q, loading: true, error: null, config: form }));
+    setTabs(prev => prev.map(t => t.id === targetTabId && t.kind === "busca" ? { ...t, title: q, count: null } : t));
+    emitSearchState({ loading: true, error: "", count: null, query: q, status: "loading", config: form });
 
     const apiCall = window.GovGoSearchApi
       ? window.GovGoSearchApi.runSearch(form)
-      : fetch("/api/search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ query: q, search_type: "keyword", limit: 10 }) }).then(r => r.json());
+      : fetch("/api/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(
+            window.GovGoSearchContracts?.toApiPayload
+              ? window.GovGoSearchContracts.toApiPayload(form)
+              : { query: q, search_type: "semantic", limit: 10 }
+          ),
+        }).then(r => r.json());
 
-    apiCall.then(response => {
+    return apiCall.then(response => {
       const normalized = window.GovGoSearchUiAdapter
         ? window.GovGoSearchUiAdapter.normalizeResponse(response)
         : { results: response.results || [], error: response.error };
 
       if (normalized.error) {
-        setSearchState(s => ({ ...s, loading: false, error: normalized.error }));
-        return;
+        setSearchState(s => ({ ...s, loading: false, error: normalized.error, config: form }));
+        emitSearchState({ loading: false, error: normalized.error, count: null, query: q, status: "error", config: form });
+        return normalized;
       }
 
       if (window.GovGoSearchUiAdapter?.rememberResponse) {
@@ -173,10 +344,15 @@ function BuscaWorkspace({ navigate }) {
 
       const editais = toEditaisShape(normalized.results || []);
       const count = editais.length;
-      setSearchState(s => ({ ...s, loading: false, results: editais, count, query: q }));
-      setTabs(prev => prev.map(t => t.kind === "busca" && t.id === activeTab ? { ...t, count, title: q } : t));
+      setSearchState(s => ({ ...s, loading: false, results: editais, count, query: q, config: form }));
+      setTabs(prev => prev.map(t => t.id === targetTabId && t.kind === "busca" ? { ...t, count, title: q } : t));
+      emitSearchState({ loading: false, error: "", count, query: q, status: count > 0 ? "success" : "empty", config: form });
+      return normalized;
     }).catch(err => {
-      setSearchState(s => ({ ...s, loading: false, error: String(err) }));
+      const message = String(err);
+      setSearchState(s => ({ ...s, loading: false, error: message, config: form }));
+      emitSearchState({ loading: false, error: message, count: null, query: q, status: "error", config: form });
+      return { results: [], error: message };
     });
   };
 
@@ -184,19 +360,23 @@ function BuscaWorkspace({ navigate }) {
     const pending = window.GovGoSearchUiAdapter?.consumePendingSearch
       ? window.GovGoSearchUiAdapter.consumePendingSearch()
       : null;
-    runSearch(pending?.query || defaultQuery, pending?.searchType || "keyword");
+    if (pending?.query) {
+      runSearch(pending.query, pending.config || pending.searchType || null);
+      return;
+    }
+    emitSearchState({ loading: false, error: "", count: null, query: "", status: "idle", config: createDefaultSearchFormState() });
   }, []);
 
   uEf(() => {
-    window._govgoBuscaSearch = (query, searchType) => {
+    window._govgoBuscaSearch = (query, searchInput) => {
       if (current?.kind === "busca") {
-        runSearch(query, searchType);
-      } else {
-        const id = "t" + Date.now();
-        setTabs(prev => [...prev, { id, title: query, icon: React.createElement(Icon.search, { size: 12 }), tone: "orange", count: null, kind: "busca" }]);
-        setActiveTab(id);
-        runSearch(query, searchType);
+        return runSearch(query, searchInput, activeTab);
       }
+
+      const id = "t" + Date.now();
+      setTabs(prev => [...prev, { id, title: query || "Nova busca", icon: React.createElement(Icon.search, { size: 12 }), tone: "orange", count: null, kind: "busca" }]);
+      setActiveTab(id);
+      return runSearch(query, searchInput, id);
     };
     return () => { window._govgoBuscaSearch = null; };
   });
@@ -250,6 +430,17 @@ function BuscaWorkspace({ navigate }) {
   } : null;
 
   const mockEditais = DATA?.editais || [];
+  const searchConfigSummary = window.GovGoSearchContracts?.describeConfig
+      ? window.GovGoSearchContracts.describeConfig(searchState.config)
+      : {
+        typeLabel: "Semantica",
+        approachLabel: "Direta",
+        relevanceLabel: "Permissivo",
+        sortLabel: "Similaridade",
+        minSimilarityLabel: "0.00",
+        limitLabel: "10",
+        topCategoriesLabel: "10",
+      };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
@@ -271,7 +462,9 @@ function BuscaWorkspace({ navigate }) {
               eyebrow={current?.kind === "favorito" ? "Favorito" : current?.kind === "boletim" ? "Boletim" : "Busca"}
               title={
                 current?.kind === "busca"
-                  ? `Editais aderentes a "${searchState.query}"`
+                  ? searchState.query
+                    ? `Editais aderentes a "${searchState.query}"`
+                    : "Busca de editais"
                   : current?.title
               }
               desc={
@@ -283,11 +476,11 @@ function BuscaWorkspace({ navigate }) {
                   ? "Erro na busca"
                   : searchState.count != null
                   ? `${searchState.count} processos · 12 fontes oficiais`
-                  : "Carregando…"
+                  : "Digite uma consulta no painel esquerdo"
               }
               actions={
                 <>
-                  <Button kind="ghost" size="sm" icon={React.createElement(Icon.filter, { size: 14 })}>6 filtros</Button>
+                  <Button kind="ghost" size="sm" icon={React.createElement(Icon.filter, { size: 14 })}>Refinar busca</Button>
                   <Button size="sm" icon={React.createElement(Icon.download, { size: 14 })}>Exportar</Button>
                   {current?.kind === "busca"
                     ? <Button kind="primary" size="sm" icon={React.createElement(Icon.starFill, { size: 14 })}>Salvar busca</Button>
@@ -295,16 +488,23 @@ function BuscaWorkspace({ navigate }) {
                 </>
               }
             />
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "12px 14px", background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 10, marginBottom: 14 }}>
-              <span style={{ fontSize: 11.5, color: "var(--ink-3)", fontWeight: 600, textTransform: "uppercase", letterSpacing: ".06em", alignSelf: "center", marginRight: 4 }}>Filtros ativos</span>
-              <Chip tone="blue" onRemove={() => {}}>Status: Aberto</Chip>
-              <Chip tone="blue" onRemove={() => {}}>UF: CE, SP, BA, RS, GO…</Chip>
-              <Chip tone="blue" onRemove={() => {}}>Modalidade: Pregão, Concorrência</Chip>
-              <Chip tone="orange" onRemove={() => {}}>Similaridade ≥ 0.85</Chip>
-              <Chip tone="blue" onRemove={() => {}}>Valor {">"} R$ 100k</Chip>
-              <span style={{ flex: 1 }} />
-              <Button kind="ghost" size="sm" icon={React.createElement(Icon.plus, { size: 12 })}>Adicionar filtro</Button>
-            </div>
+            {current?.kind === "busca" && searchState.query && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "12px 14px", background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 10, marginBottom: 14 }}>
+                <span style={{ fontSize: 11.5, color: "var(--ink-3)", fontWeight: 600, textTransform: "uppercase", letterSpacing: ".06em", alignSelf: "center", marginRight: 4 }}>Configuracao da busca</span>
+                <Chip tone="blue">Tipo: {searchConfigSummary.typeLabel}</Chip>
+                <Chip tone="blue">Abordagem: {searchConfigSummary.approachLabel}</Chip>
+                <Chip tone="blue">Relevancia: {searchConfigSummary.relevanceLabel}</Chip>
+                <Chip tone="blue">Ordenacao: {searchConfigSummary.sortLabel}</Chip>
+                {Number(searchState.config?.minSimilarity || 0) > 0 && (
+                  <Chip tone="orange">Sim. minima: {searchConfigSummary.minSimilarityLabel}</Chip>
+                )}
+                {searchState.config?.searchApproach !== "direct" && (
+                  <Chip tone="blue">Categorias: {searchConfigSummary.topCategoriesLabel}</Chip>
+                )}
+                <Chip tone="blue">Resultados: {searchConfigSummary.limitLabel}</Chip>
+                {searchState.config?.filterExpired && <Chip tone="blue">Filtra encerrados</Chip>}
+              </div>
+            )}
             {current?.kind === "busca" ? (
               searchState.loading ? (
                 <LoadingState />
@@ -314,7 +514,9 @@ function BuscaWorkspace({ navigate }) {
                 <EditaisTable editais={searchState.results} onOpen={openEdital} />
               ) : searchState.results && searchState.results.length === 0 ? (
                 <EmptyState query={searchState.query} />
-              ) : null
+              ) : (
+                <IdleState />
+              )
             ) : (
               <EditaisTable editais={mockEditais} onOpen={openEdital} />
             )}

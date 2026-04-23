@@ -1,4 +1,12 @@
 (function registerGovGoSearchApi() {
+  async function parseJsonResponse(response, invalidJsonMessage) {
+    try {
+      return await response.json();
+    } catch (error) {
+      throw new Error(invalidJsonMessage);
+    }
+  }
+
   async function runSearch(formState) {
     if (!window.GovGoSearchContracts) {
       throw new Error("GovGoSearchContracts indisponivel.");
@@ -13,12 +21,7 @@
       body: JSON.stringify(window.GovGoSearchContracts.toApiPayload(formState)),
     });
 
-    let payload;
-    try {
-      payload = await response.json();
-    } catch (error) {
-      throw new Error("A API de Busca retornou um JSON invalido.");
-    }
+    const payload = await parseJsonResponse(response, "A API de Busca retornou um JSON invalido.");
 
     if (!response.ok && !payload.error) {
       throw new Error(`Falha HTTP ${response.status} ao executar a Busca.`);
@@ -27,5 +30,91 @@
     return payload;
   }
 
-  window.GovGoSearchApi = { runSearch };
+  async function loadSearchConfig() {
+    const response = await fetch("/api/search-config", {
+      method: "GET",
+      headers: {
+        "Accept": "application/json",
+      },
+    });
+
+    const payload = await parseJsonResponse(response, "A API de configuracao retornou um JSON invalido.");
+
+    if (!response.ok) {
+      throw new Error(payload.error || `Falha HTTP ${response.status} ao carregar a configuracao.`);
+    }
+
+    return payload.config || {};
+  }
+
+  async function saveSearchConfig(formState) {
+    if (!window.GovGoSearchContracts) {
+      throw new Error("GovGoSearchContracts indisponivel.");
+    }
+
+    const response = await fetch("/api/search-config", {
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(window.GovGoSearchContracts.normalizeFormState(formState)),
+    });
+
+    const payload = await parseJsonResponse(response, "A API de configuracao retornou um JSON invalido.");
+
+    if (!response.ok) {
+      throw new Error(payload.error || `Falha HTTP ${response.status} ao salvar a configuracao.`);
+    }
+
+    return payload.config || {};
+  }
+
+  async function loadSearchFilters() {
+    const response = await fetch("/api/search-filters", {
+      method: "GET",
+      headers: {
+        "Accept": "application/json",
+      },
+    });
+
+    const payload = await parseJsonResponse(response, "A API de filtros retornou um JSON invalido.");
+
+    if (!response.ok) {
+      throw new Error(payload.error || `Falha HTTP ${response.status} ao carregar os filtros.`);
+    }
+
+    return payload.filters || {};
+  }
+
+  async function saveSearchFilters(filterState) {
+    if (!window.GovGoSearchContracts?.normalizeFilters) {
+      throw new Error("GovGoSearchContracts indisponivel.");
+    }
+
+    const response = await fetch("/api/search-filters", {
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(window.GovGoSearchContracts.normalizeFilters(filterState)),
+    });
+
+    const payload = await parseJsonResponse(response, "A API de filtros retornou um JSON invalido.");
+
+    if (!response.ok) {
+      throw new Error(payload.error || `Falha HTTP ${response.status} ao salvar os filtros.`);
+    }
+
+    return payload.filters || {};
+  }
+
+  window.GovGoSearchApi = {
+    runSearch,
+    loadSearchConfig,
+    saveSearchConfig,
+    loadSearchFilters,
+    saveSearchFilters,
+  };
 })();

@@ -24,6 +24,12 @@ URL = f"http://{HOST}:{PORT}{ROUTE}"
 
 
 class QuietStaticHandler(SimpleHTTPRequestHandler):
+    def end_headers(self) -> None:
+        self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Expires", "0")
+        super().end_headers()
+
     def log_message(self, format: str, *args) -> None:
         return
 
@@ -56,16 +62,37 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
         return payload
 
     def do_OPTIONS(self) -> None:
-        if self.path.split("?", 1)[0] != "/api/search":
+        route = self.path.split("?", 1)[0]
+        if route not in {"/api/search", "/api/search-config", "/api/search-filters"}:
             self.send_error(404, "Endpoint nao encontrado.")
             return
 
         self.send_response(204)
-        self.send_header("Allow", "OPTIONS, POST")
+        self.send_header("Allow", "OPTIONS, GET, POST")
         self.end_headers()
 
+    def do_GET(self) -> None:
+        route = self.path.split("?", 1)[0]
+        if route not in {"/api/search-config", "/api/search-filters"}:
+            self.send_error(404, "Endpoint nao encontrado.")
+            return
+
+        try:
+            from src.backend.search.api.service import get_search_config, get_search_filters
+
+            if route == "/api/search-filters":
+                response = {"filters": get_search_filters()}
+            else:
+                response = {"config": get_search_config()}
+        except Exception as exc:
+            self._write_json(500, {"error": str(exc)})
+            return
+
+        self._write_json(200, response)
+
     def do_POST(self) -> None:
-        if self.path.split("?", 1)[0] != "/api/search":
+        route = self.path.split("?", 1)[0]
+        if route not in {"/api/search", "/api/search-config", "/api/search-filters"}:
             self.send_error(404, "Endpoint nao encontrado.")
             return
 
@@ -76,15 +103,24 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
             return
 
         try:
-            from src.backend.search.api.service import run_search
+            from src.backend.search.api.service import (
+                run_search,
+                update_search_config,
+                update_search_filters,
+            )
 
-            response = run_search(payload)
+            if route == "/api/search-config":
+                response = {"config": update_search_config(payload)}
+            elif route == "/api/search-filters":
+                response = {"filters": update_search_filters(payload)}
+            else:
+                response = run_search(payload)
         except Exception as exc:
             self._write_json(500, {"error": str(exc)})
             return
 
         status_code = 200
-        if response.get("error") == "Informe uma consulta para buscar.":
+        if route == "/api/search" and response.get("error") == "Informe uma consulta para buscar.":
             status_code = 400
         self._write_json(status_code, response)
 
@@ -144,19 +180,16 @@ def _serve_forever() -> int:
 
     print(f"GovGo v2 servido em: {URL}")
 
-    server_thread = threading.Thread(target=httpd.serve_forever, daemon=True)
-    server_thread.start()
+    def open_browser_when_ready() -> None:
+        if not _wait_until_reachable(URL):
+            print("Falha ao disponibilizar a pagina inicial.", file=sys.stderr)
+            return
+        _open_browser(URL)
 
-    if not _wait_until_reachable(URL):
-        print("Falha ao disponibilizar a pagina inicial.", file=sys.stderr)
-        httpd.shutdown()
-        httpd.server_close()
-        return 1
-
-    _open_browser(URL)
+    threading.Thread(target=open_browser_when_ready, daemon=True).start()
 
     try:
-        server_thread.join()
+        httpd.serve_forever(poll_interval=0.25)
     except KeyboardInterrupt:
         print("\nEncerrando servidor GovGo v2...")
     finally:

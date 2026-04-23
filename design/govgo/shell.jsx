@@ -1,5 +1,5 @@
 // Shell: top bar, left rail, search rail (Busca), activity rail (Favoritos/Histórico/Boletins)
-const { useState: uS } = React;
+const { useState: uS, useEffect: uE } = React;
 
 function TopBar({mode}) {
   const [theme, setTheme] = uS(() => {
@@ -115,20 +115,443 @@ function LeftRail({mode, onMode}) {
   );
 }
 
+function createSearchRailConfig() {
+  if (window.GovGoSearchContracts?.createDefaultSearchForm) {
+    return window.GovGoSearchContracts.createDefaultSearchForm();
+  }
+
+  return {
+    query: "",
+    searchType: "semantic",
+    searchApproach: "direct",
+    relevanceLevel: 1,
+    sortMode: 1,
+    limit: 10,
+    categorySearchBase: "semantic",
+    topCategoriesLimit: 10,
+    preprocess: true,
+    filterExpired: true,
+    useNegation: true,
+    minSimilarity: 0,
+  };
+}
+
+function normalizeSearchRailConfig(config) {
+  if (window.GovGoSearchContracts?.normalizeFormState) {
+    return window.GovGoSearchContracts.normalizeFormState(config);
+  }
+  return { ...createSearchRailConfig(), ...(config || {}) };
+}
+
+function describeSearchRailConfig(config) {
+  if (window.GovGoSearchContracts?.describeConfig) {
+    return window.GovGoSearchContracts.describeConfig(config);
+  }
+  return {
+    typeLabel: "Semantica",
+    approachLabel: "Direta",
+    relevanceLabel: "Permissivo",
+    sortLabel: "Similaridade",
+    minSimilarityLabel: "0.00",
+    limitLabel: "10",
+    topCategoriesLabel: "10",
+  };
+}
+
+const FILTER_UF_OPTIONS = [
+  "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO",
+  "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI",
+  "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO",
+];
+
+const FILTER_MODALIDADE_OPTIONS = [
+  { value: "1", label: "01 - Pregao" },
+  { value: "2", label: "02 - Concorrencia" },
+  { value: "3", label: "03 - Concurso" },
+  { value: "4", label: "04 - Leilao" },
+  { value: "5", label: "05 - Dialogo Competitivo" },
+  { value: "6", label: "06 - Dispensa de Licitacao" },
+  { value: "7", label: "07 - Inexigibilidade" },
+  { value: "8", label: "08 - Credenciamento" },
+];
+
+const FILTER_MODO_OPTIONS = [
+  { value: "1", label: "01 - Aberto" },
+  { value: "2", label: "02 - Fechado" },
+  { value: "3", label: "03 - Aberto/Fechado" },
+  { value: "4", label: "04 - Fechado/Aberto" },
+];
+
+const FILTER_DATE_FIELD_OPTIONS = [
+  { value: "encerramento", label: "Encerramento" },
+  { value: "abertura", label: "Abertura" },
+  { value: "publicacao", label: "Publicacao" },
+];
+
+function createDefaultFilterDraft() {
+  if (window.GovGoSearchContracts?.createDefaultSearchFilters) {
+    return window.GovGoSearchContracts.createDefaultSearchFilters();
+  }
+  return {
+    pncp: "",
+    orgao: "",
+    cnpj: "",
+    uasg: "",
+    uf: [],
+    municipio: "",
+    modalidade: FILTER_MODALIDADE_OPTIONS.map((option) => option.value),
+    modo: FILTER_MODO_OPTIONS.map((option) => option.value),
+    dateField: "encerramento",
+    startDate: "",
+    endDate: "",
+  };
+}
+
+function normalizeSearchRailFilters(filters) {
+  if (window.GovGoSearchContracts?.normalizeFilters) {
+    return window.GovGoSearchContracts.normalizeFilters(filters);
+  }
+  return { ...createDefaultFilterDraft(), ...(filters || {}) };
+}
+
+function hasActiveSearchRailFilters(filters) {
+  if (window.GovGoSearchContracts?.hasActiveFilters) {
+    return window.GovGoSearchContracts.hasActiveFilters(filters);
+  }
+  return false;
+}
+
+function MultiSelectField({ options, values, onToggle, onToggleAll, allLabel = "Todos", placeholder, maxHeight = 170 }) {
+  const [open, setOpen] = React.useState(false);
+  const rootRef = React.useRef(null);
+  const allSelected = options.length > 0 && values.length === options.length;
+
+  React.useEffect(() => {
+    const handlePointerDown = (event) => {
+      if (!rootRef.current || rootRef.current.contains(event.target)) {
+        return;
+      }
+      setOpen(false);
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, []);
+
+  const selectedLabels = options
+    .filter((option) => values.includes(option.value))
+    .map((option) => option.label);
+
+  const summary = allSelected
+    ? allLabel
+    : selectedLabels.length === 0
+    ? (placeholder || "Selecione")
+    : selectedLabels.length <= 2
+    ? selectedLabels.join(", ")
+    : `${selectedLabels.length} selecionados`;
+
+  return (
+    <div ref={rootRef} style={{ position: "relative" }}>
+      <button
+        onClick={() => setOpen((current) => !current)}
+        style={{
+          all: "unset",
+          boxSizing: "border-box",
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "7px 10px",
+          background: "var(--paper)",
+          borderRadius: "var(--r-md)",
+          border: "1px solid var(--hairline)",
+          boxShadow: "var(--shadow-xs)",
+          cursor: "pointer",
+          color: values.length ? "var(--ink-1)" : "var(--ink-3)",
+          fontSize: 12.5,
+        }}
+      >
+        <span style={{
+          flex: 1,
+          minWidth: 0,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}>{summary}</span>
+        <span style={{ display: "inline-flex", color: "var(--ink-3)", transform: open ? "rotate(180deg)" : "none", transition: "transform 140ms" }}>
+          <Icon.chevDown size={12}/>
+        </span>
+      </button>
+
+      {open && (
+        <div style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          top: "calc(100% + 4px)",
+          zIndex: 30,
+          border: "1px solid var(--hairline)",
+          borderRadius: "var(--r-md)",
+          background: "var(--paper)",
+          boxShadow: "var(--shadow-md)",
+          overflow: "hidden",
+        }}>
+          <label style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "8px 10px",
+            borderBottom: "1px solid var(--hairline-soft)",
+            fontSize: 12,
+            fontWeight: 600,
+            color: "var(--ink-2)",
+          }}>
+            <input type="checkbox" checked={allSelected} onChange={onToggleAll}/>
+            <span>{allLabel}</span>
+          </label>
+          <div style={{ maxHeight, overflowY: "auto", padding: "6px 10px", display: "flex", flexDirection: "column", gap: 4 }}>
+            {options.map((option) => (
+              <label key={option.value} style={{ display: "flex", alignItems: "center", gap: 8, padding: "2px 0", fontSize: 11.5, color: "var(--ink-1)" }}>
+                <input type="checkbox" checked={values.includes(option.value)} onChange={() => onToggle(option.value)}/>
+                <span>{option.label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ---------- Search rail (LEFT in Busca mode) ----------
 function SearchRail() {
-  const [filtersOpen, setFiltersOpen] = uS(false);
-  const [query, setQuery] = uS("alimentação hospitalar");
-  const [semantic, setSemantic] = uS(true);
+  const [panelOpen, setPanelOpen] = uS(false);
+  const [activePanel, setActivePanel] = uS("filters");
+  const [query, setQuery] = uS("");
+  const [searchConfig, setSearchConfig] = uS(() => normalizeSearchRailConfig(createSearchRailConfig()));
+  const [configReady, setConfigReady] = uS(false);
+  const [filterDraft, setFilterDraft] = uS(() => normalizeSearchRailFilters(createDefaultFilterDraft()));
+  const [filtersReady, setFiltersReady] = uS(false);
+  const [searchInfo, setSearchInfo] = uS({
+    loading: false,
+    error: "",
+    count: null,
+    query: "",
+  });
+  const typeOptions = window.GovGoSearchContracts?.SEARCH_TYPE_OPTIONS || [
+    { value: "semantic", label: "Semantica" },
+    { value: "keyword", label: "Palavras-chave" },
+    { value: "hybrid", label: "Hibrida" },
+  ];
+  const approachOptions = window.GovGoSearchContracts?.SEARCH_APPROACH_OPTIONS || [
+    { value: "direct", label: "Direta" },
+    { value: "correspondence", label: "Correspondencia" },
+    { value: "category_filtered", label: "Categoria" },
+  ];
+  const relevanceOptions = window.GovGoSearchContracts?.RELEVANCE_OPTIONS || [
+    { value: 1, label: "Permissivo" },
+    { value: 2, label: "Flexivel" },
+    { value: 3, label: "Restritivo" },
+  ];
+  const sortOptions = window.GovGoSearchContracts?.SORT_OPTIONS || [
+    { value: 1, label: "Similaridade" },
+    { value: 2, label: "Data" },
+    { value: 3, label: "Valor" },
+  ];
+  const topCategoryOptions = window.GovGoSearchContracts?.TOP_CATEGORY_OPTIONS || [5, 10, 15, 20, 30, 50];
+  const limitPresets = window.GovGoSearchContracts?.LIMIT_PRESETS || [10, 20, 30, 50, 100];
+  const minSimilarityRange = window.GovGoSearchContracts?.MIN_SIMILARITY_RANGE || { min: 0, max: 1, step: 0.01 };
+  const filterUfOptions = window.GovGoSearchContracts?.FILTER_UF_OPTIONS || FILTER_UF_OPTIONS;
+  const filterModalidadeOptions = window.GovGoSearchContracts?.FILTER_MODALIDADE_OPTIONS || FILTER_MODALIDADE_OPTIONS;
+  const filterModoOptions = window.GovGoSearchContracts?.FILTER_MODO_OPTIONS || FILTER_MODO_OPTIONS;
+  const filterDateFieldOptions = window.GovGoSearchContracts?.FILTER_DATE_FIELD_OPTIONS || FILTER_DATE_FIELD_OPTIONS;
+  const configSummary = describeSearchRailConfig(searchConfig);
+  const isCategoryMode = searchConfig.searchApproach !== "direct";
 
-  const handleBuscar = () => {
-    if (window._govgoBuscaSearch) {
-      window._govgoBuscaSearch(query, semantic ? "semantic" : "keyword");
+  const updateSearchConfig = (patchOrUpdater) => {
+    setSearchConfig((current) => {
+      const patch = typeof patchOrUpdater === "function" ? patchOrUpdater(current) : patchOrUpdater;
+      const next = { ...current, ...(patch || {}) };
+      if (patch && Object.prototype.hasOwnProperty.call(patch, "searchType") && !Object.prototype.hasOwnProperty.call(patch, "categorySearchBase")) {
+        next.categorySearchBase = patch.searchType;
+      }
+      return normalizeSearchRailConfig(next);
+    });
+  };
+
+  uE(() => {
+    let cancelled = false;
+
+    const loadSavedConfig = async () => {
+      if (!window.GovGoSearchApi?.loadSearchConfig) {
+        setConfigReady(true);
+        return;
+      }
+
+      try {
+        const savedConfig = await window.GovGoSearchApi.loadSearchConfig();
+        if (!cancelled && savedConfig) {
+          setSearchConfig(normalizeSearchRailConfig(savedConfig));
+        }
+      } catch (_) {
+      } finally {
+        if (!cancelled) {
+          setConfigReady(true);
+        }
+      }
+    };
+
+    loadSavedConfig();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  uE(() => {
+    let cancelled = false;
+
+    const loadSavedFilters = async () => {
+      if (!window.GovGoSearchApi?.loadSearchFilters) {
+        setFiltersReady(true);
+        return;
+      }
+
+      try {
+        const savedFilters = await window.GovGoSearchApi.loadSearchFilters();
+        if (!cancelled && savedFilters) {
+          setFilterDraft(normalizeSearchRailFilters(savedFilters));
+        }
+      } catch (_) {
+      } finally {
+        if (!cancelled) {
+          setFiltersReady(true);
+        }
+      }
+    };
+
+    loadSavedFilters();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  uE(() => {
+    if (!configReady || !window.GovGoSearchApi?.saveSearchConfig) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      window.GovGoSearchApi.saveSearchConfig(searchConfig).catch(() => {});
+    }, 180);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [searchConfig, configReady]);
+
+  uE(() => {
+    if (!filtersReady || !window.GovGoSearchApi?.saveSearchFilters) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      window.GovGoSearchApi.saveSearchFilters(filterDraft).catch(() => {});
+    }, 180);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [filterDraft, filtersReady]);
+
+  uE(() => {
+    const handleSearchState = (event) => {
+      const detail = event.detail || {};
+      setSearchInfo({
+        loading: Boolean(detail.loading),
+        error: detail.error || "",
+        count: detail.count ?? null,
+        query: detail.query || "",
+      });
+      if (detail.config && detail.status !== "idle") {
+        setSearchConfig(normalizeSearchRailConfig(detail.config));
+      }
+      if (detail.filters) {
+        setFilterDraft(normalizeSearchRailFilters(detail.filters));
+      }
+      if (detail.status === "idle" || !detail.query) {
+        setQuery("");
+        return;
+      }
+      setQuery(detail.query);
+    };
+
+    window.addEventListener("govgo:search-state", handleSearchState);
+    return () => window.removeEventListener("govgo:search-state", handleSearchState);
+  }, []);
+
+  const runSearch = (configOverride) => {
+    const trimmed = query.trim();
+    const normalizedFilters = normalizeSearchRailFilters(filterDraft);
+    const hasFilters = hasActiveSearchRailFilters(normalizedFilters);
+    if ((!trimmed && !hasFilters) || searchInfo.loading) {
+      return;
+    }
+
+    const normalizedConfig = normalizeSearchRailConfig({
+      ...searchConfig,
+      ...(configOverride || {}),
+      query: trimmed,
+      uiFilters: normalizedFilters,
+    });
+    setSearchConfig(normalizedConfig);
+
+    if (!window._govgoBuscaSearch) {
+      setSearchInfo({ loading: false, error: "Busca indisponivel.", count: null, query: trimmed });
+      return;
+    }
+
+    setSearchInfo({ loading: true, error: "", count: null, query: trimmed });
+    try {
+      const request = window._govgoBuscaSearch(trimmed, normalizedConfig);
+      if (request && typeof request.catch === "function") {
+        request.catch((error) => {
+          setSearchInfo({ loading: false, error: String(error), count: null, query: trimmed });
+        });
+      }
+    } catch (error) {
+      setSearchInfo({ loading: false, error: String(error), count: null, query: trimmed });
     }
   };
 
+  const handleBuscar = () => runSearch();
+
   const handleKeyDown = (e) => {
     if (e.key === "Enter") handleBuscar();
+  };
+
+  const canSearch = (Boolean(query.trim()) || hasActiveSearchRailFilters(filterDraft)) && !searchInfo.loading;
+  const sectionLabelStyle = {
+    fontSize: 10.5,
+    color: "var(--ink-3)",
+    textTransform: "uppercase",
+    letterSpacing: ".05em",
+    fontWeight: 600,
+  };
+  const setFilterValue = (key, value) => {
+    setFilterDraft((current) => ({ ...current, [key]: value }));
+  };
+  const toggleFilterListValue = (key, value) => {
+    setFilterDraft((current) => {
+      const values = Array.isArray(current[key]) ? current[key] : [];
+      const nextValues = values.includes(value)
+        ? values.filter((item) => item !== value)
+        : [...values, value];
+      return { ...current, [key]: nextValues };
+    });
+  };
+  const toggleAllFilterListValues = (key, options) => {
+    setFilterDraft((current) => {
+      const allValues = options.map((option) => option.value);
+      const currentValues = Array.isArray(current[key]) ? current[key] : [];
+      const nextValues = currentValues.length === allValues.length ? [] : allValues;
+      return { ...current, [key]: nextValues };
+    });
   };
 
   return (
@@ -140,79 +563,300 @@ function SearchRail() {
       <div style={{background: "var(--paper)", borderBottom: "1px solid var(--hairline)"}}>
         <div style={{padding: "12px 10px 10px"}}>
           <div style={{fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".08em", fontWeight: 600, margin: "0 2px 8px"}}>MODO BUSCA</div>
-          <Input size="sm" placeholder="Buscar editais, objeto, palavra-chave…" icon={<Icon.search size={14}/>} value={query} onChange={setQuery} onKeyDown={handleKeyDown}/>
-          <div style={{display: "flex", gap: 6, marginTop: 8, alignItems: "center"}}>
-            <Chip tone={semantic ? "blue" : "default"} icon={<Icon.sparkle size={10}/>} onClick={() => setSemantic(!semantic)}>IA semântica</Chip>
-            <Chip>sinônimos</Chip>
+          <Input size="sm" placeholder="Buscar editais, objeto, palavra-chave..." icon={<Icon.search size={14}/>} value={query} onChange={setQuery} onKeyDown={handleKeyDown} name="govgo-search-query" autoComplete="off"/>
+          <div style={{display: "flex", gap: 6, marginTop: 8, alignItems: "center", flexWrap: "wrap"}}>
+            <Chip tone="blue" onClick={() => { setPanelOpen(true); setActivePanel("config"); }}>{configSummary.typeLabel}</Chip>
             <span style={{flex: 1}}/>
-            <Button kind="primary" size="sm" onClick={handleBuscar}>Buscar</Button>
+            <Button kind="primary" size="sm" onClick={handleBuscar} disabled={!canSearch} loading={searchInfo.loading}>Buscar</Button>
           </div>
+          <div className={`gg-search-progress ${searchInfo.loading ? "is-active" : ""}`} aria-hidden={!searchInfo.loading}>
+            <span className="gg-search-progress__bar"/>
+          </div>
+          {searchInfo.error && (
+            <div style={{fontSize: 11.5, color: "var(--risk)", margin: "7px 2px 0", lineHeight: 1.35}}>
+              {searchInfo.error}
+            </div>
+          )}
         </div>
       </div>
 
       <div style={{flex: 1, overflowY: "auto", paddingBottom: 12}}>
         {/* Filters — single collapsible box, smaller font */}
-        <div style={{margin: "10px 10px 0", background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 8, fontSize: 11.5}}>
-          <button onClick={() => setFiltersOpen(!filtersOpen)} style={{
-            all: "unset", cursor: "pointer", width: "100%", boxSizing: "border-box",
-            display: "flex", alignItems: "center", gap: 7, padding: "8px 10px",
+        <div style={{margin: "10px 10px 0", background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 8, fontSize: 11.5, overflow: "hidden"}}>
+          <div role="tablist" style={{
+            display: "flex",
+            alignItems: "flex-end",
+            gap: 2,
+            padding: "0 10px",
+            background: "var(--surface-sunk)",
+            borderBottom: "1px solid var(--hairline-soft)",
             color: "var(--ink-2)",
           }}>
-            <Icon.filter size={12}/>
-            <span style={{fontSize: 11.5, fontWeight: 600, letterSpacing: ".02em"}}>Filtros</span>
-            <Chip tone="orange">5 ativos</Chip>
+            {[
+              { id: "filters", label: "Filtros", icon: <Icon.filter size={11}/> },
+              { id: "config", label: "Configuração", icon: <Icon.gear size={11}/> },
+            ].map((tab) => {
+              const active = activePanel === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => {
+                    setActivePanel(tab.id);
+                    setPanelOpen(true);
+                  }}
+                  style={{
+                    all: "unset",
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    padding: "8px 12px 9px",
+                    marginTop: 6,
+                    position: "relative",
+                    top: 1,
+                    background: active ? "var(--paper)" : "transparent",
+                    border: active ? "1px solid var(--hairline)" : "1px solid transparent",
+                    borderBottom: active ? "1px solid var(--paper)" : "1px solid transparent",
+                    borderTop: active ? "2px solid var(--orange)" : "2px solid transparent",
+                    borderRadius: "8px 8px 0 0",
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    color: active ? "var(--orange-700)" : "var(--ink-3)",
+                  }}
+                >
+                  <span style={{display: "inline-flex", color: active ? "var(--orange)" : "var(--ink-3)"}}>{tab.icon}</span>
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
             <span style={{flex: 1}}/>
-            <span style={{transform: filtersOpen ? "rotate(180deg)" : "none", transition: "transform 140ms", color: "var(--ink-3)", display: "inline-flex"}}>
-              <Icon.chevDown size={12}/>
-            </span>
-          </button>
-          {filtersOpen && (
-            <div style={{borderTop: "1px solid var(--hairline-soft)", padding: "8px 10px 10px", fontSize: 11.5}}>
-              <div style={{display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 10}}>
-                <Chip tone="blue" onRemove={()=>{}}>Status: Aberto</Chip>
-                <Chip tone="blue" onRemove={()=>{}}>UF: CE, SP, BA</Chip>
-                <Chip tone="orange" onRemove={()=>{}}>sim ≥ 0.85</Chip>
-                <Chip tone="blue" onRemove={()=>{}}>R$ &gt; 100k</Chip>
-                <Chip tone="blue" onRemove={()=>{}}>Vence em 60d</Chip>
-              </div>
+            <button
+              onClick={() => setPanelOpen(!panelOpen)}
+              style={{
+                all: "unset",
+                cursor: "pointer",
+                width: 22,
+                height: 22,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "var(--ink-3)",
+              }}
+            >
+              <span style={{transform: panelOpen ? "rotate(180deg)" : "none", transition: "transform 140ms", display: "inline-flex"}}>
+                <Icon.chevDown size={12}/>
+              </span>
+            </button>
+          </div>
+          {panelOpen && (
+            <div style={{borderTop: "1px solid var(--hairline-soft)", padding: "10px 10px 12px", fontSize: 11.5}}>
+              {activePanel === "filters" ? (
+                <div>
+                  <div style={{...sectionLabelStyle, margin: "2px 0 5px"}}>Nº PNCP</div>
+                  <Input size="sm" placeholder="ex.: 2024.12345.1.1.1" value={filterDraft.pncp} onChange={(value) => setFilterValue("pncp", value)}/>
 
-              <div style={{fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".05em", fontWeight: 600, margin: "6px 0 5px"}}>Geografia</div>
-              <div style={{display: "flex", flexWrap: "wrap", gap: 4}}>
-                {["SP","RJ","MG","CE","BA","DF","RS","PR","GO","PE","SC","AM","PA","MT"].map(uf => (
-                  <Chip key={uf} tone={["SP","CE","BA"].includes(uf) ? "blue" : "default"}>{uf}</Chip>
-                ))}
-              </div>
+                  <div style={{...sectionLabelStyle, margin: "12px 0 5px"}}>Órgão (contém)</div>
+                  <Input size="sm" placeholder="Nome do órgão" value={filterDraft.orgao} onChange={(value) => setFilterValue("orgao", value)}/>
 
-              <div style={{fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".05em", fontWeight: 600, margin: "12px 0 5px"}}>Valor estimado</div>
-              <div style={{fontSize: 11, color: "var(--ink-3)"}}>R$ 100.000 — R$ 500.000.000</div>
-              <div style={{background: "var(--surface-sunk)", height: 5, borderRadius: 3, position: "relative", marginTop: 6}}>
-                <div style={{position: "absolute", left: "18%", right: "22%", top: 0, bottom: 0, background: "var(--deep-blue)", borderRadius: 3}}/>
-                <div style={{position: "absolute", left: "calc(18% - 5px)", top: -3, width: 11, height: 11, borderRadius: "50%", background: "var(--paper)", border: "2px solid var(--deep-blue)"}}/>
-                <div style={{position: "absolute", left: "calc(78% - 5px)", top: -3, width: 11, height: 11, borderRadius: "50%", background: "var(--paper)", border: "2px solid var(--deep-blue)"}}/>
-              </div>
+                  <div style={{...sectionLabelStyle, margin: "12px 0 5px"}}>CNPJ do Órgão</div>
+                  <Input size="sm" placeholder="Somente números" mono value={filterDraft.cnpj} onChange={(value) => setFilterValue("cnpj", value)}/>
 
-              <div style={{fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".05em", fontWeight: 600, margin: "12px 0 5px"}}>Modalidade</div>
-              <div style={{display: "flex", flexDirection: "column", gap: 2, fontSize: 11.5}}>
-                {["Pregão Eletrônico (142)","Concorrência (38)","Dispensa (24)","RDC (10)"].map((m, i) => (
-                  <label key={i} style={{display: "flex", alignItems: "center", gap: 7, padding: "2px 0"}}>
-                    <input type="checkbox" defaultChecked={i<2}/> <span>{m}</span>
+                  <div style={{...sectionLabelStyle, margin: "12px 0 5px"}}>UASG do Órgão</div>
+                  <Input size="sm" placeholder="Ex.: 160123" mono value={filterDraft.uasg} onChange={(value) => setFilterValue("uasg", value)}/>
+
+                  <div style={{...sectionLabelStyle, margin: "12px 0 5px"}}>Estado (UF)</div>
+                  <div style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(9, minmax(0, 1fr))",
+                    gap: 4,
+                  }}>
+                    {filterUfOptions.map((uf) => {
+                      const active = filterDraft.uf.includes(uf);
+                      return (
+                        <button
+                          key={uf}
+                          onClick={() => toggleFilterListValue("uf", uf)}
+                          style={{
+                            all: "unset",
+                            cursor: "pointer",
+                            boxSizing: "border-box",
+                            height: 24,
+                            borderRadius: 999,
+                            border: `1px solid ${active ? "var(--blue-200)" : "var(--hairline)"}`,
+                            background: active ? "var(--blue-50)" : "var(--paper)",
+                            color: active ? "var(--deep-blue)" : "var(--ink-2)",
+                            fontSize: 11,
+                            fontWeight: 600,
+                            textAlign: "center",
+                            lineHeight: "22px",
+                          }}
+                        >
+                          {uf}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div style={{...sectionLabelStyle, margin: "12px 0 5px"}}>Municípios</div>
+                  <Input size="sm" placeholder="Municípios separados por vírgula" value={filterDraft.municipio} onChange={(value) => setFilterValue("municipio", value)}/>
+
+                  <div style={{...sectionLabelStyle, margin: "12px 0 5px"}}>Modalidade</div>
+                  <MultiSelectField
+                    options={filterModalidadeOptions}
+                    values={filterDraft.modalidade}
+                    onToggle={(value) => toggleFilterListValue("modalidade", value)}
+                    onToggleAll={() => toggleAllFilterListValues("modalidade", filterModalidadeOptions)}
+                    placeholder="Selecione modalidades"
+                  />
+
+                  <div style={{...sectionLabelStyle, margin: "12px 0 5px"}}>Modo de disputa</div>
+                  <MultiSelectField
+                    options={filterModoOptions}
+                    values={filterDraft.modo}
+                    onToggle={(value) => toggleFilterListValue("modo", value)}
+                    onToggleAll={() => toggleAllFilterListValues("modo", filterModoOptions)}
+                    placeholder="Selecione modos"
+                    maxHeight={140}
+                  />
+
+                  <div style={{...sectionLabelStyle, margin: "12px 0 5px"}}>Tipo de Período</div>
+                  <div style={{display: "flex", flexWrap: "wrap", gap: 4}}>
+                    {filterDateFieldOptions.map((option) => (
+                      <Chip key={option.value} tone={filterDraft.dateField === option.value ? "blue" : "default"} onClick={() => setFilterValue("dateField", option.value)}>
+                        {option.label}
+                      </Chip>
+                    ))}
+                  </div>
+
+                  <div style={{...sectionLabelStyle, margin: "12px 0 5px"}}>Período</div>
+                  <div style={{display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6}}>
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "6px 10px",
+                      background: "var(--paper)",
+                      borderRadius: "var(--r-md)",
+                      border: "1px solid var(--hairline)",
+                      boxShadow: "var(--shadow-xs)",
+                    }}>
+                      <input
+                        type="date"
+                        value={filterDraft.startDate}
+                        onChange={(event) => setFilterValue("startDate", event.target.value)}
+                        style={{
+                          all: "unset",
+                          flex: 1,
+                          minWidth: 0,
+                          fontSize: 12.5,
+                          fontFamily: "var(--font-body)",
+                          color: "var(--ink-1)",
+                        }}
+                      />
+                    </div>
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "6px 10px",
+                      background: "var(--paper)",
+                      borderRadius: "var(--r-md)",
+                      border: "1px solid var(--hairline)",
+                      boxShadow: "var(--shadow-xs)",
+                    }}>
+                      <input
+                        type="date"
+                        value={filterDraft.endDate}
+                        onChange={(event) => setFilterValue("endDate", event.target.value)}
+                        style={{
+                          all: "unset",
+                          flex: 1,
+                          minWidth: 0,
+                          fontSize: 12.5,
+                          fontFamily: "var(--font-body)",
+                          color: "var(--ink-1)",
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div style={{...sectionLabelStyle, margin: "2px 0 5px"}}>Tipo de busca</div>
+                  <div style={{display: "flex", flexWrap: "wrap", gap: 4}}>
+                    {typeOptions.map((option) => (
+                      <Chip key={option.value} tone={searchConfig.searchType === option.value ? "blue" : "default"} onClick={() => updateSearchConfig({ searchType: option.value })}>
+                        {option.label}
+                      </Chip>
+                    ))}
+                  </div>
+
+                  <div style={{...sectionLabelStyle, margin: "12px 0 5px"}}>Abordagem</div>
+                  <div style={{display: "flex", flexWrap: "wrap", gap: 4}}>
+                    {approachOptions.map((option) => (
+                      <Chip key={option.value} tone={searchConfig.searchApproach === option.value ? "blue" : "default"} onClick={() => updateSearchConfig({ searchApproach: option.value })}>
+                        {option.label}
+                      </Chip>
+                    ))}
+                  </div>
+
+                  <div style={{...sectionLabelStyle, margin: "12px 0 5px"}}>Relevancia</div>
+                  <div style={{display: "flex", flexWrap: "wrap", gap: 4}}>
+                    {relevanceOptions.map((option) => (
+                      <Chip key={option.value} tone={searchConfig.relevanceLevel === option.value ? "blue" : "default"} onClick={() => updateSearchConfig({ relevanceLevel: option.value })}>
+                        {option.label}
+                      </Chip>
+                    ))}
+                  </div>
+
+                  <div style={{...sectionLabelStyle, margin: "12px 0 5px"}}>Ordenacao</div>
+                  <div style={{display: "flex", flexWrap: "wrap", gap: 4}}>
+                    {sortOptions.map((option) => (
+                      <Chip key={option.value} tone={searchConfig.sortMode === option.value ? "blue" : "default"} onClick={() => updateSearchConfig({ sortMode: option.value })}>
+                        {option.label}
+                      </Chip>
+                    ))}
+                  </div>
+
+                  <div style={{...sectionLabelStyle, margin: "12px 0 5px"}}>Similaridade minima</div>
+                  <div style={{display: "flex", alignItems: "center", gap: 8}}>
+                    <span className="mono" style={{fontSize: 11, color: "var(--ink-2)", width: 42}}>{configSummary.minSimilarityLabel}</span>
+                    <input type="range" min={minSimilarityRange.min} max={minSimilarityRange.max} step={minSimilarityRange.step} value={searchConfig.minSimilarity} onChange={(event) => updateSearchConfig({ minSimilarity: Number(event.target.value || 0) })} style={{flex: 1, accentColor: "var(--deep-blue)"}}/>
+                  </div>
+
+                  <div style={{...sectionLabelStyle, margin: "12px 0 5px", opacity: isCategoryMode ? 1 : 0.45}}>Numero de categorias</div>
+                  <div style={{display: "flex", flexWrap: "wrap", gap: 4, opacity: isCategoryMode ? 1 : 0.45}}>
+                    {topCategoryOptions.map((value) => (
+                      <Chip
+                        key={value}
+                        tone={searchConfig.topCategoriesLimit === value ? "blue" : "default"}
+                        onClick={() => {
+                          if (!isCategoryMode) return;
+                          updateSearchConfig({ topCategoriesLimit: value });
+                        }}
+                      >
+                        {value}
+                      </Chip>
+                    ))}
+                  </div>
+
+                  <div style={{...sectionLabelStyle, margin: "12px 0 5px"}}>Resultados na tabela</div>
+                  <div style={{display: "flex", flexWrap: "wrap", gap: 4}}>
+                    {limitPresets.map((value) => (
+                      <Chip key={value} tone={searchConfig.limit === value ? "blue" : "default"} onClick={() => updateSearchConfig({ limit: value })}>
+                        {value}
+                      </Chip>
+                    ))}
+                  </div>
+
+                  <label style={{display: "flex", alignItems: "center", gap: 8, marginTop: 14}}>
+                    <input type="checkbox" checked={searchConfig.filterExpired} onChange={(event) => updateSearchConfig({ filterExpired: event.target.checked })}/>
+                    <span style={sectionLabelStyle}>Filtrar encerrados</span>
                   </label>
-                ))}
-              </div>
-
-              <div style={{fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".05em", fontWeight: 600, margin: "12px 0 5px"}}>Palavras-chave</div>
-              <div style={{display: "flex", flexDirection: "column", gap: 6}}>
-                <Input size="sm" placeholder="Inclusão" icon={<Icon.plus size={12}/>} value="alimentação, refeições"/>
-                <Input size="sm" placeholder="Exclusão" icon={<Icon.close size={12}/>} value="consultoria, ti"/>
-              </div>
-
-              <div style={{fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".05em", fontWeight: 600, margin: "12px 0 5px"}}>Aderência ao perfil</div>
-              <Input size="sm" mono placeholder="CNPJ" value="14.024.944/0001-03"/>
-
-              <div style={{display: "flex", gap: 6, marginTop: 10}}>
-                <Button kind="ghost" size="sm" style={{flex: 1, justifyContent: "center"}}>Limpar</Button>
-                <Button kind="primary" size="sm" style={{flex: 2, justifyContent: "center"}}>Aplicar</Button>
-              </div>
+                </div>
+              )}
             </div>
           )}
         </div>

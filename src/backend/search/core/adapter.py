@@ -2,10 +2,50 @@ from __future__ import annotations
 
 import importlib
 import time
+from datetime import datetime
+from threading import Lock
 from typing import Any, Dict, List, Tuple
 
 from .bootstrap import bootstrap_v1_search_environment
 from .contracts import SearchRequest, SearchResponse, SearchResultItem
+from .ui_filters import build_sql_conditions_from_ui_filters, has_any_ui_filter
+
+
+BASE_SEARCH_TYPE_CODES = {
+    "semantic": 1,
+    "keyword": 2,
+    "hybrid": 3,
+}
+
+BASE_SEARCH_TYPE_NAMES = {
+    "semantic": "Semantica",
+    "keyword": "Palavras-chave",
+    "hybrid": "Hibrida",
+}
+
+APPROACH_NAMES = {
+    "direct": "Direta",
+    "correspondence": "Correspondencia de Categoria",
+    "category_filtered": "Filtro de Categoria",
+}
+
+RELEVANCE_NAMES = {
+    1: "Sem filtro",
+    2: "Flexivel",
+    3: "Restritivo",
+}
+
+SORT_NAMES = {
+    1: "Similaridade",
+    2: "Data (Encerramento)",
+    3: "Valor (Estimado)",
+}
+
+APPROACH_CODES = {
+    "direct": 1,
+    "correspondence": 2,
+    "category_filtered": 3,
+}
 
 
 class SearchAdapter:
@@ -13,6 +53,7 @@ class SearchAdapter:
         self._env_info: Dict[str, str] | None = None
         self._core: Any = None
         self._processor_cls: Any = None
+        self._run_lock = Lock()
 
     def _load_modules(self) -> None:
         if self._core is not None and self._processor_cls is not None:
@@ -24,12 +65,7 @@ class SearchAdapter:
         self._processor_cls = getattr(preproc, "SearchQueryProcessor")
 
     def _search_type_code(self, search_type: str) -> int:
-        mapping = {
-            "semantic": 1,
-            "keyword": 2,
-            "hybrid": 3,
-        }
-        return mapping[search_type]
+        return BASE_SEARCH_TYPE_CODES[search_type]
 
     def _extract_search_text(self, value: Any) -> str:
         if isinstance(value, dict):
@@ -40,6 +76,35 @@ class SearchAdapter:
                 or ""
             )
         return str(value or "")
+
+    def _resolve_where_sql(self, request: SearchRequest) -> List[str]:
+        combined: List[str] = []
+        seen: set[str] = set()
+        groups = (
+            build_sql_conditions_from_ui_filters(request.ui_filters),
+            request.where_sql,
+        )
+        for group in groups:
+            for condition in group or []:
+                text = str(condition or "").strip()
+                if not text or text in seen:
+                    continue
+                seen.add(text)
+                combined.append(text)
+        return combined
+
+    def _preprocessing_filters(self, request: SearchRequest) -> List[str]:
+        combined: List[str] = []
+        seen: set[str] = set()
+        groups = (request.filters, request.where_sql)
+        for group in groups:
+            for item in group or []:
+                text = str(item or "").strip()
+                if not text or text in seen:
+                    continue
+                seen.add(text)
+                combined.append(text)
+        return combined
 
     def _should_bypass_preprocessing(self, request: SearchRequest) -> bool:
         if request.filters or request.where_sql:
@@ -82,12 +147,13 @@ class SearchAdapter:
         return len(tokens) <= 5
 
     def _preprocess(self, request: SearchRequest) -> Tuple[Any, Dict[str, Any]]:
+        effective_filters = self._preprocessing_filters(request)
         if not request.preprocess:
             return request.query, {
                 "enabled": False,
                 "search_terms": request.query,
-                "sql_conditions": [],
-                "filters": request.filters,
+                "sql_conditions": list(request.where_sql),
+                "filters": effective_filters,
             }
 
         if self._should_bypass_preprocessing(request):
@@ -97,22 +163,128 @@ class SearchAdapter:
                 "skip_reason": "simple_query_bypass",
                 "search_terms": request.query,
                 "negative_terms": "",
-                "sql_conditions": [],
-                "filters": request.filters,
+                "sql_conditions": list(request.where_sql),
+                "filters": effective_filters,
                 "preprocessing_version": "bypass",
             }
 
         processor = self._processor_cls()
         if request.prefer_preproc_v2:
-            processed = processor.process_query_v2(request.query, request.filters)
+            processed = processor.process_query_v2(request.query, effective_filters)
             processed["preprocessing_version"] = "v2"
         else:
             processed = processor.process_query(request.query)
             processed["preprocessing_version"] = "v1"
-            if request.filters:
-                processed["filters"] = request.filters
+            if effective_filters:
+                processed["filters"] = effective_filters
+        processed_sql = [str(item).strip() for item in list(processed.get("sql_conditions") or []) if str(item).strip()]
+        for condition in request.where_sql:
+            if condition not in processed_sql:
+                processed_sql.append(condition)
+        processed["sql_conditions"] = processed_sql
         processed["enabled"] = True
         return processed, processed
+
+    def _coerce_relevance_level(self, request: SearchRequest) -> int:
+        value = int(request.relevance_level or 1)
+        return value if value in (1, 2, 3) else 1
+
+    def _coerce_sort_mode(self, request: SearchRequest) -> int:
+        value = int(request.sort_mode or 1)
+        return value if value in (1, 2, 3) else 1
+
+    def _coerce_min_similarity(self, request: SearchRequest) -> float:
+        value = float(request.min_similarity or 0.0)
+        return min(1.0, max(0.0, value))
+
+    def _search_approach_key(self, request: SearchRequest) -> str:
+        search_type = request.normalized_search_type()
+        if search_type == "correspondence":
+            return "correspondence"
+        if search_type == "category_filtered":
+            return "category_filtered"
+        return "direct"
+
+    def _base_search_type(self, request: SearchRequest) -> str:
+        search_type = request.normalized_search_type()
+        if search_type in BASE_SEARCH_TYPE_CODES:
+            return search_type
+        return request.normalized_category_base()
+
+    def _search_meta_labels(self, request: SearchRequest) -> Dict[str, str]:
+        base_type = self._base_search_type(request)
+        approach_key = self._search_approach_key(request)
+        return {
+            "type_name": BASE_SEARCH_TYPE_NAMES.get(base_type, "Semantica"),
+            "approach_name": APPROACH_NAMES.get(approach_key, "Direta"),
+        }
+
+    def _get_relevance_level(self) -> int:
+        if self._core is None or not hasattr(self._core, "get_relevance_filter_status"):
+            return 1
+        try:
+            status = self._core.get_relevance_filter_status() or {}
+            return int(status.get("level") or 1)
+        except Exception:
+            return 1
+
+    def _set_relevance_level(self, level: int) -> None:
+        if self._core is None or not hasattr(self._core, "set_relevance_filter_level"):
+            return
+        try:
+            self._core.set_relevance_filter_level(level)
+        except Exception:
+            pass
+
+    def _sql_only_search(self, sql_conditions: List[str], limit: int, filter_expired: bool) -> List[Dict[str, Any]]:
+        try:
+            database = importlib.import_module("gvg_database")
+            schema = importlib.import_module("gvg_schema")
+        except Exception:
+            return []
+
+        db_fetch_all = getattr(database, "db_fetch_all", None)
+        get_contratacao_core_columns = getattr(schema, "get_contratacao_core_columns", None)
+        normalize_contratacao_row = getattr(schema, "normalize_contratacao_row", None)
+        project_result_for_output = getattr(schema, "project_result_for_output", None)
+        if not all((db_fetch_all, get_contratacao_core_columns, normalize_contratacao_row, project_result_for_output)):
+            return []
+
+        where_parts = [f"( {str(condition).strip()} )" for condition in sql_conditions if str(condition).strip()]
+        if filter_expired:
+            where_parts.append(
+                "(to_date(NULLIF(c.data_encerramento_proposta,''),'YYYY-MM-DD') >= current_date "
+                "OR c.data_encerramento_proposta IS NULL OR c.data_encerramento_proposta='')"
+            )
+        where_sql = ("\nWHERE " + "\n  AND ".join(where_parts)) if where_parts else ""
+        sql = (
+            "SELECT\n  "
+            + ",\n  ".join(get_contratacao_core_columns("c"))
+            + "\nFROM contratacao c"
+            + where_sql
+            + "\nLIMIT %s"
+        )
+
+        try:
+            rows = db_fetch_all(sql, (int(limit or 30),), as_dict=True, ctx="v2.search.sql_only")
+        except Exception:
+            return []
+
+        results: List[Dict[str, Any]] = []
+        for record in rows or []:
+            try:
+                details = project_result_for_output(normalize_contratacao_row(record))
+                pncp = details.get("numero_controle_pncp")
+                results.append({
+                    "id": pncp,
+                    "numero_controle": pncp,
+                    "similarity": 0.0,
+                    "rank": 0,
+                    "details": details,
+                })
+            except Exception:
+                continue
+        return results
 
     def _dispatch_search(self, request: SearchRequest, prepared_query: Any) -> Tuple[List[Dict[str, Any]], float, Dict[str, Any]]:
         search_type = request.normalized_search_type()
@@ -163,6 +335,11 @@ class SearchAdapter:
             "category_search_base": base_type,
         }
 
+        if not top_categories and request.where_sql:
+            sql_only_results = self._sql_only_search(request.where_sql, request.limit, request.filter_expired)
+            meta["filter_route"] = "sql-only"
+            return sql_only_results, 1.0 if sql_only_results else 0.0, meta
+
         if search_type == "correspondence":
             results, confidence, search_meta = self._core.correspondence_search(
                 self._extract_search_text(prepared_query),
@@ -185,6 +362,114 @@ class SearchAdapter:
         )
         meta.update(search_meta)
         return results, confidence, meta
+
+    def _apply_relevance_if_needed(
+        self,
+        request: SearchRequest,
+        prepared_query: Any,
+        raw_results: List[Dict[str, Any]],
+        meta: Dict[str, Any],
+    ) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
+        relevance_level = self._coerce_relevance_level(request)
+        if relevance_level <= 1:
+            return raw_results, {"filter_applied": False, "level": relevance_level}
+
+        if request.normalized_search_type() != "correspondence":
+            return raw_results, {"filter_applied": True, "level": relevance_level}
+
+        if not raw_results or self._core is None or not hasattr(self._core, "apply_relevance_filter"):
+            return raw_results, {"filter_applied": False, "level": relevance_level}
+
+        labels = self._search_meta_labels(request)
+        try:
+            filtered, relevance_meta = self._core.apply_relevance_filter(
+                raw_results,
+                self._extract_search_text(prepared_query),
+                {
+                    "search_type": labels["type_name"],
+                    "search_approach": labels["approach_name"],
+                },
+            )
+            return filtered or raw_results, relevance_meta or {"filter_applied": False, "level": relevance_level}
+        except Exception as exc:
+            return raw_results, {
+                "filter_applied": False,
+                "level": relevance_level,
+                "reason": str(exc),
+            }
+
+    def _apply_min_similarity(self, raw_results: List[Dict[str, Any]], threshold: float) -> List[Dict[str, Any]]:
+        if threshold <= 0:
+            return list(raw_results)
+
+        filtered = [
+            item for item in list(raw_results)
+            if float(item.get("similarity") or 0.0) >= threshold
+        ]
+        for index, item in enumerate(filtered, start=1):
+            item["rank"] = index
+        return filtered
+
+    def _parse_date_value(self, value: Any) -> Any:
+        if not value:
+            return None
+        text = str(value).strip()
+        if not text:
+            return None
+        for fmt in ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%d/%m/%Y"):
+            try:
+                return datetime.strptime(text[:10], fmt).date()
+            except Exception:
+                continue
+        return None
+
+    def _to_float(self, value: Any) -> float | None:
+        if value in (None, ""):
+            return None
+        try:
+            return float(value)
+        except Exception:
+            return None
+
+    def _sort_results(self, raw_results: List[Dict[str, Any]], sort_mode: int) -> List[Dict[str, Any]]:
+        results = list(raw_results)
+        if sort_mode == 1:
+            ordered = sorted(results, key=lambda item: float(item.get("similarity") or 0.0), reverse=True)
+        elif sort_mode == 2:
+            def date_key(item: Dict[str, Any]) -> tuple[int, Any]:
+                details = dict(item.get("details") or {})
+                value = (
+                    details.get("data_encerramento_proposta")
+                    or details.get("dataencerramentoproposta")
+                    or details.get("dataEncerramentoProposta")
+                    or details.get("dataEncerramento")
+                )
+                parsed = self._parse_date_value(value)
+                return (0, parsed) if parsed is not None else (1, datetime.max.date())
+
+            ordered = sorted(results, key=date_key)
+        elif sort_mode == 3:
+            def value_key(item: Dict[str, Any]) -> float:
+                details = dict(item.get("details") or {})
+                value = self._to_float(
+                    details.get("valor_total_estimado")
+                    or details.get("valortotalestimado")
+                    or details.get("valorTotalEstimado")
+                    or details.get("valor_total_homologado")
+                    or details.get("valortotalhomologado")
+                    or details.get("valorTotalHomologado")
+                    or details.get("valorfinal")
+                    or details.get("valorFinal")
+                )
+                return value if value is not None else 0.0
+
+            ordered = sorted(results, key=value_key, reverse=True)
+        else:
+            ordered = results
+
+        for index, item in enumerate(ordered, start=1):
+            item["rank"] = index
+        return ordered
 
     def _normalize_result(self, raw_item: Dict[str, Any]) -> SearchResultItem:
         details = dict(raw_item.get("details") or {})
@@ -220,9 +505,80 @@ class SearchAdapter:
             if request.sql_debug:
                 self._core.set_sql_debug(True)
 
-            prepared_query, preprocessing = self._preprocess(request)
-            raw_results, confidence, meta = self._dispatch_search(request, prepared_query)
+            request.where_sql = self._resolve_where_sql(request)
+            relevance_level = self._coerce_relevance_level(request)
+            sort_mode = self._coerce_sort_mode(request)
+            min_similarity = self._coerce_min_similarity(request)
+            labels = self._search_meta_labels(request)
+            approach_key = self._search_approach_key(request)
+            preprocessing: Dict[str, Any]
+            if not request.query and request.where_sql:
+                prepared_query = request.query
+                preprocessing = {
+                    "enabled": False,
+                    "skipped": True,
+                    "skip_reason": "filter_only_sql",
+                    "search_terms": "",
+                    "negative_terms": "",
+                    "sql_conditions": list(request.where_sql),
+                    "filters": self._preprocessing_filters(request),
+                    "preprocessing_version": "sql-only",
+                }
+                raw_results = self._sql_only_search(request.where_sql, request.limit, request.filter_expired)
+                confidence = 1.0 if raw_results else 0.0
+                meta = {
+                    "filter_route": "sql-only",
+                    "sql_filter_count": len(request.where_sql),
+                    "ui_filters_active": has_any_ui_filter(request.ui_filters),
+                }
+                relevance_meta = {"filter_applied": False, "level": relevance_level, "reason": "filter_only_sql"}
+                min_similarity = 0.0
+            else:
+                prepared_query, preprocessing = self._preprocess(request)
+                with self._run_lock:
+                    previous_relevance = self._get_relevance_level()
+                    self._set_relevance_level(relevance_level)
+                    try:
+                        raw_results, confidence, meta = self._dispatch_search(request, prepared_query)
+                        raw_results, relevance_meta = self._apply_relevance_if_needed(
+                            request,
+                            prepared_query,
+                            raw_results,
+                            meta,
+                        )
+                    finally:
+                        self._set_relevance_level(previous_relevance)
+
+            raw_results = self._apply_min_similarity(raw_results, min_similarity)
+            raw_results = self._sort_results(raw_results, sort_mode)
             items = [self._normalize_result(item) for item in raw_results]
+
+            meta = dict(meta or {})
+            meta.update({
+                "search": self._search_type_code(self._base_search_type(request)),
+                "approach": APPROACH_CODES.get(approach_key, 1),
+                "relevance": relevance_level,
+                "order": sort_mode,
+                "sort_mode": sort_mode,
+                "sort_label": SORT_NAMES.get(sort_mode, SORT_NAMES[1]),
+                "max_results": int(request.limit or 0),
+                "top_categories": int(request.top_categories_limit or 0),
+                "top_categories_limit": int(request.top_categories_limit or 0),
+                "filter_expired": bool(request.filter_expired),
+                "min_similarity": min_similarity,
+                "sql_filter_count": len(request.where_sql),
+                "ui_filters_active": has_any_ui_filter(request.ui_filters),
+                "relevance_filter": relevance_meta,
+                "column_config": {
+                    "type": labels["type_name"],
+                    "approach": labels["approach_name"],
+                    "relevance": RELEVANCE_NAMES.get(relevance_level, RELEVANCE_NAMES[1]),
+                    "sort": SORT_NAMES.get(sort_mode, SORT_NAMES[1]),
+                    "top_categories_count": int(request.top_categories_limit or 0),
+                    "max_results": int(request.limit or 0),
+                    "min_similarity": min_similarity,
+                },
+            })
 
             if self._env_info:
                 meta = {**meta, **self._env_info}

@@ -11,6 +11,7 @@ const Icon = {
   plus:        (p) => <I {...p}><path d="M10 4v12M4 10h12"/></I>,
   close:       (p) => <I {...p}><path d="m5 5 10 10M15 5 5 15"/></I>,
   filter:      (p) => <I {...p}><path d="M3 5h14M5.5 10h9M8 15h4"/></I>,
+  gear:        (p) => <I {...p}><circle cx="10" cy="10" r="2.3"/><path d="M10 3.5v1.7M10 14.8v1.7M5.4 5.4l1.2 1.2M13.4 13.4l1.2 1.2M3.5 10h1.7M14.8 10h1.7M5.4 14.6l1.2-1.2M13.4 6.6l1.2-1.2"/><circle cx="10" cy="10" r="5.4"/></I>,
   star:        (p) => <I {...p}><path d="m10 3 2.1 4.4 4.9.7-3.5 3.4.8 4.8L10 14l-4.3 2.3.8-4.8L3 8.1l4.9-.7L10 3Z"/></I>,
   starFill:    (p) => <I {...p} s={0}><path fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" d="m10 3 2.1 4.4 4.9.7-3.5 3.4.8 4.8L10 14l-4.3 2.3.8-4.8L3 8.1l4.9-.7L10 3Z"/></I>,
   bell:        (p) => <I {...p}><path d="M5 13h10M6.5 13V9a3.5 3.5 0 0 1 7 0v4M9 16h2"/></I>,
