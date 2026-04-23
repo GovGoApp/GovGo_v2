@@ -211,7 +211,7 @@ Tambem foi criada uma passagem de busca entre `#/busca/detalhe` e `#/busca`: qua
 As proximas prioridades concretas sao estas:
 
 1. refinar a UX da tela real de Busca agora que ela ja consulta o backend em tempo real;
-2. decidir como a tela de detalhe da Busca vai consumir os resultados reais em vez do mock visual atual;
+2. enriquecer `#/busca/detalhe` com dados complementares reais por PNCP, especialmente itens, documentos e link oficial;
 3. manter `homologation/` apenas como laboratorio legado e referencia historica, sem dependencia runtime do fluxo real do v2;
 4. estabilizar logs, tratamento de erro e estados vazios da integracao frontend-backend da Busca;
 5. so depois expandir o mesmo padrao para os demais modulos homologados.
@@ -221,8 +221,8 @@ As proximas prioridades concretas sao estas:
 Se a retomada acontecer em um novo prompt, a IA deve continuar nesta ordem:
 
 1. continuar evoluindo a Busca a partir da pagina real `#/busca`, ja conectada ao Search em `src/`;
-2. definir o fluxo da tela `#/busca/detalhe` com dados reais ou estado compartilhado entre pagina de lista e detalhe;
-3. reforcar estados de erro, carregamento e vazios da UX da Busca no frontend real;
+2. reforcar estados de erro, carregamento e vazios da UX da Busca no frontend real;
+3. criar endpoint/contrato de detalhe por `numero_controle_pncp` para alimentar itens, documentos e metadados de `#/busca/detalhe`;
 4. manter a validacao sempre pelo browser externo no launcher raiz `run.py` e pelo endpoint `POST /api/search`;
 5. so depois seguir para refinamentos adicionais ou para o proximo modulo homologado.
 
@@ -292,8 +292,8 @@ Se a retomada acontecer em um novo prompt, a IA deve continuar nesta ordem:
 
 ## O que ainda falta iniciar de verdade
 
-- correcao estrutural do gargalo compartilhado do Search;
-- logs permanentes de performance no core da Busca;
+- endpoint real de detalhe da Busca por `numero_controle_pncp`, incluindo itens, documentos e metadados oficiais;
+- logs permanentes de performance no fluxo real da Busca;
 - definicao da stack final do frontend;
 - internalizacao do shell real em `src/`, sem depender diretamente de `design/govgo/shell.jsx`;
 - internalizacao real da tela Inicio em `src/pages/inicio` e `src/features/inicio`;
