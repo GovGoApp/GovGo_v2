@@ -202,6 +202,10 @@ Tambem foi criada a ponte minima do frontend em `src/services/contracts/searchCo
 
 Essa integracao ja foi validada ponta a ponta no caminho real do v2: o `run.py` subiu o frontend, o `POST /api/search` respondeu com `source = v1.gvg_search_core`, `result_count = 10`, `elapsed_ms = 506` e `search_root` apontando para `src/backend/search/v1_copy/gvg_browser`.
 
+Na rodada de 2026-04-23, a tela `#/busca/detalhe` deixou de depender silenciosamente de `DATA.editais` como mock. A Busca agora normaliza e guarda a ultima resposta real em `sessionStorage`, a lista abre o detalhe por rota usando o identificador do edital quando disponivel, e a pagina de detalhe recupera o edital real da ultima consulta ou mostra um estado vazio orientando o retorno para a Busca.
+
+Tambem foi criada uma passagem de busca entre `#/busca/detalhe` e `#/busca`: quando o usuario executa uma nova consulta pelo trilho lateral estando no detalhe, a consulta fica pendente no estado compartilhado e e consumida pela pagina de Busca ao voltar para a lista.
+
 ## Prioridades imediatas
 
 As proximas prioridades concretas sao estas:
