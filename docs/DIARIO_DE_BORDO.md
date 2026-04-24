@@ -37,7 +37,7 @@ Este documento deve ser atualizado sempre que houver novidade relevante, especia
 
 ### Data da ultima consolidacao
 
-2026-04-23
+2026-04-24
 
 ### Documento principal do projeto
 
@@ -86,37 +86,37 @@ Este documento deve ser atualizado sempre que houver novidade relevante, especia
 
 ### Fase macro
 
-Fase 0 de preparacao da migracao.
+Fase 1 de implementacao real da Busca e do detalhe do edital.
 
 ### Estado real atual
 
-Ainda estamos em documentacao, consolidacao de regras e definicao de como executar.
+O v2 ja tem Busca real operando no browser externo via `run.py`, em `http://127.0.0.1:8765/src/app/boot/index.html#/busca`, com backend de Search copiado para `src/backend/search/` e sem dependencia runtime de `homologation/`.
 
-A implementacao real do frontend foi iniciada de forma minima em `src/`, ainda derivada diretamente dos modos e componentes de `design/govgo` e dos estilos em `design/css`.
+A tela real de Busca foi bastante evoluida sobre a base canonica de `design/govgo`: o trilho lateral de busca, a area de resultados, as tabs de resultado e o detalhe do edital ja funcionam com dados reais, persistencia local e comunicacao com o backend em `src/`.
 
-Foi criada a estrutura inicial do frontend real em `src/`, com separacao entre `app/`, `design-system/`, `pages/`, `features/`, `services/`, `assets/`, `shared/` e `mocks/`.
+O `run.py` deixou de ser apenas um servidor estatico. Hoje ele serve a UI, expone os endpoints da Busca e do detalhe, detecta instancias antigas/incompativeis na porta `8765` e foi ajustado para nao quebrar o fluxo normal de `Ctrl+C` no Windows.
 
-Tambem foram criados os documentos `docs/ESTRUTURA_FRONTEND_V2.md` e `docs/MAPA_TOKENS_RECIPES_V2.md` para fixar a traducao de `design/` para a arquitetura real da v2 e a separacao entre tokens, recipes, estilos globais e helpers de pagina.
+A Busca real ja suporta:
 
-Foi criada uma entrada minima da app real em `src/app/boot/index.html`, com roteamento simples em `src/app/router/routes.jsx`, shell em `src/app/shell/AppShell.jsx` e wrappers de paginas em `src/pages/` para Inicio, Busca, Busca Detalhe, Empresas, Radar, Relatorios e Design System.
+- configuracao de busca persistida;
+- filtros reais persistidos e aplicados ao SQL;
+- busca apenas por filtro, sem texto, quando houver filtro ativo;
+- novas buscas abrindo novas tabs;
+- persistencia das tabs e da aba ativa ao trocar de modo ou recarregar a pagina;
+- ordenacao local da tabela por similaridade, valor e encerramento.
 
-Para operacao local da UI no browser externo, foi criado o launcher raiz `run.py`, que serve o repositorio em `http://127.0.0.1:8765` e abre a pagina inicial em `http://127.0.0.1:8765/src/app/boot/index.html#/inicio`.
+O detalhe do edital em `#/busca/detalhe` deixou de depender de mock visual. Ele hoje tem:
 
-A homologacao tecnica operacional do Search do v1 foi validada no laboratorio `homologation/search/` do v2, com adapter, runner CMD, smoke runner e tester em browser.
+- cabecalho redesenhado com dados reais do edital;
+- aba `Itens` com dados reais da base;
+- aba `Documentos` com lista real de documentos;
+- visualizacao de Markdown por documento;
+- resumo consolidado dos documentos no card `Resumo`;
+- persistencia local de itens, documentos, Markdown e resumo consolidado por PNCP.
 
-O smoke da Busca fechou com 5 de 5 casos aprovados usando o `python` ja existente na maquina, sem criar novo ambiente.
+O pipeline homologado de documentos em `homologation/documents/browser/app.py` e `src/backend/search/api/documents_homologation_runtime.py` ja esta costurado ao fluxo real do detalhe do edital. Na abertura do edital, o v2 pode iniciar automaticamente a geracao do Markdown do documento selecionado e do resumo consolidado.
 
-O bootstrap da Busca no v2 foi ajustado para carregar `v2/.env` e manter a prioridade correta entre os `site-packages` do Anaconda e do usuario.
-
-O core usado pela Busca no laboratorio passou a existir em copia local dentro de `homologation/search/v1_copy/gvg_browser`, e o bootstrap do v2 agora aponta primeiro para essa copia local.
-
-Foi feita uma rodada de otimizacao na copia local da Busca: bypass de pre-processamento simples no adapter, reducao do universo vetorial padrao da busca semantica e troca da busca hibrida para estrategia de fusao rapida por padrao.
-
-Com isso, o smoke da Busca continuou em 5 de 5 e os tempos cairam para aproximadamente: semantic 14,7s, keyword 1,5s, hybrid 7,6s, correspondence 3,5s e category-filtered 8,5s.
-
-O tester em browser da Busca foi reestruturado como bancada de comparacao, com coluna de configuracao, coluna de resultados, comparacao do mesmo input entre modelos diferentes e persistencia automatica dos testes em `homologation/search/tests/`.
-
-Foi iniciado o laboratorio de homologacao de Documentos em `homologation/documents/`, com copia local do core `gvg_documents.py` e dependencias diretas dentro de `homologation/documents/v1_copy/core/`.
+A UI continua derivada principalmente de `design/govgo/shell.jsx` e `design/govgo/mode_oportunidades_detail.jsx`, enquanto a camada real de estado, contratos e APIs esta em `src/features/`, `src/services/` e `src/backend/`.
 
 O bootstrap de Documentos foi configurado para apontar primeiro para a copia local do v2 e gravar artefatos em `homologation/documents/artifacts/`.
 
@@ -210,21 +210,21 @@ Tambem foi criada uma passagem de busca entre `#/busca/detalhe` e `#/busca`: qua
 
 As proximas prioridades concretas sao estas:
 
-1. refinar a UX da tela real de Busca agora que ela ja consulta o backend em tempo real;
-2. enriquecer `#/busca/detalhe` com dados complementares reais por PNCP, especialmente itens, documentos e link oficial;
-3. manter `homologation/` apenas como laboratorio legado e referencia historica, sem dependencia runtime do fluxo real do v2;
-4. estabilizar logs, tratamento de erro e estados vazios da integracao frontend-backend da Busca;
-5. so depois expandir o mesmo padrao para os demais modulos homologados.
+1. estabilizar a UX da aba `Documentos` no detalhe do edital, especialmente scroll, loading, renderizacao do Markdown e estados de reabertura;
+2. revisar e corrigir textos com encoding quebrado ainda remanescentes em `design/govgo/mode_oportunidades_detail.jsx` e correlatos;
+3. continuar reduzindo dependencia direta de `design/govgo/*.jsx`, internalizando gradualmente o que hoje so existe no shell e no detalhe;
+4. reforcar logs, tratamento de erro e observabilidade do fluxo de Markdown e resumo consolidado de documentos;
+5. so depois expandir o mesmo padrao real para os demais modulos homologados.
 
 ## Ordem pratica que deve ser seguida agora
 
 Se a retomada acontecer em um novo prompt, a IA deve continuar nesta ordem:
 
-1. continuar evoluindo a Busca a partir da pagina real `#/busca`, ja conectada ao Search em `src/`;
-2. reforcar estados de erro, carregamento e vazios da UX da Busca no frontend real;
-3. criar endpoint/contrato de detalhe por `numero_controle_pncp` para alimentar itens, documentos e metadados de `#/busca/detalhe`;
-4. manter a validacao sempre pelo browser externo no launcher raiz `run.py` e pelo endpoint `POST /api/search`;
-5. so depois seguir para refinamentos adicionais ou para o proximo modulo homologado.
+1. continuar evoluindo a tela real de Busca e o detalhe do edital a partir de `#/busca` e `#/busca/detalhe`, ja conectados ao backend em `src/`;
+2. estabilizar a aba `Documentos` com foco em scroll interno, exibicao de Markdown, cache e reabertura sem regressao;
+3. revisar encoding, textos e pequenos detalhes visuais nas telas reais antes de abrir novas frentes grandes;
+4. manter a validacao sempre pelo browser externo no launcher raiz `run.py` e pelos endpoints reais do backend local;
+5. so depois seguir para novos modulos homologados ou para internalizacao adicional do shell em `src/`.
 
 ## Documentos que mandam em cada assunto
 
@@ -292,25 +292,24 @@ Se a retomada acontecer em um novo prompt, a IA deve continuar nesta ordem:
 
 ## O que ainda falta iniciar de verdade
 
-- endpoint real de detalhe da Busca por `numero_controle_pncp`, incluindo itens, documentos e metadados oficiais;
 - logs permanentes de performance no fluxo real da Busca;
 - definicao da stack final do frontend;
 - internalizacao do shell real em `src/`, sem depender diretamente de `design/govgo/shell.jsx`;
 - internalizacao real da tela Inicio em `src/pages/inicio` e `src/features/inicio`;
 - substituicao gradual dos wrappers que ainda reutilizam diretamente `design/govgo`;
-- integracao real do primeiro modulo do v1.
-- estabilizacao do comportamento do assistant de resumo quando recebe Markdown local curto.
+- estabilizacao final da aba `Documentos` no detalhe do edital;
+- revisao ampla de encoding e strings quebradas nos arquivos ainda muito editados em `design/govgo`;
 - ampliacao dos testes end-to-end do laboratorio de Documentos sobre as amostras locais ja geradas.
 
 ## Proximo passo oficial
 
 O proximo passo oficial do projeto e:
 
-refinar a UX da tela real de Busca em `#/busca`, agora conectada ao backend em `src/`, com foco em estados de carregamento, erro, vazio, filtros e acoes da lista.
+estabilizar a aba `Documentos` do detalhe do edital em `#/busca/detalhe`, com foco em scroll interno, renderizacao do Markdown, reabertura sem regressao e consistencia visual com a homologacao de Documentos.
 
 Logo em seguida:
 
-criar o contrato de detalhe por `numero_controle_pncp` para que `#/busca/detalhe` deixe de depender apenas do item selecionado na ultima busca e passe a buscar itens, documentos e metadados oficiais sob demanda.
+limpar textos com encoding quebrado, consolidar pequenos ajustes de layout do detalhe e seguir na internalizacao gradual do shell e do detalhe para `src/`.
 
 ## Regra de atualizacao deste diario
 
@@ -322,7 +321,11 @@ Sempre que houver novidade relevante, atualizar pelo menos estes blocos:
 4. proximo passo oficial;
 5. resumo do que mudou.
 
+A partir de 2026-04-24, o registro do diario deve ser separado por data dentro do bloco de resumo, usando subsecoes no formato `### AAAA-MM-DD`.
+
 ## Resumo do que mudou nesta consolidacao
+
+### Historico consolidado ate 2026-04-23
 
 - a pagina real `#/busca/detalhe` passou a consumir o edital selecionado da ultima Busca real via estado compartilhado em `sessionStorage`, deixando de usar mock visual como fallback silencioso.
 - a lista de Busca passou a abrir o detalhe por rota e identificador do edital, preservando o padrao visual existente do design.
@@ -367,5 +370,29 @@ Sempre que houver novidade relevante, atualizar pelo menos estes blocos:
 - foi consolidada no diario a regra de handoff com o usuario: sempre entregar prompt de continuidade e link clicavel do arquivo principal a abrir.
 - o browser tester de Documentos passou a oferecer escolha explicita entre URL/caminho, upload local real e documento escolhido da listagem do PNCP.
 - foi criado e validado um teste dedicado de selecao de fonte em `homologation/documents/cmd/test_source_selection.py`, com relatorio em `homologation/documents/artifacts/source_selection_test_latest.json`.
+
+### 2026-04-24
+
+- a Busca real em `#/busca` foi amplamente refinada na UI, incluindo o trilho lateral de busca, o box de configuracao, o box de filtros e a organizacao das tabs de resultado.
+- a configuracao de busca do v1 homologado foi trazida para o v2 real, com `tipo`, `abordagem`, `relevancia`, `ordenacao`, `numero de categorias`, `resultados na tabela`, `filtrar encerrados` e `similaridade minima`.
+- os filtros homologados do v1 foram ligados ao backend real do v2, com payload estruturado, traducao para SQL e suporte a busca apenas por filtros quando houver filtros ativos.
+- a Busca passou a persistir tabs, aba ativa, resultados e tabs de detalhe no browser, mantendo contexto mesmo ao trocar de modo ou recarregar a pagina.
+- cada nova busca agora abre uma nova aba de resultado, e a abertura de um edital cria uma nova aba de detalhe ao lado da aba de origem.
+- o `run.py` foi ajustado para servir corretamente arquivos estaticos, tolerar `Ctrl+C` no Windows e detectar servidores antigos ou incompativeis ainda presos na porta `8765`.
+- o detalhe do edital recebeu uma rodada extensa de redesign no cabecalho, com novo arranjo de titulo, metadados, objeto, KPIs e tabs, seguindo a composicao definida pelo usuario ao longo das iteracoes.
+- a ordem das sub-abas do detalhe foi reorganizada para `Itens | Documentos | Resumo | Historico | Concorrencia | Analise IA`, com `Itens` como aba padrao.
+- a aba `Itens` deixou de ser dummy e passou a carregar dados reais por `numero_controle_pncp`, via backend local, com cache e persistencia por PNCP.
+- a aba `Documentos` deixou de ser dummy e passou a listar documentos reais, com cache e persistencia local por PNCP.
+- foi criado o endpoint real de view do documento e o endpoint de resumo consolidado dos documentos, ambos alimentados pelo pipeline homologado de Documentos do v2.
+- a abertura do edital passou a poder disparar automaticamente a geracao do Markdown do documento selecionado e do resumo consolidado dos documentos.
+- o resumo consolidado dos documentos foi incorporado ao card `Resumo` do detalhe, enquanto o resumo por documento deixou de aparecer como subaba da area de documentos.
+- o workspace de `Documentos` foi simplificado para lista lateral + visualizador de Markdown, com nome de arquivo em ate duas linhas e cards laterais sem as tags inferiores consideradas inuteis.
+- foi corrigida uma condicao de corrida entre a geracao do resumo consolidado e a view do documento, usando lock por documento no backend para evitar processamento duplicado e loading infinito.
+- foi adicionada persistencia local de itens, documentos, views de documentos e resumo consolidado no detalhe do edital, reduzindo recarga desnecessaria ao reabrir o mesmo PNCP.
+- o card `Por que este edital foi recomendado` foi removido, e o `Resumo dos documentos` passou a viver em card proprio.
+- o `Objeto` foi movido do corpo do `Resumo` para dentro do cabecalho do edital, em faixa propria acima da linha dos KPIs.
+- o logo do cabecalho passou a usar assets locais separados para modo claro e modo escuro, em `src/assets/logos/govgo_logo_light_mode.png` e `src/assets/logos/govgo_logo_dark_mode.png`.
+- como os PNGs do logo tem muito fundo e glow em volta da marca, a exibicao no header passou a usar viewport recortado para ampliar a marca visivel sem depender de uma altura fixa no `img`.
+- o risco residual mais claro neste momento e a necessidade de continuar estabilizando a aba `Documentos`, especialmente no comportamento de scroll, renderizacao e pequenos detalhes visuais.
 - os fluxos de arquivo local real e de documento PNCP escolhido foram promovidos a testes explicitos do browser, com cards proprios no padrao visual dos outros testes do laboratorio.
 - o teste automatizado de selecao de fonte passou a validar tambem a existencia desses cards explicitos na pagina inicial do browser tester.

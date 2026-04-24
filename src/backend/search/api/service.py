@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -25,6 +26,8 @@ from src.backend.search.core.ui_filters import has_any_ui_filter
 
 
 ADAPTER = SearchAdapter()
+_DOCUMENT_ARTIFACT_LOCKS: dict[str, threading.Lock] = {}
+_DOCUMENT_ARTIFACT_LOCKS_GUARD = threading.Lock()
 
 
 def _as_bool(value: Any, default: bool = False) -> bool:
@@ -56,6 +59,16 @@ def _normalize_document_result(payload: dict[str, Any], pncp: str, document_url:
     }
 
 
+def _document_artifact_lock(pncp: str, document_url: str, document_name: str) -> threading.Lock:
+    artifact_key = build_document_artifact_key(pncp, document_url, document_name)
+    with _DOCUMENT_ARTIFACT_LOCKS_GUARD:
+        lock = _DOCUMENT_ARTIFACT_LOCKS.get(artifact_key)
+        if lock is None:
+            lock = threading.Lock()
+            _DOCUMENT_ARTIFACT_LOCKS[artifact_key] = lock
+        return lock
+
+
 def _load_or_generate_document_artifact(
     pncp: str,
     document_url: str,
@@ -68,21 +81,26 @@ def _load_or_generate_document_artifact(
     if cached and (cached.get("summary") or cached.get("markdown")):
         return cached, True
 
-    response = run_documents_action(
-        action="process_url",
-        document_url=document_url,
-        document_name=document_name,
-        pncp_id=pncp,
-        user_id=user_id,
-        max_tokens=500,
-        save_artifacts=False,
-        timeout_seconds=900,
-    )
-    artifact = _normalize_document_result(response, pncp, document_url, document_name)
-    if artifact["error"]:
-        return artifact, False
-    saved = save_document_artifact(pncp, document_url, document_name, artifact)
-    return saved, False
+    with _document_artifact_lock(pncp, document_url, document_name):
+        cached = None if force else load_document_artifact(pncp, document_url, document_name)
+        if cached and (cached.get("summary") or cached.get("markdown")):
+            return cached, True
+
+        response = run_documents_action(
+            action="process_url",
+            document_url=document_url,
+            document_name=document_name,
+            pncp_id=pncp,
+            user_id=user_id,
+            max_tokens=500,
+            save_artifacts=False,
+            timeout_seconds=900,
+        )
+        artifact = _normalize_document_result(response, pncp, document_url, document_name)
+        if artifact["error"]:
+            return artifact, False
+        saved = save_document_artifact(pncp, document_url, document_name, artifact)
+        return saved, False
 
 
 def _error_response(request: SearchRequest, message: str) -> dict[str, Any]:

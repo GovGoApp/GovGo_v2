@@ -36,6 +36,121 @@ function mergePersistedEditalDetail(pncpId, partialState) {
   } catch (_) {}
 }
 
+function renderInlineMarkdown(text) {
+  const source = String(text || "");
+  const parts = source.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).filter(Boolean);
+  return parts.map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={index}>{part.slice(2, -2)}</strong>;
+    }
+    if (part.startsWith("`") && part.endsWith("`")) {
+      return (
+        <code
+          key={index}
+          style={{
+            fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+            fontSize: "0.92em",
+            background: "var(--surface-sunk)",
+            border: "1px solid var(--hairline-soft)",
+            borderRadius: 6,
+            padding: "1px 4px",
+          }}
+        >
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+    return <React.Fragment key={index}>{part}</React.Fragment>;
+  });
+}
+
+function MarkdownSummaryView({ content }) {
+  const lines = String(content || "").replace(/\r\n/g, "\n").split("\n");
+  const blocks = [];
+  let paragraph = [];
+  let listItems = [];
+
+  const flushParagraph = () => {
+    if (!paragraph.length) return;
+    blocks.push(
+      <p key={`p-${blocks.length}`} style={{margin: 0, fontSize: 13.5, color: "var(--ink-2)", lineHeight: 1.8}}>
+        {renderInlineMarkdown(paragraph.join(" "))}
+      </p>
+    );
+    paragraph = [];
+  };
+
+  const flushList = () => {
+    if (!listItems.length) return;
+    blocks.push(
+      <ul key={`ul-${blocks.length}`} style={{margin: "2px 0 0 18px", padding: 0, display: "grid", gap: 8}}>
+        {listItems.map((item, index) => (
+          <li key={index} style={{fontSize: 13.5, color: "var(--ink-2)", lineHeight: 1.7}}>
+            {renderInlineMarkdown(item)}
+          </li>
+        ))}
+      </ul>
+    );
+    listItems = [];
+  };
+
+  lines.forEach((rawLine) => {
+    const line = String(rawLine || "").trim();
+    if (!line) {
+      flushParagraph();
+      flushList();
+      return;
+    }
+
+    const headingMatch = line.match(/^(#{1,3})\s+(.*)$/);
+    if (headingMatch) {
+      flushParagraph();
+      flushList();
+      const level = headingMatch[1].length;
+      const label = headingMatch[2];
+      const fontSize = level === 1 ? 17 : level === 2 ? 14.5 : 12.5;
+      blocks.push(
+        <div
+          key={`h-${blocks.length}`}
+          style={{
+            marginTop: blocks.length ? 8 : 0,
+            fontSize,
+            fontWeight: 700,
+            color: "var(--ink-1)",
+            letterSpacing: level === 1 ? "-0.01em" : ".04em",
+            textTransform: level === 1 ? "none" : "uppercase",
+          }}
+        >
+          {renderInlineMarkdown(label)}
+        </div>
+      );
+      return;
+    }
+
+    if (/^---+$/.test(line)) {
+      flushParagraph();
+      flushList();
+      blocks.push(<div key={`hr-${blocks.length}`} style={{height: 1, background: "var(--hairline)", margin: "4px 0"}}/>);
+      return;
+    }
+
+    const bulletMatch = line.match(/^[-*]\s+(.*)$/);
+    if (bulletMatch) {
+      flushParagraph();
+      listItems.push(bulletMatch[1]);
+      return;
+    }
+
+    flushList();
+    paragraph.push(line);
+  });
+
+  flushParagraph();
+  flushList();
+
+  return <div style={{display: "grid", gap: 12}}>{blocks}</div>;
+}
+
 function EditalDetail({ edital }) {
   const [tab, setTab] = uSod("itens");
   const [titleFontSize, setTitleFontSize] = uSod(20);
@@ -43,8 +158,6 @@ function EditalDetail({ edital }) {
   const [docsState, setDocsState] = uSod({ status: "idle", documents: [], error: "" });
   const [documentsSummaryState, setDocumentsSummaryState] = uSod(EMPTY_DOCUMENTS_SUMMARY);
   const [selectedDocumentKey, setSelectedDocumentKey] = uSod("");
-  const [documentWorkspaceTab, setDocumentWorkspaceTab] = uSod("original");
-  const [documentListFilter, setDocumentListFilter] = uSod("all");
   const [documentViews, setDocumentViews] = uSod({});
   const titleRef = uRod(null);
   const itemsCacheRef = uRod({});
@@ -224,15 +337,6 @@ function EditalDetail({ edital }) {
         };
       })
     : [];
-  const filteredDocumentRows = documentRows.filter((document) => {
-    if (documentListFilter === "pdf") {
-      return document.extension === "PDF";
-    }
-    if (documentListFilter === "converted") {
-      return document.hasMarkdown;
-    }
-    return true;
-  });
   const persistedDocuments = Array.isArray(persistedDetail?.documents) ? persistedDetail.documents : null;
   const docsCount = docsState.status === "success"
     ? documentRows.length
@@ -243,9 +347,8 @@ function EditalDetail({ edital }) {
   const persistedDocumentsSummary = persistedDetail && typeof persistedDetail.documentsSummary === "object" && persistedDetail.documentsSummary
     ? persistedDetail.documentsSummary
     : null;
-  const selectedDocument = filteredDocumentRows.find((document) => document.key === selectedDocumentKey) || filteredDocumentRows[0] || null;
+  const selectedDocument = documentRows.find((document) => document.key === selectedDocumentKey) || documentRows[0] || null;
   const selectedDocumentView = selectedDocument ? (documentViews[selectedDocument.key] || EMPTY_DOCUMENT_VIEW) : EMPTY_DOCUMENT_VIEW;
-  const documentsConvertedCount = documentRows.filter((document) => document.hasMarkdown).length;
   const selectedDocumentMetadata = [
     selectedDocument?.type && selectedDocument.type !== "N/I" ? selectedDocument.type : "",
     selectedDocument?.sizeLabel || "",
@@ -349,8 +452,6 @@ function EditalDetail({ edital }) {
         : EMPTY_DOCUMENTS_SUMMARY
     );
     setSelectedDocumentKey("");
-    setDocumentWorkspaceTab("original");
-    setDocumentListFilter("all");
   }, [pncpId, persistedDetail, inlineDocuments]);
 
   uEod(() => {
@@ -380,16 +481,16 @@ function EditalDetail({ edital }) {
   }, [e.org]);
 
   uEod(() => {
-    if (!filteredDocumentRows.length) {
+    if (!documentRows.length) {
       if (selectedDocumentKey) {
         setSelectedDocumentKey("");
       }
       return;
     }
-    if (!selectedDocumentKey || !filteredDocumentRows.some((document) => document.key === selectedDocumentKey)) {
-      setSelectedDocumentKey(filteredDocumentRows[0].key);
+    if (!selectedDocumentKey || !documentRows.some((document) => document.key === selectedDocumentKey)) {
+      setSelectedDocumentKey(documentRows[0].key);
     }
-  }, [filteredDocumentRows, selectedDocumentKey]);
+  }, [documentRows, selectedDocumentKey]);
 
   uEod(() => {
     if (tab !== "itens") {
@@ -459,10 +560,6 @@ function EditalDetail({ edital }) {
   }, [tab, pncpId]);
 
   uEod(() => {
-    if (tab !== "documentos") {
-      return;
-    }
-
     const cacheKey = pncpId || "__sem_pncp__";
     if (Array.isArray(inlineDocuments)) {
       docsCacheRef.current[cacheKey] = inlineDocuments;
@@ -537,10 +634,10 @@ function EditalDetail({ edital }) {
     return () => {
       cancelled = true;
     };
-  }, [tab, pncpId]);
+  }, [pncpId, inlineDocuments]);
 
   uEod(() => {
-    if (tab !== "resumo" || !pncpId) {
+    if (!pncpId) {
       return;
     }
     if (documentsSummaryState.status === "success" || documentsSummaryState.status === "loading") {
@@ -555,7 +652,7 @@ function EditalDetail({ edital }) {
     let cancelled = false;
     setDocumentsSummaryState((current) => ({ ...current, status: "loading", error: "" }));
 
-    loadEditalDocumentsSummary({ pncpId, force: false, generateIfMissing: false })
+    loadEditalDocumentsSummary({ pncpId, force: false, generateIfMissing: true })
       .then((payload) => {
         if (cancelled) return;
         if (!payload || !payload.summary) {
@@ -588,15 +685,19 @@ function EditalDetail({ edital }) {
     return () => {
       cancelled = true;
     };
-  }, [tab, pncpId, documentsSummaryState.status]);
+  }, [pncpId]);
 
   uEod(() => {
-    if (tab !== "documentos" || !selectedDocument || (documentWorkspaceTab !== "resumo" && documentWorkspaceTab !== "markdown")) {
+    if (!selectedDocument || !pncpId) {
       return;
     }
 
     const currentView = documentViews[selectedDocument.key];
-    if (currentView && (currentView.status === "success" || currentView.status === "loading")) {
+    if (
+      currentView &&
+      currentView.status === "success" &&
+      (String(currentView.markdown || "").trim() || String(currentView.summary || "").trim() || String(currentView.markdownPath || "").trim())
+    ) {
       return;
     }
 
@@ -666,7 +767,7 @@ function EditalDetail({ edital }) {
     return () => {
       cancelled = true;
     };
-  }, [tab, pncpId, selectedDocumentKey, documentWorkspaceTab]);
+  }, [pncpId, selectedDocumentKey, selectedDocument && selectedDocument.key]);
 
   const triggerDocumentsSummary = (force) => {
     const loadEditalDocumentsSummary = window.GovGoSearchApi && window.GovGoSearchApi.loadEditalDocumentsSummary;
@@ -688,7 +789,7 @@ function EditalDetail({ edital }) {
       error: "",
     }));
 
-    loadEditalDocumentsSummary({ pncpId, force: !!force, generateIfMissing: !!force })
+    loadEditalDocumentsSummary({ pncpId, force: !!force, generateIfMissing: true })
       .then((payload) => {
         if (!payload || !payload.summary) {
           setDocumentsSummaryState(EMPTY_DOCUMENTS_SUMMARY);
@@ -971,8 +1072,18 @@ function EditalDetail({ edital }) {
                       </div>
                     </div>
                   ) : documentsSummaryState.summary ? (
-                    <div style={{display: "flex", flexDirection: "column", gap: 10}}>
-                      <div style={{fontSize: 13, color: "var(--ink-2)", lineHeight: 1.7, whiteSpace: "pre-wrap"}}>{documentsSummaryState.summary}</div>
+                    <div style={{display: "flex", flexDirection: "column", gap: 14}}>
+                      <div style={{
+                        padding: "10px 12px",
+                        borderRadius: 10,
+                        background: "var(--blue-50)",
+                        border: "1px solid var(--hairline)",
+                        fontSize: 12.5,
+                        color: "var(--deep-blue)",
+                      }}>
+                        Sintese automatica dos documentos - revisao humana recomendada
+                      </div>
+                      <MarkdownSummaryView content={documentsSummaryState.summary}/>
                       <div style={{display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap"}}>
                         <div style={{fontSize: 11.5, color: "var(--ink-3)"}}>
                           {documentsSummaryState.documentsUsed ? `${documentsSummaryState.documentsUsed} documentos analisados` : ""}
@@ -1136,50 +1247,25 @@ function EditalDetail({ edital }) {
                   overflow: "hidden",
                   display: "grid",
                   gridTemplateColumns: "280px minmax(0, 1fr)",
-                  minHeight: 560,
+                  height: "calc(100vh - 24px)",
+                  maxHeight: "calc(100vh - 24px)",
+                  position: "sticky",
+                  top: 12,
                 }}>
                   <aside style={{borderRight: "1px solid var(--hairline)", background: "var(--surface-sunk)", display: "flex", flexDirection: "column", minHeight: 0}}>
                     <div style={{padding: "14px 14px 10px", borderBottom: "1px solid var(--hairline)"}}>
                       <div style={{fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".06em", fontWeight: 700}}>
-                        {`${documentRows.length} arquivos \u00b7 ${documentsConvertedCount} convertidos`}
-                      </div>
-                      <div style={{display: "flex", gap: 6, marginTop: 10}}>
-                        {[
-                          ["all", "Todos"],
-                          ["pdf", "S\u00f3 PDFs"],
-                          ["converted", "Convertidos"],
-                        ].map(([id, label]) => {
-                          const active = documentListFilter === id;
-                          return (
-                            <button
-                              key={id}
-                              onClick={() => setDocumentListFilter(id)}
-                              style={{
-                                all: "unset",
-                                cursor: "pointer",
-                                padding: "7px 12px",
-                                borderRadius: 8,
-                                background: active ? "var(--paper)" : "transparent",
-                                border: active ? "1px solid var(--hairline)" : "1px solid transparent",
-                                color: active ? "var(--ink-1)" : "var(--ink-3)",
-                                fontSize: 12,
-                                fontWeight: active ? 600 : 500,
-                              }}
-                            >
-                              {label}
-                            </button>
-                          );
-                        })}
+                        ARQUIVOS
                       </div>
                     </div>
 
-                    <div style={{flex: 1, minHeight: 0, overflowY: "auto", padding: 10, display: "flex", flexDirection: "column", gap: 8}}>
-                      {filteredDocumentRows.length === 0 ? (
+                    <div style={{flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", padding: 10, display: "flex", flexDirection: "column", gap: 8}}>
+                      {documentRows.length === 0 ? (
                         <div style={{padding: "18px 12px", fontSize: 12.5, color: "var(--ink-3)"}}>
-                          Nenhum documento encontrado nesse filtro.
+                          Nenhum documento encontrado.
                         </div>
                       ) : (
-                        filteredDocumentRows.map((document) => {
+                        documentRows.map((document) => {
                           const active = selectedDocument && selectedDocument.key === document.key;
                           return (
                             <button
@@ -1212,29 +1298,19 @@ function EditalDetail({ edital }) {
                                 letterSpacing: ".04em",
                               }}>{document.extension}</div>
                               <div style={{flex: 1, minWidth: 0, textAlign: "left"}}>
-                                <div style={{fontSize: 13, fontWeight: 600, color: "var(--ink-1)", lineHeight: 1.3}}>{document.name}</div>
+                                <div style={{
+                                  fontSize: 13,
+                                  fontWeight: 600,
+                                  color: "var(--ink-1)",
+                                  lineHeight: 1.28,
+                                  display: "-webkit-box",
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: "vertical",
+                                  overflow: "hidden",
+                                }}>{document.name}</div>
                                 <div style={{fontSize: 11.5, color: "var(--ink-3)", marginTop: 3, display: "flex", gap: 6, flexWrap: "wrap"}}>
                                   {document.sizeLabel && <span>{document.sizeLabel}</span>}
                                   {document.dateLabel && <><span>{"\u00b7"}</span><span>{document.dateLabel}</span></>}
-                                </div>
-                                <div style={{display: "flex", gap: 6, marginTop: 6, flexWrap: "wrap"}}>
-                                  <span style={{
-                                    fontSize: 10.5,
-                                    padding: "2px 6px",
-                                    borderRadius: 6,
-                                    background: "var(--paper)",
-                                    border: "1px solid var(--hairline)",
-                                    color: "var(--ink-3)",
-                                    fontWeight: 600,
-                                  }}>{document.type || "Documento"}</span>
-                                  <span style={{
-                                    fontSize: 10.5,
-                                    padding: "2px 6px",
-                                    borderRadius: 6,
-                                    background: document.hasMarkdown ? "var(--green-50)" : "var(--rail)",
-                                    color: document.hasMarkdown ? "var(--green)" : "var(--ink-4)",
-                                    fontWeight: 700,
-                                  }}>{document.hasMarkdown ? "MD ok" : "pendente"}</span>
                                 </div>
                               </div>
                             </button>
@@ -1247,7 +1323,7 @@ function EditalDetail({ edital }) {
                   <div style={{display: "flex", flexDirection: "column", minWidth: 0, minHeight: 0}}>
                     {selectedDocument ? (
                       <>
-                        <div style={{padding: "16px 18px 12px", borderBottom: "1px solid var(--hairline)"}}>
+                        <div style={{padding: "10px 14px", borderBottom: "1px solid var(--hairline)"}}>
                           <div style={{display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14, flexWrap: "wrap"}}>
                             <div style={{minWidth: 0}}>
                               <div style={{display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap"}}>
@@ -1266,8 +1342,8 @@ function EditalDetail({ edital }) {
                                   letterSpacing: ".04em",
                                 }}>{selectedDocument.extension}</div>
                                 <div style={{minWidth: 0}}>
-                                  <div style={{fontSize: 13.5, color: "var(--ink-1)", fontWeight: 600, lineHeight: 1.3}}>{selectedDocument.name}</div>
-                                  <div style={{display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4, fontSize: 11.5, color: "var(--ink-3)"}}>
+                                  <div style={{fontSize: 13.25, color: "var(--ink-1)", fontWeight: 600, lineHeight: 1.25}}>{selectedDocument.name}</div>
+                                  <div style={{display: "flex", gap: 8, flexWrap: "wrap", marginTop: 2, fontSize: 11.5, color: "var(--ink-3)"}}>
                                     {selectedDocumentMetadata.map((item, index) => (
                                       <React.Fragment key={`${item}-${index}`}>
                                         {index > 0 && <span>{"\u00b7"}</span>}
@@ -1280,25 +1356,6 @@ function EditalDetail({ edital }) {
                             </div>
 
                             <div style={{display: "flex", gap: 8, flexWrap: "wrap"}}>
-                              <button
-                                onClick={() => {
-                                  setDocumentWorkspaceTab("resumo");
-                                }}
-                                style={{
-                                  all: "unset",
-                                  cursor: "pointer",
-                                  color: "var(--ink-2)",
-                                  fontSize: 12.5,
-                                  fontWeight: 600,
-                                  padding: "10px 4px",
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: 8,
-                                }}
-                              >
-                                <Icon.sparkle size={12}/>
-                                Perguntar \u00e0 IA
-                              </button>
                               <button
                                 onClick={() => {
                                   if (selectedDocument.url) {
@@ -1327,244 +1384,56 @@ function EditalDetail({ edital }) {
                           </div>
                         </div>
 
-                        <div style={{display: "flex", gap: 0, padding: "0 18px", borderBottom: "1px solid var(--hairline)"}}>
-                          {[
-                            ["resumo", "Resumo"],
-                            ["original", "Original"],
-                            ["markdown", "Markdown"],
-                          ].map(([id, label]) => {
-                            const active = documentWorkspaceTab === id;
-                            return (
-                              <button
-                                key={id}
-                                onClick={() => setDocumentWorkspaceTab(id)}
-                                style={{
-                                  all: "unset",
-                                  cursor: "pointer",
-                                  padding: "12px 12px",
-                                  borderBottom: active ? "2px solid var(--orange)" : "2px solid transparent",
-                                  color: active ? "var(--ink-1)" : "var(--ink-3)",
-                                  fontSize: 12.5,
-                                  fontWeight: active ? 600 : 500,
-                                  marginBottom: -1,
-                                }}
-                              >
-                                {label}
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        <div style={{flex: 1, minHeight: 0, background: "var(--workspace)", padding: 18}}>
-                          {documentWorkspaceTab === "original" && (
-                            <div style={{
-                              height: "100%",
-                              minHeight: 420,
-                              background: "var(--surface-sunk)",
-                              border: "1px solid var(--hairline)",
-                              borderRadius: 12,
-                              display: "flex",
-                              flexDirection: "column",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              padding: 24,
-                              textAlign: "center",
-                            }}>
-                              <div style={{
-                                width: 180,
-                                height: 270,
-                                borderRadius: 10,
-                                background: "var(--paper)",
-                                border: "1px solid var(--hairline)",
-                                boxShadow: "0 8px 24px rgba(11, 22, 43, 0.08)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                flexDirection: "column",
-                                gap: 10,
-                              }}>
-                                <div style={{
-                                  width: 64,
-                                  height: 80,
-                                  borderRadius: 10,
-                                  background: selectedDocument.tone.bg,
-                                  color: selectedDocument.tone.fg,
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  fontSize: 14,
-                                  fontWeight: 700,
-                                  letterSpacing: ".06em",
-                                }}>{selectedDocument.extension}</div>
-                                <div style={{width: 96, height: 2, borderRadius: 999, background: "var(--orange)"}}/>
-                                <div style={{display: "grid", gap: 6}}>
-                                  {Array.from({ length: 10 }).map((_, index) => (
-                                    <span key={index} style={{width: 90 - index * 3, height: 2, borderRadius: 999, background: "var(--hairline)"}}/>
-                                  ))}
+                        <div style={{flex: 1, minHeight: 0, background: "var(--workspace)", padding: 14, overflow: "hidden"}}>
+                          <div style={{
+                            height: "100%",
+                            background: "var(--paper)",
+                            border: "1px solid var(--hairline)",
+                            borderRadius: 12,
+                            padding: 16,
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 12,
+                          }}>
+                            {selectedDocumentView.status === "loading" ? (
+                              <div style={{fontSize: 13, color: "var(--ink-3)"}}>Gerando markdown do documento...</div>
+                            ) : selectedDocumentView.status === "error" ? (
+                              <div style={{display: "flex", flexDirection: "column", gap: 10}}>
+                                <div style={{fontSize: 13, color: "var(--risk)"}}>{selectedDocumentView.error}</div>
+                                <div>
+                                  <button
+                                    onClick={() => triggerSelectedDocumentView(true)}
+                                    style={{
+                                      all: "unset",
+                                      cursor: "pointer",
+                                      padding: "10px 14px",
+                                      borderRadius: 10,
+                                      background: "var(--orange)",
+                                      color: "#fff",
+                                      fontSize: 12.5,
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    Tentar novamente
+                                  </button>
                                 </div>
                               </div>
-                              <div style={{marginTop: 16, fontSize: 13.5, color: "var(--ink-2)", fontWeight: 500}}>{selectedDocument.name}</div>
-                              <div style={{marginTop: 6, fontSize: 12, color: "var(--ink-3)"}}>
-                                {selectedDocumentMetadata.join(" \u00b7 ")}
-                              </div>
-                              <button
-                                onClick={() => {
-                                  if (selectedDocument.url) {
-                                    window.open(selectedDocument.url, "_blank", "noopener,noreferrer");
-                                  }
-                                }}
-                                style={{
-                                  all: "unset",
-                                  cursor: selectedDocument.url ? "pointer" : "default",
-                                  marginTop: 16,
-                                  padding: "11px 16px",
-                                  borderRadius: 10,
-                                  background: "var(--deep-blue)",
-                                  color: "#fff",
-                                  opacity: selectedDocument.url ? 1 : 0.5,
-                                  fontSize: 12.5,
-                                  fontWeight: 600,
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: 8,
-                                }}
-                              >
-                                <Icon.external size={12}/>
-                                Abrir documento original
-                              </button>
-                            </div>
-                          )}
-
-                          {documentWorkspaceTab === "resumo" && (
-                            <div style={{
-                              minHeight: 420,
-                              background: "var(--paper)",
-                              border: "1px solid var(--hairline)",
-                              borderRadius: 12,
-                              padding: 18,
-                              display: "flex",
-                              flexDirection: "column",
-                              gap: 14,
-                            }}>
-                              {selectedDocumentView.status === "loading" ? (
-                                <div style={{fontSize: 13, color: "var(--ink-3)"}}>Gerando resumo do documento...</div>
-                              ) : selectedDocumentView.status === "error" ? (
-                                <>
-                                  <div style={{fontSize: 13, color: "var(--risk)"}}>{selectedDocumentView.error}</div>
-                                  <div>
-                                    <button
-                                      onClick={() => triggerSelectedDocumentView(true)}
-                                      style={{
-                                        all: "unset",
-                                        cursor: "pointer",
-                                        padding: "10px 14px",
-                                        borderRadius: 10,
-                                        background: "var(--orange)",
-                                        color: "#fff",
-                                        fontSize: 12.5,
-                                        fontWeight: 600,
-                                      }}
-                                    >
-                                      Tentar novamente
-                                    </button>
-                                  </div>
-                                </>
-                              ) : selectedDocumentView.summary ? (
-                                <>
-                                  <div style={{
-                                    padding: "10px 12px",
-                                    borderRadius: 10,
-                                    background: "var(--blue-50)",
-                                    border: "1px solid var(--hairline)",
-                                    fontSize: 12.5,
-                                    color: "var(--deep-blue)",
-                                  }}>
-                                    Resumo gerado pela leitura autom\u00e1tica do documento - revis\u00e3o humana recomendada
-                                  </div>
-                                  <div style={{fontSize: 13.5, color: "var(--ink-2)", lineHeight: 1.8, whiteSpace: "pre-wrap"}}>
-                                    {selectedDocumentView.summary}
-                                  </div>
-                                  <div style={{display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap"}}>
-                                    <div style={{fontSize: 11.5, color: "var(--ink-3)"}}>
-                                      {selectedDocumentView.updatedAt ? `Atualizado em ${selectedDocumentView.updatedAt}` : ""}
-                                    </div>
-                                    <button
-                                      onClick={() => triggerSelectedDocumentView(true)}
-                                      style={{
-                                        all: "unset",
-                                        cursor: "pointer",
-                                        padding: "8px 12px",
-                                        borderRadius: 999,
-                                        border: "1px solid var(--hairline)",
-                                        color: "var(--deep-blue)",
-                                        fontSize: 12,
-                                        fontWeight: 600,
-                                      }}
-                                    >
-                                      Atualizar resumo
-                                    </button>
-                                  </div>
-                                </>
-                              ) : (
-                                <>
-                                  <div style={{fontSize: 13, color: "var(--ink-3)", lineHeight: 1.7}}>
-                                    Gere um texto curto de IA para entender rapidamente este documento sem sair da tela do edital.
-                                  </div>
-                                  <div>
-                                    <button
-                                      onClick={() => triggerSelectedDocumentView(true)}
-                                      style={{
-                                        all: "unset",
-                                        cursor: "pointer",
-                                        padding: "10px 14px",
-                                        borderRadius: 10,
-                                        background: "var(--orange)",
-                                        color: "#fff",
-                                        fontSize: 12.5,
-                                        fontWeight: 600,
-                                      }}
-                                    >
-                                      Gerar resumo
-                                    </button>
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          )}
-
-                          {documentWorkspaceTab === "markdown" && (
-                            <div style={{
-                              minHeight: 420,
-                              background: "var(--paper)",
-                              border: "1px solid var(--hairline)",
-                              borderRadius: 12,
-                              padding: 18,
-                            }}>
-                              {selectedDocumentView.status === "loading" ? (
-                                <div style={{fontSize: 13, color: "var(--ink-3)"}}>Gerando markdown do documento...</div>
-                              ) : selectedDocumentView.status === "error" ? (
-                                <div style={{display: "flex", flexDirection: "column", gap: 10}}>
-                                  <div style={{fontSize: 13, color: "var(--risk)"}}>{selectedDocumentView.error}</div>
-                                  <div>
-                                    <button
-                                      onClick={() => triggerSelectedDocumentView(true)}
-                                      style={{
-                                        all: "unset",
-                                        cursor: "pointer",
-                                        padding: "10px 14px",
-                                        borderRadius: 10,
-                                        background: "var(--orange)",
-                                        color: "#fff",
-                                        fontSize: 12.5,
-                                        fontWeight: 600,
-                                      }}
-                                    >
-                                      Tentar novamente
-                                    </button>
-                                  </div>
-                                </div>
-                              ) : selectedDocumentView.markdown ? (
+                            ) : selectedDocumentView.markdown ? (
+                              <>
                                 <div style={{
+                                  padding: "10px 12px",
+                                  borderRadius: 10,
+                                  background: "var(--blue-50)",
+                                  border: "1px solid var(--hairline)",
+                                  fontSize: 12.5,
+                                  color: "var(--deep-blue)",
+                                }}>
+                                  Markdown gerado automaticamente para o documento selecionado
+                                  {selectedDocumentView.updatedAt ? ` • atualizado em ${selectedDocumentView.updatedAt}` : ""}
+                                </div>
+                                <div style={{
+                                  flex: 1,
+                                  minHeight: 0,
                                   borderRadius: 10,
                                   border: "1px solid var(--hairline)",
                                   background: "var(--workspace)",
@@ -1573,37 +1442,37 @@ function EditalDetail({ edital }) {
                                   color: "var(--ink-2)",
                                   lineHeight: 1.7,
                                   whiteSpace: "pre-wrap",
-                                  overflowX: "auto",
-                                  minHeight: 380,
+                                  overflowY: "auto",
+                                  overscrollBehavior: "contain",
                                 }}>
                                   {selectedDocumentView.markdown}
                                 </div>
-                              ) : (
-                                <div style={{display: "flex", flexDirection: "column", gap: 10}}>
-                                  <div style={{fontSize: 13, color: "var(--ink-3)", lineHeight: 1.7}}>
-                                    Este documento ainda nao possui uma versao Markdown pronta para leitura e uso em IA.
-                                  </div>
-                                  <div>
-                                    <button
-                                      onClick={() => triggerSelectedDocumentView(true)}
-                                      style={{
-                                        all: "unset",
-                                        cursor: "pointer",
-                                        padding: "10px 14px",
-                                        borderRadius: 10,
-                                        background: "var(--orange)",
-                                        color: "#fff",
-                                        fontSize: 12.5,
-                                        fontWeight: 600,
-                                      }}
-                                    >
-                                      Gerar Markdown
-                                    </button>
-                                  </div>
+                              </>
+                            ) : (
+                              <div style={{display: "flex", flexDirection: "column", gap: 10}}>
+                                <div style={{fontSize: 13, color: "var(--ink-3)", lineHeight: 1.7}}>
+                                  Preparando a transcricao em Markdown deste documento.
                                 </div>
-                              )}
-                            </div>
-                          )}
+                                <div>
+                                  <button
+                                    onClick={() => triggerSelectedDocumentView(true)}
+                                    style={{
+                                      all: "unset",
+                                      cursor: "pointer",
+                                      padding: "10px 14px",
+                                      borderRadius: 10,
+                                      background: "var(--orange)",
+                                      color: "#fff",
+                                      fontSize: 12.5,
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    Reprocessar
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </>
                     ) : (

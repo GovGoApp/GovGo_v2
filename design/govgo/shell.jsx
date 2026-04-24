@@ -1,12 +1,14 @@
 // Shell: top bar, left rail, search rail (Busca), activity rail (Favoritos/Histórico/Boletins)
 const { useState: uS, useEffect: uE } = React;
-const GOVGO_V1_LOGO_URL = "https://hemztmtbejcbhgfmsvfq.supabase.co/storage/v1/object/public/govgo/LOGO/LOGO_TEXTO_GOvGO_TRIM_v3.png";
+const GOVGO_LOGO_LIGHT_URL = "/src/assets/logos/govgo_logo_light_mode.png";
+const GOVGO_LOGO_DARK_URL = "/src/assets/logos/govgo_logo_dark_mode.png";
 
 function TopBar({mode}) {
   const [theme, setTheme] = uS(() => {
     if (typeof document === 'undefined') return 'light';
     return document.documentElement.getAttribute('data-theme') || localStorage.getItem('govgo-theme') || 'light';
   });
+  const logoUrl = theme === "dark" ? GOVGO_LOGO_DARK_URL : GOVGO_LOGO_LIGHT_URL;
   const toggleTheme = () => {
     const next = theme === 'dark' ? 'light' : 'dark';
     setTheme(next);
@@ -19,8 +21,22 @@ function TopBar({mode}) {
       display: "flex", alignItems: "center", padding: "0 16px", gap: 16,
       position: "sticky", top: 0, zIndex: 30,
     }}>
-      <div style={{display: "flex", alignItems: "center", gap: 10}}>
-        <img src={GOVGO_V1_LOGO_URL} alt="GovGo" style={{height: 28, width: "auto", display: "block"}}/>
+      <div style={{display: "flex", alignItems: "center", gap: 10, height: "100%"}}>
+        <div style={{height: "100%", display: "flex", alignItems: "stretch", padding: "6px 0"}}>
+          <div style={{height: "100%", aspectRatio: "4.2 / 1", overflow: "hidden", display: "flex", alignItems: "stretch"}}>
+            <img
+              src={logoUrl}
+              alt="GovGo"
+              style={{
+                width: "100%",
+                height: "100%",
+                display: "block",
+                objectFit: "cover",
+                objectPosition: "calc(50% - 10px) calc(50% + 4px)",
+              }}
+            />
+          </div>
+        </div>
         <span style={{fontFamily: "var(--font-display)", fontWeight: 500, fontSize: 12, color: "var(--ink-3)"}}>v2</span>
         <span style={{
           marginLeft: 4, fontSize: 10, fontWeight: 700, padding: "2px 6px",
