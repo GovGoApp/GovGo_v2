@@ -258,6 +258,19 @@ Se a retomada acontecer em um novo prompt, a IA deve continuar nesta ordem:
 
 - `docs/ESPECIFICACAO_TELA_INICIO.md`
 
+## Registro por data
+
+### 2026-04-24
+
+- Foi concluida uma rodada de documentacao e leitura estrutural da base e dos pipelines legados.
+- Foi criada a analise da base real em `docs/ANALISE_BASE_SUPABASE.md`, com leitura do schema atual do Supabase.
+- Foi criada a analise do pipeline de boletins em `docs/ANALISE_PIPELINE_BOLETIM_V1.md`.
+- Foi criada a analise campo a campo das tabelas do gerador de boletins em `docs/ANALISE_CAMPOS_BOLETIM_V1.md`, cruzando schema real e uso efetivo nos scripts do v1.
+- O arquivo legado `C:\Users\Haroldo Duraes\Desktop\Scripts\GovGo\v1\db\BDS1_v6.txt` foi lido e usado como baseline historica do schema.
+- Foi gerado um novo snapshot textual do schema `public` atual em `C:\Users\Haroldo Duraes\Desktop\Scripts\GovGo\v1\db\BDS1_v7.txt`.
+- O mesmo snapshot foi espelhado para o repositorio atual em `v2/db/BDS1_v7.txt`.
+- A regra de continuidade para esta frente fica assim: quando o assunto for base de dados, pipeline PNCP ou gerador de boletins, os documentos de referencia imediata passam a incluir `docs/ANALISE_BASE_SUPABASE.md`, `docs/ANALISE_PIPELINE_BOLETIM_V1.md`, `docs/ANALISE_CAMPOS_BOLETIM_V1.md` e `db/BDS1_v7.txt`.
+
 ### Como testar modulos do v1 antes da UI
 
 - `docs/ESTRATEGIA_TESTES_ANTES_UI.md`
