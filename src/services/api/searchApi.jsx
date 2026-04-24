@@ -162,6 +162,53 @@
     };
   }
 
+  async function loadEditalDocumentView({ pncpId, documentUrl, documentName, force = false } = {}) {
+    const response = await fetch("/api/edital-document-view", {
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        pncp_id: pncpId || "",
+        document_url: documentUrl || "",
+        document_name: documentName || "",
+        force: !!force,
+      }),
+    });
+
+    const payload = await parseJsonResponse(response, "A API de visualizacao do documento retornou um JSON invalido.");
+
+    if (!response.ok) {
+      throw new Error(payload.error || `Falha HTTP ${response.status} ao carregar o documento.`);
+    }
+
+    return payload;
+  }
+
+  async function loadEditalDocumentsSummary({ pncpId, force = false, generateIfMissing = true } = {}) {
+    const response = await fetch("/api/edital-documents-summary", {
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        pncp_id: pncpId || "",
+        force: !!force,
+        generate_if_missing: force ? true : !!generateIfMissing,
+      }),
+    });
+
+    const payload = await parseJsonResponse(response, "A API de resumo dos documentos retornou um JSON invalido.");
+
+    if (!response.ok) {
+      throw new Error(payload.error || `Falha HTTP ${response.status} ao carregar o resumo dos documentos.`);
+    }
+
+    return payload;
+  }
+
   window.GovGoSearchApi = {
     runSearch,
     loadSearchConfig,
@@ -170,5 +217,7 @@
     saveSearchFilters,
     loadEditalItems,
     loadEditalDocuments,
+    loadEditalDocumentView,
+    loadEditalDocumentsSummary,
   };
 })();

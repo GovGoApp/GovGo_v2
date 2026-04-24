@@ -64,7 +64,15 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
 
     def do_OPTIONS(self) -> None:
         route = urlsplit(self.path).path
-        if route not in {"/api/search", "/api/search-config", "/api/search-filters", "/api/edital-items", "/api/edital-documentos"}:
+        if route not in {
+            "/api/search",
+            "/api/search-config",
+            "/api/search-filters",
+            "/api/edital-items",
+            "/api/edital-documentos",
+            "/api/edital-document-view",
+            "/api/edital-documents-summary",
+        }:
             self.send_error(404, "Endpoint nao encontrado.")
             return
 
@@ -93,7 +101,15 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
 
     def do_POST(self) -> None:
         route = urlsplit(self.path).path
-        if route not in {"/api/search", "/api/search-config", "/api/search-filters", "/api/edital-items", "/api/edital-documentos"}:
+        if route not in {
+            "/api/search",
+            "/api/search-config",
+            "/api/search-filters",
+            "/api/edital-items",
+            "/api/edital-documentos",
+            "/api/edital-document-view",
+            "/api/edital-documents-summary",
+        }:
             self.send_error(404, "Endpoint nao encontrado.")
             return
 
@@ -106,6 +122,8 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
         try:
             from src.backend.search.api.service import (
                 get_edital_documents,
+                get_edital_document_view,
+                get_edital_documents_summary,
                 get_edital_items,
                 run_search,
                 update_search_config,
@@ -120,6 +138,10 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
                 response = get_edital_items(payload)
             elif route == "/api/edital-documentos":
                 response = get_edital_documents(payload)
+            elif route == "/api/edital-document-view":
+                response = get_edital_document_view(payload)
+            elif route == "/api/edital-documents-summary":
+                response = get_edital_documents_summary(payload)
             else:
                 response = run_search(payload)
         except Exception as exc:
@@ -129,7 +151,12 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
         status_code = 200
         if route == "/api/search" and response.get("error") == "Informe uma consulta para buscar.":
             status_code = 400
-        elif route in {"/api/edital-items", "/api/edital-documentos"} and response.get("error"):
+        elif route in {
+            "/api/edital-items",
+            "/api/edital-documentos",
+            "/api/edital-document-view",
+            "/api/edital-documents-summary",
+        } and response.get("error"):
             status_code = 400
         self._write_json(status_code, response)
 
@@ -203,6 +230,8 @@ def _existing_server_matches_current_api() -> bool:
     required_post_urls = [
         f"http://{HOST}:{PORT}/api/edital-items",
         f"http://{HOST}:{PORT}/api/edital-documentos",
+        f"http://{HOST}:{PORT}/api/edital-document-view",
+        f"http://{HOST}:{PORT}/api/edital-documents-summary",
     ]
     return all(_post_json_works(endpoint) for endpoint in required_post_urls)
 
