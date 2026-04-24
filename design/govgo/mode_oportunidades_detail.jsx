@@ -1,15 +1,28 @@
 // Edital detail drawer — slides over from the right within the main column
-const { useState: uSod } = React;
+const { useState: uSod, useEffect: uEod, useRef: uRod } = React;
 
 function EditalDetail({ edital }) {
   const [tab, setTab] = uSod("resumo");
+  const [titleFontSize, setTitleFontSize] = uSod(20);
+  const [itemsState, setItemsState] = uSod({ status: "idle", items: [], error: "" });
+  const [docsState, setDocsState] = uSod({ status: "idle", documents: [], error: "" });
+  const titleRef = uRod(null);
+  const itemsCacheRef = uRod({});
+  const docsCacheRef = uRod({});
   if (!edital) return null;
 
   const e = edital;
-  const details = e.details || e.raw?.details || {};
+  const raw = e.raw || {};
+  const details = e.details || raw.details || {};
+  const firstFilled = (...values) => {
+    for (const value of values) {
+      if (value !== null && value !== undefined && value !== "") return value;
+    }
+    return "";
+  };
   const pickDetail = (...keys) => {
     for (const key of keys) {
-      const value = details[key] ?? e[key];
+      const value = details[key] ?? raw[key] ?? e[key];
       if (value !== null && value !== undefined && value !== "") return value;
     }
     return "";
@@ -24,24 +37,75 @@ function EditalDetail({ edital }) {
 
   // Fake derived data (consistent per rank)
   const pregoeiro = ["Ana Lúcia Ferreira", "Marco Sobral", "Júlia Cardoso", "Heitor Monteiro", "Paulo R. Lima", "Ivana Barreto", "Teresa C. Alves", "André L. Corrêa", "Fernanda M. Ribeiro", "Lucas F. Nogueira"][e.rank - 1];
-  const numProcesso = `${(2026).toString()}/${String(e.rank * 137).padStart(6, "0")}`;
-  const numEdital = `PE-${String(e.rank * 23).padStart(4, "0")}/2026`;
-  const uasg = String(925000 + e.rank * 13);
+  const fallbackProcesso = `${(2026).toString()}/${String(e.rank * 137).padStart(6, "0")}`;
+  const fallbackEdital = `PE-${String(e.rank * 23).padStart(4, "0")}/2026`;
+  const numProcesso = String(firstFilled(
+    pickDetail("numero_processo", "numeroProcesso", "processo"),
+    fallbackProcesso
+  ));
+  const editalNumeroBase = firstFilled(
+    pickDetail(
+      "numero_instrumento_convocatorio",
+      "numeroInstrumentoConvocatorio",
+      "numero_edital",
+      "numeroEdital",
+      "numero_compra",
+      "numeroCompra",
+      "sequencial_compra",
+      "sequencialCompra"
+    )
+  );
+  const editalAno = String(firstFilled(pickDetail("ano_compra", "anoCompra"), "")).trim();
+  const numEdital = String(
+    editalNumeroBase
+      ? (String(editalNumeroBase).includes("/") || !editalAno ? editalNumeroBase : `${editalNumeroBase}/${editalAno}`)
+      : fallbackEdital
+  );
+  const pncpId = String(firstFilled(
+    pickDetail("numero_controle_pncp", "numeroControlePNCP", "numerocontrolepncp", "numero_controle", "id"),
+    e.itemId,
+    e.id
+  ));
+  const uasg = String(firstFilled(
+    pickDetail("unidade_orgao_codigo_unidade", "codigo_unidade", "uasg"),
+    String(925000 + e.rank * 13)
+  ));
   const esfera = ["Estadual", "Estadual", "Municipal", "Municipal", "Municipal", "Federal", "Municipal", "Federal", "Municipal", "Distrital"][e.rank - 1];
-  const fonte = ["PNCP", "ComprasNet", "BLL", "Licitações-e", "PNCP", "ComprasNet", "PNCP", "ComprasNet", "PNCP", "ComprasNet"][e.rank - 1];
+  const sourceLink = String(firstFilled(
+    pickDetail("link_sistema_origem", "linkSistemaOrigem", "linksistemaorigem", "url_origem", "urlOrigem", "link"),
+    raw.links?.origem
+  ));
+  const fonte = String(firstFilled(
+    pickDetail("fonte", "nome_fonte", "source", "origem"),
+    ["PNCP", "ComprasNet", "BLL", "Licitações-e", "PNCP", "ComprasNet", "PNCP", "ComprasNet", "PNCP", "ComprasNet"][e.rank - 1]
+  ));
 
   const objeto = `Registro de preços para aquisição de gêneros alimentícios destinados ao fornecimento de refeições hospitalares e dietas especiais, conforme especificações constantes no Termo de Referência — Anexo I do edital, com entrega parcelada pelo período de 12 (doze) meses.`;
 
   const objetoReal = e.objeto || details.objeto_compra || e.title || objeto;
-
-  const items = [
-    { lote: 1, desc: "Dieta enteral padrão — 500ml · Polimérica · Isenta de sacarose", qtd: "14.400 un", valor: "R$ 38,90", total: "R$ 560.160,00", match: 0.98 },
-    { lote: 2, desc: "Suplemento hipercalórico — sabor baunilha · 200ml", qtd: "6.800 un", valor: "R$ 22,40", total: "R$ 152.320,00", match: 0.96 },
-    { lote: 3, desc: "Fórmula pediátrica — 400g · 0 a 12 meses", qtd: "2.200 un", valor: "R$ 71,50", total: "R$ 157.300,00", match: 0.91 },
-    { lote: 4, desc: "Módulo de proteína — pó · pote 250g", qtd: "1.540 un", valor: "R$ 98,20", total: "R$ 151.228,00", match: 0.88 },
-    { lote: 5, desc: "Espessante alimentar — instantâneo · 125g", qtd: "980 un", valor: "R$ 43,70", total: "R$ 42.826,00", match: 0.84 },
-    { lote: 6, desc: "Água para diluição — 1L · estéril", qtd: "4.800 un", valor: "R$ 9,90", total: "R$ 47.520,00", match: 0.73 },
-  ];
+  const qtyFormatter = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 3 });
+  const formatItemQty = (value) => {
+    if (value === null || value === undefined || value === "") return "\u2014";
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return String(value);
+    return qtyFormatter.format(numeric);
+  };
+  const formatItemMoney = (value) => {
+    if (value === null || value === undefined || value === "") return "\u2014";
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return "\u2014";
+    return fmtBRL(numeric).replace("R$ ", "R$\u202F");
+  };
+  const itemRows = Array.isArray(itemsState.items)
+    ? itemsState.items.map((item, index) => ({
+        numero: item.row_number || index + 1,
+        descricao: String(item.descricao_item || ""),
+        quantidade: formatItemQty(item.quantidade_item),
+        valorUnitario: formatItemMoney(item.valor_unitario_estimado),
+        valorTotal: formatItemMoney(item.valor_total_estimado),
+      }))
+    : [];
+  const itemCount = itemsState.status === "success" ? itemRows.length : (Number(e.items) || 0);
 
   const docs = [
     { name: "Edital completo.pdf", size: "4,2 MB", kind: "edital", date: "28/03/2026", pages: 82 },
@@ -68,60 +132,171 @@ function EditalDetail({ edital }) {
     { cnpj: "31.889.027/0001-12", name: "Prodiet Farmacêutica S.A.", score: 0.77, hist: 42, win: 0.49 },
   ];
 
+  uEod(() => {
+    const fitTitle = () => {
+      const element = titleRef.current;
+      if (!element) return;
+
+      const maxSize = 20;
+      const minSize = 16;
+      let nextSize = maxSize;
+
+      element.style.fontSize = `${maxSize}px`;
+      while (nextSize > minSize && element.scrollWidth > element.clientWidth) {
+        nextSize -= 0.5;
+        element.style.fontSize = `${nextSize}px`;
+      }
+
+      setTitleFontSize(nextSize);
+    };
+
+    const frameId = window.requestAnimationFrame(fitTitle);
+    window.addEventListener("resize", fitTitle);
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      window.removeEventListener("resize", fitTitle);
+    };
+  }, [e.org]);
+
+  uEod(() => {
+    if (tab !== "itens") {
+      return;
+    }
+
+    if (!pncpId) {
+      setItemsState({
+        status: "error",
+        items: [],
+        error: "Este edital nao possui ID PNCP disponivel para carregar os itens.",
+      });
+      return;
+    }
+
+    const cachedItems = itemsCacheRef.current[pncpId];
+    if (Array.isArray(cachedItems)) {
+      setItemsState({
+        status: "success",
+        items: cachedItems,
+        error: "",
+      });
+      return;
+    }
+
+    const loadEditalItems = window.GovGoSearchApi && window.GovGoSearchApi.loadEditalItems;
+    if (typeof loadEditalItems !== "function") {
+      setItemsState({
+        status: "error",
+        items: [],
+        error: "A API de itens do edital nao esta disponivel.",
+      });
+      return;
+    }
+
+    let cancelled = false;
+    setItemsState({
+      status: "loading",
+      items: [],
+      error: "",
+    });
+
+    loadEditalItems({ pncpId, limit: 500 })
+      .then((payload) => {
+        if (cancelled) return;
+        const nextItems = Array.isArray(payload?.items) ? payload.items : [];
+        itemsCacheRef.current[pncpId] = nextItems;
+        setItemsState({
+          status: "success",
+          items: nextItems,
+          error: "",
+        });
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setItemsState({
+          status: "error",
+          items: [],
+          error: error?.message || "Nao foi possivel carregar os itens deste edital.",
+        });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tab, pncpId]);
+
   return (
     <div style={{
       background: "var(--workspace)",
       display: "flex", flexDirection: "column",
       height: "100%", minHeight: 0, overflow: "hidden",
     }}>
-
-      {/* Top bar with breadcrumb */}
-      <div style={{
-        display: "flex", alignItems: "center", gap: 10,
-        padding: "10px 24px", background: "var(--paper)",
-        borderBottom: "1px solid var(--hairline)",
-      }}>
-        <span style={{fontSize: 11, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".06em", fontWeight: 600}}>Busca</span>
-        <Icon.chevRight size={11} style={{color: "var(--ink-4)"}}/>
-        <span style={{fontSize: 11, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".06em", fontWeight: 600}}>Edital</span>
-        <Icon.chevRight size={11} style={{color: "var(--ink-4)"}}/>
-        <span className="mono" style={{fontSize: 11.5, color: "var(--ink-2)", fontWeight: 600}}>{numEdital}</span>
-        <span style={{flex: 1}}/>
-        <button title="Anterior" style={{all: "unset", cursor: "pointer", padding: 4, color: "var(--ink-3)", display: "inline-flex", transform: "rotate(180deg)"}}><Icon.chevRight size={14}/></button>
-        <button title="Próximo" style={{all: "unset", cursor: "pointer", padding: 4, color: "var(--ink-3)", display: "inline-flex"}}><Icon.chevRight size={14}/></button>
-        <div style={{width: 1, height: 16, background: "var(--hairline)", margin: "0 4px"}}/>
-        <button title="Abrir no site oficial" style={{all: "unset", cursor: "pointer", padding: 4, color: "var(--ink-3)", display: "inline-flex"}}><Icon.external size={13}/></button>
-      </div>
-
       {/* Scroll body */}
       <div style={{flex: 1, overflowY: "auto"}}>
         <div style={{maxWidth: 1080, margin: "0 auto"}}>
 
-        {/* Hero — org + title + badges */}
+        {/* Hero */}
         <div style={{padding: "18px 24px 14px", background: "var(--paper)", borderBottom: "1px solid var(--hairline)"}}>
           <div style={{display: "flex", alignItems: "flex-start", gap: 16}}>
             <div style={{
-              width: 52, height: 52, borderRadius: 10,
+              width: 58, height: 58, borderRadius: 12,
               background: "linear-gradient(135deg, var(--deep-blue), #1F6FD4)",
               color: "white", display: "inline-flex", alignItems: "center", justifyContent: "center",
-              fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 14, letterSpacing: ".02em",
+              fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 15, letterSpacing: ".02em",
               flexShrink: 0,
             }}>{e.uf}</div>
-            <div style={{flex: 1, minWidth: 0}}>
-              <div style={{display: "flex", alignItems: "center", gap: 6, marginBottom: 4, flexWrap: "wrap"}}>
-                <Chip tone="green" icon={<Icon.check size={11}/>}>Alta aderência · {(e.sim * 100).toFixed(1)}%</Chip>
-                <Chip tone="blue">{e.modal}</Chip>
-                <Chip>{esfera}</Chip>
-                <Chip tone={urgent ? "orange" : "default"} icon={<Icon.clock size={10}/>}>{urgent ? `${daysLeft} dias` : `vence em ${daysLeft}d`}</Chip>
-                <span style={{flex: 1}}/>
-                <span style={{fontSize: 11, color: "var(--ink-4)", fontFamily: "var(--font-mono)", fontWeight: 500}}>#{String(e.rank).padStart(2, "0")} no rank</span>
+            <div style={{flex: 1, minWidth: 0, display: "flex", alignItems: "flex-start", gap: 20}}>
+              <div style={{flex: 1, minWidth: 0}}>
+                <h2
+                  ref={titleRef}
+                  style={{
+                    margin: "0 0 8px",
+                    fontFamily: "var(--font-display)",
+                    fontSize: titleFontSize,
+                    color: "var(--ink-1)",
+                    fontWeight: 600,
+                    lineHeight: 1.2,
+                    letterSpacing: "-0.01em",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {e.org}
+                </h2>
+                <div style={{display: "flex", alignItems: "center", gap: 6, marginBottom: 8, flexWrap: "wrap"}}>
+                  <Chip tone="blue">{e.modal}</Chip>
+                  <Chip>{esfera}</Chip>
+                  <Chip tone={urgent ? "orange" : "default"} icon={<Icon.clock size={10}/>}>{urgent ? `${daysLeft} dias` : `vence em ${daysLeft}d`}</Chip>
+                  {e.sim > 0.5 && (
+                    <Chip tone="green">{"Alta ader\u00eancia"}</Chip>
+                  )}
+                </div>
+                <div style={{fontSize: 13, color: "var(--ink-3)", display: "flex", gap: 10, flexWrap: "wrap"}}>
+                  <span style={{display: "inline-flex", alignItems: "center", gap: 5}}><Icon.pin size={11}/>{e.mun} {"\u00b7"} {e.uf}</span>
+                  <span>ID PNCP <b className="mono" style={{color: "var(--ink-2)", fontWeight: 600}}>{pncpId || "\u2014"}</b></span>
+                </div>
               </div>
-              <h2 style={{margin: "2px 0 4px", fontFamily: "var(--font-display)", fontSize: 20, color: "var(--ink-1)", fontWeight: 600, lineHeight: 1.25, letterSpacing: "-0.01em"}}>{e.org}</h2>
-              <div style={{fontSize: 13, color: "var(--ink-3)", display: "flex", gap: 14, flexWrap: "wrap"}}>
-                <span style={{display: "inline-flex", alignItems: "center", gap: 5}}><Icon.pin size={11}/>{e.mun} · {e.uf}</span>
-                <span>UASG <b className="mono" style={{color: "var(--ink-2)", fontWeight: 600}}>{uasg}</b></span>
-                <span>Processo <b className="mono" style={{color: "var(--ink-2)", fontWeight: 600}}>{numProcesso}</b></span>
-                <span>Fonte <b style={{color: "var(--deep-blue)", fontWeight: 600}}>{fonte}</b></span>
+              <div style={{width: 300, flexShrink: 0, position: "relative", paddingTop: 0, marginRight: 24}}>
+                <span style={{position: "absolute", top: 0, right: 0, fontSize: 11, color: "var(--ink-4)", fontFamily: "var(--font-mono)", fontWeight: 500}}>#{String(e.rank).padStart(2, "0")} no rank</span>
+                <div style={{display: "flex", flexDirection: "column", gap: 2, fontSize: 13, color: "var(--ink-3)", alignItems: "flex-start", textAlign: "left", paddingRight: 76}}>
+                  <span style={{whiteSpace: "nowrap"}}>UASG <b className="mono" style={{color: "var(--ink-2)", fontWeight: 600}}>{uasg}</b></span>
+                  <span style={{whiteSpace: "nowrap"}}>Processo <b className="mono" style={{color: "var(--ink-2)", fontWeight: 600}}>{numProcesso}</b></span>
+                  <span style={{whiteSpace: "nowrap"}}>Edital <b className="mono" style={{color: "var(--ink-2)", fontWeight: 600}}>{numEdital}</b></span>
+                  <span style={{display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap"}}>
+                    <span>Fonte <b style={{color: "var(--deep-blue)", fontWeight: 600}}>{fonte}</b></span>
+                    {sourceLink && (
+                      <a
+                        href={sourceLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        title={"Abrir licita\u00e7\u00e3o em nova guia"}
+                        style={{display: "inline-flex", color: "var(--deep-blue)"}}
+                      >
+                        <Icon.external size={12}/>
+                      </a>
+                    )}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -135,7 +310,7 @@ function EditalDetail({ edital }) {
           {[
             { lbl: "Valor estimado", val: e.val === 0 ? "—" : fmtBRL(e.val).replace("R$ ", "R$\u202F"), sub: e.val === 0 ? "sigiloso" : "total do lote", mono: true },
             { lbl: "Encerramento", val: e.end, sub: urgent ? `${daysLeft} dias úteis` : `${daysLeft} dias corridos`, tone: urgent ? "risk" : null, mono: true },
-            { lbl: "Itens / Lotes", val: e.items || "—", sub: `${e.docs} documentos anexados` },
+            { lbl: "Itens / Lotes", val: itemCount || "\u2014", sub: `${e.docs} documentos anexados` },
             { lbl: "Similaridade IA", val: e.sim.toFixed(3), sub: "cálculo ponderado", tone: "blue", mono: true },
           ].map((k, i) => (
             <div key={i} style={{
@@ -162,7 +337,7 @@ function EditalDetail({ edital }) {
         }}>
           {[
             ["resumo", "Resumo", null],
-            ["itens", "Itens", e.items || 0],
+            ["itens", "Itens", itemCount || 0],
             ["documentos", "Documentos", e.docs],
             ["historico", "Histórico", 6],
             ["concorrencia", "Concorrência", 4],
@@ -258,35 +433,47 @@ function EditalDetail({ edital }) {
 
           {tab === "itens" && (
             <div style={{background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 10, overflow: "hidden"}}>
-              <div style={{
-                display: "grid", gridTemplateColumns: "50px minmax(0, 1fr) 110px 110px 130px 70px",
-                padding: "10px 16px", background: "var(--rail)",
-                fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".06em", fontWeight: 600,
-                borderBottom: "1px solid var(--hairline)",
-              }}>
-                <span>Lote</span><span>Descrição</span><span>Qtd</span><span style={{textAlign: "right"}}>Valor un.</span><span style={{textAlign: "right"}}>Total</span><span style={{textAlign: "right"}}>Match</span>
-              </div>
-              {items.map((it, i) => (
-                <div key={i} style={{
-                  display: "grid", gridTemplateColumns: "50px minmax(0, 1fr) 110px 110px 130px 70px",
-                  padding: "11px 16px", fontSize: 12.5, alignItems: "center",
-                  borderBottom: i < items.length - 1 ? "1px solid var(--hairline-soft)" : "none",
-                }}>
-                  <span className="mono" style={{color: "var(--ink-3)", fontWeight: 500}}>{String(it.lote).padStart(2, "0")}</span>
-                  <span style={{color: "var(--ink-1)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"}}>{it.desc}</span>
-                  <span className="mono" style={{color: "var(--ink-2)"}}>{it.qtd}</span>
-                  <span className="mono" style={{color: "var(--ink-2)", textAlign: "right"}}>{it.valor}</span>
-                  <span className="mono" style={{color: "var(--ink-1)", fontWeight: 600, textAlign: "right"}}>{it.total}</span>
-                  <span style={{textAlign: "right"}}>
-                    <span className="mono" style={{
-                      display: "inline-block", padding: "2px 7px", borderRadius: 10,
-                      fontSize: 11, fontWeight: 600,
-                      background: it.match >= 0.9 ? "var(--green-50, #E8F3E9)" : it.match >= 0.8 ? "var(--orange-50)" : "var(--rail)",
-                      color: it.match >= 0.9 ? "var(--green)" : it.match >= 0.8 ? "var(--orange-700)" : "var(--ink-3)",
-                    }}>{it.match.toFixed(2)}</span>
-                  </span>
+              {itemsState.status === "loading" ? (
+                <div style={{padding: "26px 18px", fontSize: 13, color: "var(--ink-3)"}}>
+                  Carregando itens do edital...
                 </div>
-              ))}
+              ) : itemsState.status === "error" ? (
+                <div style={{padding: "26px 18px", fontSize: 13, color: "var(--risk)"}}>
+                  {itemsState.error}
+                </div>
+              ) : itemRows.length === 0 ? (
+                <div style={{padding: "26px 18px", fontSize: 13, color: "var(--ink-3)"}}>
+                  Nenhum item encontrado para este edital.
+                </div>
+              ) : (
+                <>
+                  <div style={{
+                    display: "grid", gridTemplateColumns: "64px minmax(0, 1fr) 120px 136px 150px",
+                    padding: "10px 16px", background: "var(--rail)",
+                    fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".06em", fontWeight: 600,
+                    borderBottom: "1px solid var(--hairline)",
+                  }}>
+                    <span>{"N\u00ba"}</span>
+                    <span>{"Descri\u00e7\u00e3o"}</span>
+                    <span>Qtde</span>
+                    <span style={{textAlign: "right"}}>{"Unit (R$)"}</span>
+                    <span style={{textAlign: "right"}}>{"Total (R$)"}</span>
+                  </div>
+                  {itemRows.map((item, index) => (
+                    <div key={`${item.numero}-${index}`} style={{
+                      display: "grid", gridTemplateColumns: "64px minmax(0, 1fr) 120px 136px 150px",
+                      padding: "11px 16px", fontSize: 12.5, alignItems: "start",
+                      borderBottom: index < itemRows.length - 1 ? "1px solid var(--hairline-soft)" : "none",
+                    }}>
+                      <span className="mono" style={{color: "var(--ink-3)", fontWeight: 500}}>{String(item.numero).padStart(2, "0")}</span>
+                      <span style={{color: "var(--ink-1)", lineHeight: 1.45}}>{item.descricao || "\u2014"}</span>
+                      <span className="mono" style={{color: "var(--ink-2)"}}>{item.quantidade}</span>
+                      <span className="mono" style={{color: "var(--ink-2)", textAlign: "right"}}>{item.valorUnitario}</span>
+                      <span className="mono" style={{color: "var(--ink-1)", fontWeight: 600, textAlign: "right"}}>{item.valorTotal}</span>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
           )}
 
@@ -417,7 +604,19 @@ function EditalDetail({ edital }) {
         <Button kind="ghost" size="sm" icon={<Icon.bell size={13}/>}>Acompanhar</Button>
         <Button kind="ghost" size="sm" icon={<Icon.external size={13}/>}>Compartilhar</Button>
         <span style={{flex: 1}}/>
-        <Button kind="ghost" size="sm" icon={<Icon.external size={13}/>}>Abrir no {fonte}</Button>
+        <Button
+          kind="ghost"
+          size="sm"
+          icon={<Icon.external size={13}/>}
+          disabled={!sourceLink}
+          onClick={() => {
+            if (sourceLink) {
+              window.open(sourceLink, "_blank", "noopener,noreferrer");
+            }
+          }}
+        >
+          Abrir no {fonte}
+        </Button>
         <Button kind="primary" size="sm" icon={<Icon.sparkle size={13}/>}>Analisar com IA</Button>
       </div>
     </div>

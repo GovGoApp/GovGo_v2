@@ -110,11 +110,65 @@
     return payload.filters || {};
   }
 
+  async function loadEditalItems({ pncpId, limit = 500 } = {}) {
+    const response = await fetch("/api/edital-items", {
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        pncp_id: pncpId || "",
+        limit,
+      }),
+    });
+
+    const payload = await parseJsonResponse(response, "A API de itens retornou um JSON invalido.");
+
+    if (!response.ok) {
+      throw new Error(payload.error || `Falha HTTP ${response.status} ao carregar os itens do edital.`);
+    }
+
+    return {
+      pncpId: payload.pncp_id || pncpId || "",
+      count: payload.count || 0,
+      items: Array.isArray(payload.items) ? payload.items : [],
+    };
+  }
+
+  async function loadEditalDocuments({ pncpId, limit = 200 } = {}) {
+    const response = await fetch("/api/edital-documentos", {
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        pncp_id: pncpId || "",
+        limit,
+      }),
+    });
+
+    const payload = await parseJsonResponse(response, "A API de documentos retornou um JSON invalido.");
+
+    if (!response.ok) {
+      throw new Error(payload.error || `Falha HTTP ${response.status} ao carregar os documentos do edital.`);
+    }
+
+    return {
+      pncpId: payload.pncp_id || pncpId || "",
+      count: payload.count || 0,
+      documents: Array.isArray(payload.documents) ? payload.documents : [],
+    };
+  }
+
   window.GovGoSearchApi = {
     runSearch,
     loadSearchConfig,
     saveSearchConfig,
     loadSearchFilters,
     saveSearchFilters,
+    loadEditalItems,
+    loadEditalDocuments,
   };
 })();

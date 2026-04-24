@@ -1,5 +1,6 @@
 // Shell: top bar, left rail, search rail (Busca), activity rail (Favoritos/Histórico/Boletins)
 const { useState: uS, useEffect: uE } = React;
+const GOVGO_V1_LOGO_URL = "https://hemztmtbejcbhgfmsvfq.supabase.co/storage/v1/object/public/govgo/LOGO/LOGO_TEXTO_GOvGO_TRIM_v3.png";
 
 function TopBar({mode}) {
   const [theme, setTheme] = uS(() => {
@@ -19,11 +20,8 @@ function TopBar({mode}) {
       position: "sticky", top: 0, zIndex: 30,
     }}>
       <div style={{display: "flex", alignItems: "center", gap: 10}}>
-        <Icon.logo size={26}/>
-        <div style={{display: "flex", alignItems: "baseline", gap: 6}}>
-          <span style={{fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 17, color: "var(--deep-blue)", letterSpacing: "-0.01em"}}>GovGo</span>
-          <span style={{fontFamily: "var(--font-display)", fontWeight: 500, fontSize: 12, color: "var(--ink-3)"}}>v2</span>
-        </div>
+        <img src={GOVGO_V1_LOGO_URL} alt="GovGo" style={{height: 28, width: "auto", display: "block"}}/>
+        <span style={{fontFamily: "var(--font-display)", fontWeight: 500, fontSize: 12, color: "var(--ink-3)"}}>v2</span>
         <span style={{
           marginLeft: 4, fontSize: 10, fontWeight: 700, padding: "2px 6px",
           background: "var(--blue-50)", color: "var(--deep-blue)", borderRadius: 4, letterSpacing: ".06em"
@@ -232,11 +230,29 @@ function hasActiveSearchRailFilters(filters) {
 function MultiSelectField({ options, values, onToggle, onToggleAll, allLabel = "Todos", placeholder, maxHeight = 170 }) {
   const [open, setOpen] = React.useState(false);
   const rootRef = React.useRef(null);
+  const menuRef = React.useRef(null);
+  const [menuRect, setMenuRect] = React.useState(null);
   const allSelected = options.length > 0 && values.length === options.length;
+
+  const syncMenuRect = React.useCallback(() => {
+    if (!rootRef.current) {
+      return;
+    }
+    const rect = rootRef.current.getBoundingClientRect();
+    setMenuRect({
+      left: rect.left,
+      top: rect.bottom + 4,
+      width: rect.width,
+    });
+  }, []);
 
   React.useEffect(() => {
     const handlePointerDown = (event) => {
-      if (!rootRef.current || rootRef.current.contains(event.target)) {
+      if (
+        !rootRef.current ||
+        rootRef.current.contains(event.target) ||
+        menuRef.current?.contains(event.target)
+      ) {
         return;
       }
       setOpen(false);
@@ -245,6 +261,21 @@ function MultiSelectField({ options, values, onToggle, onToggleAll, allLabel = "
     document.addEventListener("mousedown", handlePointerDown);
     return () => document.removeEventListener("mousedown", handlePointerDown);
   }, []);
+
+  React.useEffect(() => {
+    if (!open) {
+      return undefined;
+    }
+
+    syncMenuRect();
+    const handleReposition = () => syncMenuRect();
+    window.addEventListener("resize", handleReposition);
+    window.addEventListener("scroll", handleReposition, true);
+    return () => {
+      window.removeEventListener("resize", handleReposition);
+      window.removeEventListener("scroll", handleReposition, true);
+    };
+  }, [open, syncMenuRect]);
 
   const selectedLabels = options
     .filter((option) => values.includes(option.value))
@@ -291,19 +322,22 @@ function MultiSelectField({ options, values, onToggle, onToggleAll, allLabel = "
         </span>
       </button>
 
-      {open && (
-        <div style={{
-          position: "absolute",
-          left: 0,
-          right: 0,
-          top: "calc(100% + 4px)",
-          zIndex: 30,
-          border: "1px solid var(--hairline)",
-          borderRadius: "var(--r-md)",
-          background: "var(--paper)",
-          boxShadow: "var(--shadow-md)",
-          overflow: "hidden",
-        }}>
+      {open && menuRect && ReactDOM.createPortal(
+        <div
+          ref={menuRef}
+          style={{
+            position: "fixed",
+            left: menuRect.left,
+            top: menuRect.top,
+            width: menuRect.width,
+            zIndex: 4000,
+            border: "1px solid var(--hairline)",
+            borderRadius: "var(--r-md)",
+            background: "var(--paper)",
+            boxShadow: "var(--shadow-md)",
+            overflow: "hidden",
+          }}
+        >
           <label style={{
             display: "flex",
             alignItems: "center",
@@ -325,7 +359,8 @@ function MultiSelectField({ options, values, onToggle, onToggleAll, allLabel = "
               </label>
             ))}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
@@ -336,6 +371,7 @@ function SearchRail() {
   const [panelOpen, setPanelOpen] = uS(false);
   const [activePanel, setActivePanel] = uS("filters");
   const [query, setQuery] = uS("");
+  const [queryFocus, setQueryFocus] = uS(false);
   const [searchConfig, setSearchConfig] = uS(() => normalizeSearchRailConfig(createSearchRailConfig()));
   const [configReady, setConfigReady] = uS(false);
   const [filterDraft, setFilterDraft] = uS(() => normalizeSearchRailFilters(createDefaultFilterDraft()));
@@ -427,7 +463,14 @@ function SearchRail() {
       try {
         const savedFilters = await window.GovGoSearchApi.loadSearchFilters();
         if (!cancelled && savedFilters) {
-          setFilterDraft(normalizeSearchRailFilters(savedFilters));
+          const normalized = normalizeSearchRailFilters(savedFilters);
+          setFilterDraft({
+            ...normalized,
+            startDate: "",
+            endDate: "",
+            date_start: "",
+            date_end: "",
+          });
         }
       } catch (_) {
       } finally {
@@ -493,6 +536,31 @@ function SearchRail() {
     return () => window.removeEventListener("govgo:search-state", handleSearchState);
   }, []);
 
+  uE(() => {
+    const handleOpenRail = (event) => {
+      const panel = event.detail?.panel;
+      if (panel === "config" || panel === "filters") {
+        setActivePanel(panel);
+      }
+      setPanelOpen(true);
+    };
+
+    window.addEventListener("govgo:search-rail-open", handleOpenRail);
+    return () => window.removeEventListener("govgo:search-rail-open", handleOpenRail);
+  }, []);
+
+  uE(() => {
+    const handleSearchFocus = () => {
+      const input = document.querySelector('[name="govgo-search-query"]');
+      if (input && typeof input.focus === "function") {
+        input.focus();
+      }
+    };
+
+    window.addEventListener("govgo:search-focus", handleSearchFocus);
+    return () => window.removeEventListener("govgo:search-focus", handleSearchFocus);
+  }, []);
+
   const runSearch = (configOverride) => {
     const trimmed = query.trim();
     const normalizedFilters = normalizeSearchRailFilters(filterDraft);
@@ -530,7 +598,10 @@ function SearchRail() {
   const handleBuscar = () => runSearch();
 
   const handleKeyDown = (e) => {
-    if (e.key === "Enter") handleBuscar();
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleBuscar();
+    }
   };
 
   const canSearch = (Boolean(query.trim()) || hasActiveSearchRailFilters(filterDraft)) && !searchInfo.loading;
@@ -567,15 +638,60 @@ function SearchRail() {
       minWidth: 0, background: "var(--rail)", borderRight: "1px solid var(--hairline)",
       display: "flex", flexDirection: "column", overflow: "hidden",
     }}>
-      {/* Busca box */}
-      <div style={{background: "var(--paper)", borderBottom: "1px solid var(--hairline)"}}>
-        <div style={{padding: "12px 10px 10px"}}>
-          <div style={{fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".08em", fontWeight: 600, margin: "0 2px 8px"}}>MODO BUSCA</div>
-          <Input size="sm" placeholder="Buscar editais, objeto, palavra-chave..." icon={<Icon.search size={14}/>} value={query} onChange={setQuery} onKeyDown={handleKeyDown} name="govgo-search-query" autoComplete="off"/>
-          <div style={{display: "flex", gap: 6, marginTop: 8, alignItems: "center", flexWrap: "wrap"}}>
-            <Chip tone="blue" onClick={() => { setPanelOpen(true); setActivePanel("config"); }}>{configSummary.typeLabel}</Chip>
-            <span style={{flex: 1}}/>
-            <Button kind="primary" size="sm" onClick={handleBuscar} disabled={!canSearch} loading={searchInfo.loading}>Buscar</Button>
+      <div style={{padding: "10px 10px 0", background: "transparent"}}>
+        <div style={{
+          background: "var(--paper)",
+          border: "1px solid var(--hairline)",
+          borderBottom: "none",
+          borderRadius: "8px 8px 0 0",
+          padding: "12px 10px 6px",
+        }}>
+          <div style={{fontSize: 10.5, color: "var(--ink-3)", textTransform: "uppercase", letterSpacing: ".08em", fontWeight: 600, margin: "0 2px 8px"}}>BUSCA</div>
+          <div style={{
+            position: "relative",
+            background: "var(--paper)",
+            borderRadius: "var(--r-md)",
+            border: `1px solid ${queryFocus ? "var(--deep-blue)" : "var(--hairline)"}`,
+            boxShadow: queryFocus ? "var(--ring-focus)" : "var(--shadow-xs)",
+            transition: "border-color 120ms, box-shadow 120ms",
+          }}>
+            <span style={{
+              position: "absolute",
+              left: 12,
+              top: 12,
+              color: "var(--ink-3)",
+              display: "inline-flex",
+              pointerEvents: "none",
+            }}>
+              <Icon.search size={14}/>
+            </span>
+            <textarea
+              rows={3}
+              placeholder="Buscar editais, objeto, palavra-chave..."
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              onKeyDown={handleKeyDown}
+              onFocus={() => setQueryFocus(true)}
+              onBlur={() => setQueryFocus(false)}
+              name="govgo-search-query"
+              autoComplete="off"
+              spellCheck={false}
+              style={{
+                all: "unset",
+                boxSizing: "border-box",
+                width: "100%",
+                minHeight: 84,
+                resize: "none",
+                padding: "10px 104px 10px 34px",
+                fontSize: 13.5,
+                lineHeight: 1.45,
+                fontFamily: "var(--font-body)",
+                color: "var(--ink-1)",
+              }}
+            />
+            <div style={{position: "absolute", right: 10, bottom: 10}}>
+              <Button kind="primary" size="sm" onClick={handleBuscar} disabled={!canSearch} loading={searchInfo.loading}>Buscar</Button>
+            </div>
           </div>
           <div className={`gg-search-progress ${searchInfo.loading ? "is-active" : ""}`} aria-hidden={!searchInfo.loading}>
             <span className="gg-search-progress__bar"/>
@@ -590,27 +706,32 @@ function SearchRail() {
 
       <div style={{flex: 1, overflowY: "auto", paddingBottom: 12}}>
         {/* Filters — single collapsible box, smaller font */}
-        <div style={{margin: "10px 10px 0", background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 8, fontSize: 11.5, overflow: "hidden"}}>
+        <div style={{margin: "0 10px 0", background: "var(--paper)", border: "1px solid var(--hairline)", borderTop: "none", borderRadius: "0 0 8px 8px", fontSize: 11.5, overflow: "hidden"}}>
           <div role="tablist" style={{
             display: "flex",
             alignItems: "flex-end",
             gap: 2,
-            padding: "0 10px",
+            padding: "0 8px 0 10px",
             background: "var(--surface-sunk)",
             borderBottom: "1px solid var(--hairline-soft)",
             color: "var(--ink-2)",
           }}>
             {[
-              { id: "filters", label: "Filtros", icon: <Icon.filter size={11}/> },
-              { id: "config", label: "Configuração", icon: <Icon.gear size={11}/> },
+              { id: "filters", label: "Filtros", icon: <Icon.filter size={14}/> },
+              { id: "config", label: "Configuração", icon: <Icon.gear size={14}/> },
             ].map((tab) => {
-              const active = activePanel === tab.id;
+              const isCurrent = activePanel === tab.id;
+              const active = isCurrent && panelOpen;
               return (
                 <button
                   key={tab.id}
                   role="tab"
                   aria-selected={active}
                   onClick={() => {
+                    if (isCurrent && panelOpen) {
+                      setPanelOpen(false);
+                      return;
+                    }
                     setActivePanel(tab.id);
                     setPanelOpen(true);
                   }}
@@ -624,17 +745,17 @@ function SearchRail() {
                     marginTop: 6,
                     position: "relative",
                     top: 1,
-                    background: active ? "var(--paper)" : "transparent",
+                    background: active ? "var(--paper)" : "var(--surface-sunk)",
                     border: active ? "1px solid var(--hairline)" : "1px solid transparent",
                     borderBottom: active ? "1px solid var(--paper)" : "1px solid transparent",
                     borderTop: active ? "2px solid var(--orange)" : "2px solid transparent",
                     borderRadius: "8px 8px 0 0",
                     fontSize: 12.5,
                     fontWeight: 600,
-                    color: active ? "var(--orange-700)" : "var(--ink-3)",
+                    color: active ? "var(--orange-700)" : "var(--ink-2)",
                   }}
                 >
-                  <span style={{display: "inline-flex", color: active ? "var(--orange)" : "var(--ink-3)"}}>{tab.icon}</span>
+                  <span style={{display: "inline-flex", color: active ? "var(--orange)" : "var(--ink-2)"}}>{tab.icon}</span>
                   <span>{tab.label}</span>
                 </button>
               );
@@ -645,16 +766,17 @@ function SearchRail() {
               style={{
                 all: "unset",
                 cursor: "pointer",
-                width: 22,
-                height: 22,
+                width: 30,
+                height: 30,
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
                 color: "var(--ink-3)",
+                alignSelf: "center",
               }}
             >
               <span style={{transform: panelOpen ? "rotate(180deg)" : "none", transition: "transform 140ms", display: "inline-flex"}}>
-                <Icon.chevDown size={12}/>
+                <Icon.chevDown size={15}/>
               </span>
             </button>
           </div>

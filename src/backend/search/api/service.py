@@ -47,3 +47,51 @@ def get_search_filters() -> dict[str, Any]:
 
 def update_search_filters(payload: dict[str, Any] | None) -> dict[str, Any]:
     return save_search_filters(payload or {})
+
+
+def get_edital_items(payload: dict[str, Any] | None) -> dict[str, Any]:
+    source = payload or {}
+    pncp = str(
+        source.get("pncp_id")
+        or source.get("numero_controle_pncp")
+        or source.get("pncp")
+        or ""
+    ).strip()
+
+    try:
+        limit = int(source.get("limit") or 500)
+    except (TypeError, ValueError):
+        limit = 500
+
+    items, error = ADAPTER.fetch_edital_items(pncp, limit=limit)
+    return {
+        "pncp_id": pncp,
+        "limit": limit,
+        "count": len(items),
+        "items": items,
+        "error": error,
+    }
+
+
+def get_edital_documents(payload: dict[str, Any] | None) -> dict[str, Any]:
+    source = payload or {}
+    pncp = str(
+        source.get("pncp_id")
+        or source.get("numero_controle_pncp")
+        or source.get("pncp")
+        or ""
+    ).strip()
+
+    try:
+        limit = int(source.get("limit") or 200)
+    except (TypeError, ValueError):
+        limit = 200
+
+    documents, error = ADAPTER.fetch_edital_documents(pncp, limit=limit)
+    return {
+        "pncp_id": pncp,
+        "limit": limit,
+        "count": len(documents),
+        "documents": documents,
+        "error": error,
+    }

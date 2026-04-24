@@ -578,6 +578,91 @@ class SearchAdapter:
             raw=raw_item,
         )
 
+    def fetch_edital_items(self, numero_controle_pncp: str, limit: int = 500) -> tuple[List[Dict[str, Any]], str | None]:
+        self._load_modules()
+
+        pncp = str(numero_controle_pncp or "").strip()
+        if not pncp:
+            return [], "Informe o numero_controle_pncp do edital."
+
+        database_error = self._database_configuration_error()
+        if database_error:
+            return [], database_error
+
+        fetch_items = getattr(self._core, "fetch_itens_contratacao", None)
+        if not callable(fetch_items):
+            return [], "O modulo de busca nao expoe fetch_itens_contratacao()."
+
+        try:
+            raw_items = fetch_items(pncp, limit=int(limit or 500)) or []
+        except Exception as exc:
+            return [], str(exc)
+
+        items: List[Dict[str, Any]] = []
+        for index, raw_item in enumerate(raw_items, start=1):
+            if not isinstance(raw_item, dict):
+                continue
+
+            quantidade = self._to_float(raw_item.get("quantidade_item"))
+            valor_unitario = self._to_float(raw_item.get("valor_unitario_estimado"))
+            valor_total = self._to_float(raw_item.get("valor_total_estimado"))
+            if valor_total is None and quantidade is not None and valor_unitario is not None:
+                valor_total = quantidade * valor_unitario
+
+            items.append({
+                "row_number": index,
+                "numero_controle_pncp": str(raw_item.get("numero_controle_pncp") or pncp),
+                "numero_item": str(raw_item.get("numero_item") or ""),
+                "descricao_item": str(raw_item.get("descricao_item") or ""),
+                "material_ou_servico": str(raw_item.get("material_ou_servico") or ""),
+                "quantidade_item": quantidade,
+                "unidade_medida": str(raw_item.get("unidade_medida") or ""),
+                "valor_unitario_estimado": valor_unitario,
+                "valor_total_estimado": valor_total,
+            })
+
+        return items, None
+
+    def fetch_edital_documents(self, numero_controle_pncp: str, limit: int = 200) -> tuple[List[Dict[str, Any]], str | None]:
+        self._load_modules()
+
+        pncp = str(numero_controle_pncp or "").strip()
+        if not pncp:
+            return [], "Informe o numero_controle_pncp do edital."
+
+        try:
+            database = importlib.import_module("gvg_database")
+        except Exception as exc:
+            return [], f"Nao foi possivel carregar o modulo de documentos: {exc}"
+
+        fetch_documents = getattr(database, "fetch_documentos", None)
+        if not callable(fetch_documents):
+            return [], "O modulo de busca nao expoe fetch_documentos()."
+
+        try:
+            raw_documents = fetch_documents(pncp) or []
+        except Exception as exc:
+            return [], str(exc)
+
+        documents: List[Dict[str, Any]] = []
+        for index, raw_document in enumerate(raw_documents[: max(1, int(limit or 200))], start=1):
+            if not isinstance(raw_document, dict):
+                continue
+
+            documents.append({
+                "row_number": index,
+                "numero_controle_pncp": pncp,
+                "nome": str(raw_document.get("nome") or raw_document.get("titulo") or "Documento"),
+                "url": str(raw_document.get("url") or raw_document.get("uri") or ""),
+                "tipo": str(raw_document.get("tipo") or raw_document.get("tipoDocumentoNome") or "N/I"),
+                "tamanho": raw_document.get("tamanho"),
+                "modificacao": str(raw_document.get("modificacao") or raw_document.get("dataPublicacaoPncp") or ""),
+                "sequencial": raw_document.get("sequencial"),
+                "origem": str(raw_document.get("origem") or "api"),
+            })
+
+        return documents, None
+
     def run(self, request: SearchRequest) -> SearchResponse:
         started_at = time.perf_counter()
         self._load_modules()

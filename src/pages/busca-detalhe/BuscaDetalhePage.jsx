@@ -45,7 +45,18 @@ function BuscaDetalhePage({ route, navigate }) {
     );
   }
 
-  return <EditalDetail edital={edital} />;
+  return (
+    <EditalDetail
+      edital={edital}
+      onBackToSearch={() => {
+        if (navigate) {
+          navigate("busca");
+          return;
+        }
+        window.location.hash = "#/busca";
+      }}
+    />
+  );
 }
 
 window.BuscaDetalhePage = BuscaDetalhePage;

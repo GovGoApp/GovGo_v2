@@ -13,6 +13,7 @@ import urllib.request
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import urlsplit
 
 
 HOST = "127.0.0.1"
@@ -62,8 +63,8 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
         return payload
 
     def do_OPTIONS(self) -> None:
-        route = self.path.split("?", 1)[0]
-        if route not in {"/api/search", "/api/search-config", "/api/search-filters"}:
+        route = urlsplit(self.path).path
+        if route not in {"/api/search", "/api/search-config", "/api/search-filters", "/api/edital-items", "/api/edital-documentos"}:
             self.send_error(404, "Endpoint nao encontrado.")
             return
 
@@ -72,7 +73,7 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self) -> None:
-        route = self.path.split("?", 1)[0]
+        route = urlsplit(self.path).path
         if route not in {"/api/search-config", "/api/search-filters"}:
             super().do_GET()
             return
@@ -91,8 +92,8 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
         self._write_json(200, response)
 
     def do_POST(self) -> None:
-        route = self.path.split("?", 1)[0]
-        if route not in {"/api/search", "/api/search-config", "/api/search-filters"}:
+        route = urlsplit(self.path).path
+        if route not in {"/api/search", "/api/search-config", "/api/search-filters", "/api/edital-items", "/api/edital-documentos"}:
             self.send_error(404, "Endpoint nao encontrado.")
             return
 
@@ -104,6 +105,8 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
 
         try:
             from src.backend.search.api.service import (
+                get_edital_documents,
+                get_edital_items,
                 run_search,
                 update_search_config,
                 update_search_filters,
@@ -113,6 +116,10 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
                 response = {"config": update_search_config(payload)}
             elif route == "/api/search-filters":
                 response = {"filters": update_search_filters(payload)}
+            elif route == "/api/edital-items":
+                response = get_edital_items(payload)
+            elif route == "/api/edital-documentos":
+                response = get_edital_documents(payload)
             else:
                 response = run_search(payload)
         except Exception as exc:
@@ -121,6 +128,8 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
 
         status_code = 200
         if route == "/api/search" and response.get("error") == "Informe uma consulta para buscar.":
+            status_code = 400
+        elif route in {"/api/edital-items", "/api/edital-documentos"} and response.get("error"):
             status_code = 400
         self._write_json(status_code, response)
 
@@ -167,12 +176,35 @@ def _existing_server_works(url: str) -> bool:
     return _wait_until_reachable(url, timeout_seconds=1.0)
 
 
+def _post_json_works(url: str, body: dict | None = None, timeout_seconds: float = 1.0) -> bool:
+    request = urllib.request.Request(
+        url,
+        data=json.dumps(body or {}).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with contextlib.closing(urllib.request.urlopen(request, timeout=timeout_seconds)) as response:
+            return 200 <= response.status < 500
+    except urllib.error.HTTPError as exc:
+        return 200 <= exc.code < 500
+    except (urllib.error.URLError, TimeoutError, OSError):
+        return False
+
+
 def _existing_server_matches_current_api() -> bool:
-    required_urls = [
+    required_get_urls = [
         f"http://{HOST}:{PORT}/api/search-config",
         f"http://{HOST}:{PORT}/api/search-filters",
     ]
-    return all(_wait_until_reachable(endpoint, timeout_seconds=1.0) for endpoint in required_urls)
+    if not all(_wait_until_reachable(endpoint, timeout_seconds=1.0) for endpoint in required_get_urls):
+        return False
+
+    required_post_urls = [
+        f"http://{HOST}:{PORT}/api/edital-items",
+        f"http://{HOST}:{PORT}/api/edital-documentos",
+    ]
+    return all(_post_json_works(endpoint) for endpoint in required_post_urls)
 
 
 def _serve_forever() -> int:

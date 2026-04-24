@@ -2,46 +2,93 @@
 const { useState: uSo, useMemo: uMo } = React;
 
 function WorkspaceTabs({tabs, active, onActivate, onClose, onNew}) {
+  const scrollRef = React.useRef(null);
+  React.useEffect(() => {
+    const node = scrollRef.current;
+    if (!node) {
+      return undefined;
+    }
+
+    const handleWheel = (event) => {
+      if (node.scrollWidth <= node.clientWidth) {
+        return;
+      }
+
+      const delta = Math.abs(event.deltaY) > Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
+      if (!delta) {
+        return;
+      }
+
+      node.scrollLeft += delta;
+      event.preventDefault();
+    };
+
+    node.addEventListener("wheel", handleWheel, { passive: false });
+    return () => node.removeEventListener("wheel", handleWheel);
+  }, []);
+
   return (
-    <div style={{
-      display: "flex", alignItems: "flex-end", gap: 2,
-      borderBottom: "1px solid var(--hairline)",
-      padding: "0 0 0 4px", background: "var(--surface-sunk)",
-      overflowX: "auto",
-    }}>
+    <div
+      ref={scrollRef}
+      style={{
+        display: "flex", alignItems: "flex-end", gap: 2,
+        borderBottom: "1px solid var(--hairline)",
+        padding: "0 0 0 4px", background: "var(--surface-sunk)",
+        overflowX: "auto",
+        overflowY: "hidden",
+        scrollbarWidth: "thin",
+        scrollBehavior: "smooth",
+      }}>
       {tabs.map(t => {
         const isActive = t.id === active;
         return (
           <div key={t.id} onClick={() => onActivate(t.id)}
             style={{
+              flex: "0 0 auto",
               display: "inline-flex", alignItems: "center", gap: 8,
               padding: "9px 12px 9px 12px", marginTop: 6,
-              background: isActive ? "var(--paper)" : "transparent",
+              background: isActive ? "var(--paper)" : "var(--surface-sunk)",
               border: isActive ? "1px solid var(--hairline)" : "1px solid transparent",
               borderBottom: isActive ? "1px solid var(--paper)" : "1px solid transparent",
+              borderTop: isActive ? "2px solid var(--orange)" : "2px solid transparent",
               borderRadius: "8px 8px 0 0",
               cursor: "pointer", position: "relative", top: 1,
               fontSize: 12.5, fontWeight: 500,
-              color: isActive ? "var(--ink-1)" : "var(--ink-3)",
+              color: isActive ? "var(--orange-700)" : "var(--ink-2)",
               maxWidth: 240, minWidth: 0,
             }}>
-            <span style={{color: t.tone === "orange" ? "var(--orange)" : t.tone === "blue" ? "var(--deep-blue)" : t.tone === "green" ? "var(--green)" : "var(--ink-3)", display: "inline-flex"}}>{t.icon}</span>
+            <span style={{
+              color: isActive
+                ? "var(--orange)"
+                : t.tone === "orange"
+                ? "var(--orange)"
+                : t.tone === "blue"
+                ? "var(--deep-blue)"
+                : t.tone === "green"
+                ? "var(--green)"
+                : "var(--ink-3)",
+              opacity: isActive ? 1 : 0.84,
+              display: "inline-flex",
+            }}>
+              {React.isValidElement(t.icon) ? t.icon : null}
+            </span>
             <span style={{overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160}}>{t.title}</span>
-            {t.count != null && <span style={{fontSize: 10.5, color: "var(--ink-3)", fontFamily: "var(--font-mono)", fontWeight: 600}}>{t.count}</span>}
+            {t.count != null && <span style={{fontSize: 10.5, color: isActive ? "var(--orange-700)" : "var(--ink-2)", fontFamily: "var(--font-mono)", fontWeight: 600}}>{t.count}</span>}
             {t.closable !== false && (
               <button onClick={e => { e.stopPropagation(); onClose(t.id); }} style={{
                 all: "unset", cursor: "pointer", padding: 2, borderRadius: 3,
-                display: "inline-flex", color: "var(--ink-3)", marginLeft: 2,
+                display: "inline-flex", color: isActive ? "var(--orange-700)" : "var(--ink-2)", marginLeft: 2,
               }}><Icon.close size={11}/></button>
             )}
           </div>
         );
       })}
       <button onClick={onNew} title="Nova busca" style={{
+        flex: "0 0 auto",
         all: "unset", cursor: "pointer",
         display: "inline-flex", alignItems: "center", justifyContent: "center",
         width: 30, height: 30, marginTop: 6, borderRadius: 6,
-        color: "var(--ink-3)",
+        color: "var(--ink-2)",
       }}><Icon.plus size={14}/></button>
       <span style={{flex: 1}}/>
     </div>
