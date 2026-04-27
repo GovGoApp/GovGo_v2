@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import importlib
 import os
+import re
 import time
+import unicodedata
 from datetime import datetime
 from threading import Lock
 from typing import Any, Dict, List, Tuple
@@ -512,6 +514,136 @@ class SearchAdapter:
         except Exception:
             return None
 
+    def _normalize_municipio_key(self, value: Any) -> str:
+        text = str(value or "").strip().lower()
+        if not text:
+            return ""
+        normalized = unicodedata.normalize("NFKD", text)
+        ascii_text = normalized.encode("ascii", "ignore").decode("ascii")
+        collapsed = re.sub(r"[^a-z0-9]+", " ", ascii_text)
+        return re.sub(r"\s+", " ", collapsed).strip()
+
+    def _load_municipios_lookup(self, uf_codes: List[str]) -> Dict[tuple[str, str], Dict[str, Any]]:
+        unique_ufs = sorted({str(code or "").strip().upper() for code in uf_codes if str(code or "").strip()})
+        if not unique_ufs:
+            return {}
+
+        try:
+            database = importlib.import_module("gvg_database")
+        except Exception:
+            return {}
+
+        db_fetch_all = getattr(database, "db_fetch_all", None)
+        if not callable(db_fetch_all):
+            return {}
+
+        sql = """
+            SELECT
+                municipio::text AS municipio,
+                uf_code,
+                name,
+                no_accents,
+                slug_name,
+                lat,
+                lon,
+                pop_21
+            FROM public.municipios
+            WHERE uf_code = ANY(%s)
+              AND lat IS NOT NULL
+              AND lon IS NOT NULL
+        """
+
+        try:
+            rows = db_fetch_all(sql, (unique_ufs,), as_dict=True, ctx="v2.search.municipios")
+        except Exception:
+            return {}
+
+        lookup: Dict[tuple[str, str], Dict[str, Any]] = {}
+        for row in rows or []:
+            uf = str(row.get("uf_code") or "").strip().upper()
+            if not uf:
+                continue
+            municipio_codigo = str(row.get("municipio") or "").strip()
+            keys = {
+                f"ibge:{municipio_codigo}" if municipio_codigo else "",
+                self._normalize_municipio_key(row.get("name")),
+                self._normalize_municipio_key(row.get("no_accents")),
+                self._normalize_municipio_key(row.get("slug_name")),
+            }
+            population = int(row.get("pop_21") or 0)
+            for key in keys:
+                if not key:
+                    continue
+                lookup_key = (uf, key)
+                previous = lookup.get(lookup_key)
+                previous_population = int(previous.get("pop_21") or 0) if previous else -1
+                if previous is None or population > previous_population:
+                    lookup[lookup_key] = row
+        return lookup
+
+    def _attach_result_coordinates(self, raw_results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        if not raw_results:
+            return raw_results
+
+        uf_codes: List[str] = []
+        for item in raw_results:
+            details = dict(item.get("details") or {})
+            uf = str(details.get("unidade_orgao_uf_sigla") or details.get("uf") or "").strip().upper()
+            if uf:
+                uf_codes.append(uf)
+
+        lookup = self._load_municipios_lookup(uf_codes)
+        if not lookup:
+            return raw_results
+
+        for item in raw_results:
+            details = dict(item.get("details") or {})
+            uf = str(details.get("unidade_orgao_uf_sigla") or details.get("uf") or "").strip().upper()
+            municipio_codigo_origem = str(
+                details.get("ibge_municipio")
+                or details.get("municipio_ibge")
+                or details.get("unidade_orgao_codigo_ibge")
+                or details.get("unidade_orgao_municipio_codigo_ibge")
+                or ""
+            ).strip()
+            municipio_nome = str(
+                details.get("unidade_orgao_municipio_nome")
+                or details.get("municipio")
+                or ""
+            ).strip()
+            key = self._normalize_municipio_key(municipio_nome)
+            if not uf or (not key and not municipio_codigo_origem):
+                item["details"] = details
+                continue
+
+            row = None
+            if municipio_codigo_origem:
+                row = lookup.get((uf, f"ibge:{municipio_codigo_origem}"))
+            if not row and key:
+                row = lookup.get((uf, key))
+            if not row:
+                item["details"] = details
+                continue
+
+            lat = self._to_float(row.get("lat"))
+            lon = self._to_float(row.get("lon"))
+            municipio_codigo = str(row.get("municipio") or "").strip() or None
+            if lat is None or lon is None:
+                item["details"] = details
+                continue
+
+            details["lat"] = lat
+            details["lon"] = lon
+            if municipio_codigo:
+                details["ibge_municipio"] = municipio_codigo
+            item["details"] = details
+            item["latitude"] = lat
+            item["longitude"] = lon
+            if municipio_codigo:
+                item["municipality_code"] = municipio_codigo
+
+        return raw_results
+
     def _sort_results(self, raw_results: List[Dict[str, Any]], sort_mode: int) -> List[Dict[str, Any]]:
         results = list(raw_results)
         if sort_mode == 1:
@@ -575,6 +707,9 @@ class SearchAdapter:
             modality=str(modality or ""),
             closing_date=str(closing_date or ""),
             estimated_value=estimated_value,
+            municipality_code=str(raw_item.get("municipality_code") or details.get("ibge_municipio") or "") or None,
+            latitude=self._to_float(raw_item.get("latitude") or details.get("lat")),
+            longitude=self._to_float(raw_item.get("longitude") or details.get("lon")),
             raw=raw_item,
         )
 
@@ -733,6 +868,7 @@ class SearchAdapter:
                         self._set_relevance_level(previous_relevance)
 
             raw_results = self._apply_min_similarity(raw_results, min_similarity)
+            raw_results = self._attach_result_coordinates(raw_results)
             raw_results = self._sort_results(raw_results, sort_mode)
             items = [self._normalize_result(item) for item in raw_results]
 
@@ -752,6 +888,7 @@ class SearchAdapter:
                 "sql_filter_count": len(request.where_sql),
                 "ui_filters_active": has_any_ui_filter(request.ui_filters),
                 "relevance_filter": relevance_meta,
+                "results_with_coordinates": sum(1 for item in items if item.latitude is not None and item.longitude is not None),
                 "column_config": {
                     "type": labels["type_name"],
                     "approach": labels["approach_name"],

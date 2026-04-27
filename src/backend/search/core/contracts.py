@@ -102,6 +102,9 @@ class SearchResultItem:
     modality: str
     closing_date: str
     estimated_value: Any
+    municipality_code: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
     raw: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:

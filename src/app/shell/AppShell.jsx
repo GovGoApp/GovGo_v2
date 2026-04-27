@@ -16,10 +16,11 @@ function AppShell({ route, navigate }) {
     <div
       data-screen-label={`GovGo v2 · ${route.title}`}
       style={{
-        minHeight: "100vh",
+        height: "100vh",
         display: "flex",
         flexDirection: "column",
         background: "var(--workspace)",
+        overflow: "hidden",
       }}
     >
       <TopBar mode={route.mode} />
@@ -29,11 +30,12 @@ function AppShell({ route, navigate }) {
           gridTemplateColumns,
           flex: 1,
           minHeight: 0,
+          overflow: "hidden",
         }}
       >
         <LeftRail mode={route.mode} onMode={(legacyMode) => navigate(window.legacyModeToRouteKey(legacyMode))} />
         {route.withSearchRail ? <SearchRail /> : null}
-        <main style={{ minWidth: 0, overflow: "hidden" }}>{page}</main>
+        <main style={{ minWidth: 0, minHeight: 0, overflow: "hidden" }}>{page}</main>
       </div>
     </div>
   );

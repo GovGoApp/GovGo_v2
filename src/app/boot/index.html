@@ -9,9 +9,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../../design/css/tokens.css" />
 <link rel="stylesheet" href="../../../design/css/govgo.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous" />
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous"></script>
 <style>
   :root { --surface: var(--workspace); }
   [data-theme="dark"] { --surface: var(--workspace); }
@@ -53,6 +55,30 @@
     font-size: 13.5px;
     line-height: 1.5;
     color: var(--ink-2);
+  }
+  .govgo-map-pin-icon {
+    background: transparent;
+    border: none;
+  }
+  .govgo-map-tooltip {
+    background: var(--paper);
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    box-shadow: var(--shadow-md);
+    color: var(--ink-1);
+    padding: 8px 10px;
+    white-space: normal;
+    max-width: 320px;
+    word-break: break-word;
+  }
+  .govgo-map-tooltip:before {
+    border-top-color: var(--paper);
+  }
+  .leaflet-container {
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  }
+  .leaflet-control-attribution {
+    font-size: 10px;
   }
 </style>
 </head>

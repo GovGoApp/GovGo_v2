@@ -99,6 +99,20 @@
     const similarityRatio = normalizeSimilarity(item && item.similarity);
     const raw = (item && item.raw) || {};
     const details = raw.details || {};
+    const latitude = toFiniteNumber(firstFilled(
+      item && item.latitude,
+      raw.latitude,
+      raw.lat,
+      details.latitude,
+      details.lat
+    ));
+    const longitude = toFiniteNumber(firstFilled(
+      item && item.longitude,
+      raw.longitude,
+      raw.lon,
+      details.longitude,
+      details.lon
+    ));
     const id = firstFilled(
       item && item.item_id,
       raw.numero_controle,
@@ -121,6 +135,15 @@
       estimatedValueLabel: formatMoney(item && item.estimated_value),
       similarityRatio,
       similarityLabel: formatPercent(similarityRatio),
+      municipalityCode: firstFilled(
+        item && item.municipality_code,
+        raw.municipality_code,
+        details.ibge_municipio,
+        details.unidade_orgao_codigo_ibge,
+        details.municipio
+      ),
+      latitude,
+      longitude,
       details,
       raw,
     };
@@ -179,6 +202,9 @@
       status: firstFilled(details.situacao_edital, raw.situacao_edital, "aberto"),
       title: firstFilled(item && item.title, details.objeto_compra, ""),
       objeto: firstFilled(details.objeto_compra, item && item.title, ""),
+      municipioCode: firstFilled(item && item.municipalityCode, raw.municipality_code, details.ibge_municipio, details.unidade_orgao_codigo_ibge, ""),
+      lat: toFiniteNumber(firstFilled(item && item.latitude, raw.latitude, raw.lat, details.latitude, details.lat)),
+      lon: toFiniteNumber(firstFilled(item && item.longitude, raw.longitude, raw.lon, details.longitude, details.lon)),
       details,
       raw,
     };

@@ -652,7 +652,7 @@ function SearchRail() {
   return (
     <aside style={{
       minWidth: 0, background: "var(--rail)", borderRight: "1px solid var(--hairline)",
-      display: "flex", flexDirection: "column", overflow: "hidden",
+      display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 0, height: "100%",
     }}>
       <div style={{padding: "10px 10px 0", background: "transparent"}}>
         <div style={{
@@ -720,7 +720,7 @@ function SearchRail() {
         </div>
       </div>
 
-      <div style={{flex: 1, overflowY: "auto", paddingBottom: 12}}>
+      <div style={{flex: 1, minHeight: 0, overflowY: "auto", paddingBottom: 12}}>
         {/* Filters — single collapsible box, smaller font */}
         <div style={{margin: "0 10px 0", background: "var(--paper)", border: "1px solid var(--hairline)", borderTop: "none", borderRadius: "0 0 8px 8px", fontSize: 11.5, overflow: "hidden"}}>
           <div role="tablist" style={{

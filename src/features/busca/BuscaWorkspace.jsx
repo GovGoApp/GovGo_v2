@@ -7,6 +7,239 @@ const { useState: uSo, useEffect: uEf } = React;
 const EDITAIS_GRID_COLUMNS = "44px 56px minmax(190px,1.15fr) minmax(170px,1fr) minmax(110px,.8fr) 44px 130px 120px 112px";
 const HOME_SEARCH_TAB_ID = "search-home";
 const WORKSPACE_STORAGE_KEY = "govgo.busca.workspace.v2";
+const RESULTS_VIEW_OPTIONS = [
+  { value: "table", label: "Tabela", icon: "table" },
+  { value: "map", label: "Mapa", icon: "map" },
+];
+const MAP_METRIC_OPTIONS = [
+  { value: "similarity", label: "Similaridade" },
+  { value: "value", label: "Valor" },
+  { value: "date", label: "Encerramento" },
+];
+const MAP_FALLBACK_CENTER = [-14.235, -51.9253];
+
+function normalizeSearchViewMode(value) {
+  return value === "map" ? "map" : "table";
+}
+
+function normalizeMapMetric(value) {
+  return value === "value" || value === "date" ? value : "similarity";
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function hashString(value) {
+  const text = String(value || "");
+  let hash = 0;
+  for (let index = 0; index < text.length; index += 1) {
+    hash = ((hash << 5) - hash) + text.charCodeAt(index);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+function getDaysUntilClosing(dateLabel) {
+  const parts = String(dateLabel || "").split("/");
+  if (parts.length !== 3) {
+    return null;
+  }
+  const [day, month, year] = parts.map((part) => Number(part));
+  if (!day || !month || !year) {
+    return null;
+  }
+  const target = new Date(year, month - 1, day);
+  if (Number.isNaN(target.getTime())) {
+    return null;
+  }
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  return Math.round((target.getTime() - now.getTime()) / 86400000);
+}
+
+function interpolateNumber(start, end, factor) {
+  return start + ((end - start) * factor);
+}
+
+function buildMapMetricValue(edital, metric) {
+  if (metric === "value") {
+    return Number(edital?.val || 0);
+  }
+  if (metric === "date") {
+    const days = getDaysUntilClosing(edital?.end);
+    return days === null ? null : days;
+  }
+  return Number(edital?.sim || 0);
+}
+
+function describeMapMetric(edital, metric) {
+  if (metric === "value") {
+    return edital?.val ? fmtBRL(edital.val) : "Valor nao informado";
+  }
+  if (metric === "date") {
+    const days = getDaysUntilClosing(edital?.end);
+    if (days === null) {
+      return edital?.end || "Data nao informada";
+    }
+    if (days < 0) {
+      return `${Math.abs(days)}d em atraso`;
+    }
+    return days === 0 ? "Encerra hoje" : `${days}d para encerrar`;
+  }
+  return `${Math.round(Number(edital?.sim || 0) * 100)}% de similaridade`;
+}
+
+function buildMapMetricTone(metric, normalizedValue) {
+  const t = Math.max(0, Math.min(1, normalizedValue));
+  if (metric === "value") {
+    return {
+      fill: `hsl(213 ${Math.round(interpolateNumber(62, 78, t))}% ${Math.round(interpolateNumber(72, 40, t))}%)`,
+      shadow: `hsla(213, 72%, 28%, ${interpolateNumber(0.18, 0.36, t).toFixed(2)})`,
+    };
+  }
+  if (metric === "date") {
+    return {
+      fill: `hsl(${Math.round(interpolateNumber(208, 18, t))} ${Math.round(interpolateNumber(56, 90, t))}% ${Math.round(interpolateNumber(60, 56, t))}%)`,
+      shadow: `hsla(${Math.round(interpolateNumber(208, 18, t))}, 75%, 28%, ${interpolateNumber(0.18, 0.36, t).toFixed(2)})`,
+    };
+  }
+  return {
+    fill: `hsl(24 ${Math.round(interpolateNumber(72, 92, t))}% ${Math.round(interpolateNumber(72, 52, t))}%)`,
+    shadow: `hsla(24, 80%, 26%, ${interpolateNumber(0.18, 0.36, t).toFixed(2)})`,
+  };
+}
+
+function buildMapTooltipHtml(edital, metric) {
+  return `
+    <div style="display:flex;flex-direction:column;gap:6px;min-width:240px;max-width:300px;white-space:normal;">
+      <div style="font-size:12px;font-weight:700;color:var(--ink-1);line-height:1.4;white-space:normal;word-break:break-word;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;">${escapeHtml(normalizeObjectText(edital?.objeto || edital?.title || ""))}</div>
+      <div style="font-size:11.5px;color:var(--ink-2);line-height:1.45;">${escapeHtml(edital?.org || "-")}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--ink-3);">
+        <span>${escapeHtml(edital?.mun || "-")} · ${escapeHtml(edital?.uf || "-")}</span>
+        <span>${escapeHtml(edital?.modal || "-")}</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--ink-2);">
+        <span><strong>Similaridade:</strong> ${escapeHtml(describeMapMetric(edital, "similarity"))}</span>
+        <span><strong>Valor:</strong> ${escapeHtml(describeMapMetric(edital, "value"))}</span>
+        <span><strong>Encerramento:</strong> ${escapeHtml(edital?.end || "-")}</span>
+      </div>
+      <div style="font-size:11px;color:var(--ink-3);"><strong>Pin por ${escapeHtml(MAP_METRIC_OPTIONS.find((option) => option.value === metric)?.label || "Similaridade")}:</strong> ${escapeHtml(describeMapMetric(edital, metric))}</div>
+    </div>
+  `;
+}
+
+function isLikelyBrazilCoordinate(lat, lon) {
+  return lat >= -35 && lat <= 6 && lon >= -75 && lon <= -28;
+}
+
+function coerceBrazilCoordinatePair(latValue, lonValue) {
+  const lat = Number(latValue);
+  const lon = Number(lonValue);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+    return { lat: null, lon: null };
+  }
+  if (isLikelyBrazilCoordinate(lat, lon)) {
+    return { lat, lon };
+  }
+  if (isLikelyBrazilCoordinate(lon, lat)) {
+    return { lat: lon, lon: lat };
+  }
+  return { lat, lon };
+}
+
+function resolveMapCoordinatePair(item) {
+  const latValue =
+    item?.raw?.details?.lat ??
+    item?.raw?.details?.latitude ??
+    item?.details?.lat ??
+    item?.details?.latitude ??
+    item?.raw?.lat ??
+    item?.raw?.latitude ??
+    item?.lat ??
+    item?.latitude;
+
+  const lonValue =
+    item?.raw?.details?.lon ??
+    item?.raw?.details?.longitude ??
+    item?.details?.lon ??
+    item?.details?.longitude ??
+    item?.raw?.lon ??
+    item?.raw?.longitude ??
+    item?.lon ??
+    item?.longitude;
+
+  if (
+    latValue === null || latValue === undefined || latValue === "" ||
+    lonValue === null || lonValue === undefined || lonValue === ""
+  ) {
+    return { lat: null, lon: null };
+  }
+
+  return coerceBrazilCoordinatePair(latValue, lonValue);
+}
+
+function firstDefinedValue(values) {
+  for (let index = 0; index < values.length; index += 1) {
+    const value = values[index];
+    if (value !== null && value !== undefined && value !== "") {
+      return value;
+    }
+  }
+  return null;
+}
+
+function resolveResultCoordinatePair(item) {
+  if (!item || typeof item !== "object") {
+    return { lat: null, lon: null };
+  }
+  const raw = item.raw || {};
+  const rawDetails = raw.details || {};
+  const details = item.details || rawDetails || {};
+  const latValue = firstDefinedValue([
+    rawDetails.lat,
+    rawDetails.latitude,
+    details.lat,
+    details.latitude,
+    raw.lat,
+    raw.latitude,
+    item.lat,
+    item.latitude,
+  ]);
+  const lonValue = firstDefinedValue([
+    rawDetails.lon,
+    rawDetails.longitude,
+    details.lon,
+    details.longitude,
+    raw.lon,
+    raw.longitude,
+    item.lon,
+    item.longitude,
+  ]);
+  return coerceBrazilCoordinatePair(latValue, lonValue);
+}
+
+function jitterLatLon(lat, lon, index, total, seed) {
+  if (total <= 1) {
+    return { lat, lon };
+  }
+  const ringIndex = Math.floor(index / 8);
+  const slot = index % 8;
+  const radiusMeters = 220 + (ringIndex * 120);
+  const angle = ((Math.PI * 2) / Math.max(8, total)) * slot + ((seed % 360) * Math.PI / 180);
+  const dLat = (radiusMeters * Math.cos(angle)) / 111320;
+  const denom = 111320 * Math.max(0.00001, Math.cos(lat * Math.PI / 180));
+  const dLon = (radiusMeters * Math.sin(angle)) / denom;
+  return {
+    lat: lat + dLat,
+    lon: lon + dLon,
+  };
+}
 
 function normalizeObjectText(value) {
   const text = String(value || "").replace(/\s+/g, " ").trim();
@@ -135,6 +368,8 @@ function createSearchTabState(overrides) {
     error: "",
     count: null,
     localSort: null,
+    viewMode: "table",
+    mapMetric: "similarity",
     config: createDefaultSearchFormState(),
     filters: createDefaultSearchFiltersState(),
     ...overrides,
@@ -453,9 +688,11 @@ function readPersistedWorkspace() {
         ...state,
         loading: false,
         error: state.error || "",
-        results: Array.isArray(state.results) ? state.results : null,
+        results: Array.isArray(state.results) ? state.results.map(normalizePersistedEditalResult) : null,
         count: typeof state.count === "number" ? state.count : Array.isArray(state.results) ? state.results.length : null,
         localSort: normalizeResultsSort(state.localSort),
+        viewMode: normalizeSearchViewMode(state.viewMode),
+        mapMetric: normalizeMapMetric(state.mapMetric),
         config: normalizeSearchFormState(state.config),
         filters: normalizeSearchFiltersState(state.filters),
       });
@@ -510,7 +747,7 @@ function persistWorkspaceState(state) {
 
 // ─── Normaliza item real da API → shape do design ────────────────────────────
 function toEditaisShape(results) {
-  return results.map((item) => (
+  return results.map((item) => normalizePersistedEditalResult(
     window.GovGoSearchUiAdapter?.toEditalShape
       ? window.GovGoSearchUiAdapter.toEditalShape(item)
       : {
@@ -529,15 +766,55 @@ function toEditaisShape(results) {
         raw: item.raw || null,
         details: item.details || item.raw?.details || null,
         itemId: item.itemId || item.id || item.rank,
+        municipioCode: item.municipalityCode || item.raw?.municipality_code || item.raw?.details?.ibge_municipio || item.raw?.details?.unidade_orgao_codigo_ibge || "",
+        ...coerceBrazilCoordinatePair(
+          item.latitude ?? item.raw?.latitude ?? item.raw?.lat ?? item.raw?.details?.lat ?? item.raw?.details?.latitude,
+          item.longitude ?? item.raw?.longitude ?? item.raw?.lon ?? item.raw?.details?.lon ?? item.raw?.details?.longitude
+        ),
       }
   ));
+}
+
+function normalizePersistedEditalResult(item) {
+  if (!item || typeof item !== "object") {
+    return item;
+  }
+  const raw = item.raw || {};
+  const rawDetails = raw.details || {};
+  const details = item.details || rawDetails || {};
+  const coerced = resolveResultCoordinatePair(item);
+  const municipioCode = firstDefinedValue([
+    item.municipioCode,
+    item.municipalityCode,
+    raw.municipality_code,
+    rawDetails.ibge_municipio,
+    rawDetails.unidade_orgao_codigo_ibge,
+    details.ibge_municipio,
+    details.unidade_orgao_codigo_ibge,
+  ]) || "";
+  return {
+    ...item,
+    municipioCode,
+    lat: coerced.lat,
+    lon: coerced.lon,
+  };
 }
 
 // ─── Tabela de editais (grid identico ao design) ─────────────────────────────
 function EditaisTable({ editais, onOpen, currentSort, onSort }) {
   return (
-    <div style={{ background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 10, overflow: "hidden" }}>
+    <div style={{
+      flex: 1,
+      minHeight: 0,
+      display: "flex",
+      flexDirection: "column",
+      background: "var(--paper)",
+      border: "1px solid var(--hairline)",
+      borderRadius: 10,
+      overflow: "hidden",
+    }}>
       <div style={{
+        flex: "0 0 auto",
         display: "grid",
         gridTemplateColumns: EDITAIS_GRID_COLUMNS,
         columnGap: 10,
@@ -556,6 +833,7 @@ function EditaisTable({ editais, onOpen, currentSort, onSort }) {
         <SortableHeader label="Valor (R$)" field="value" currentSort={currentSort} onSort={onSort} align="right" />
         <SortableHeader label="Encerramento" field="date" currentSort={currentSort} onSort={onSort} align="right" />
       </div>
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
       {editais.map((e) => {
         const pastDue = (() => {
           try {
@@ -612,6 +890,7 @@ function EditaisTable({ editais, onOpen, currentSort, onSort }) {
           </div>
         );
       })}
+      </div>
     </div>
   );
 }
@@ -659,7 +938,7 @@ function IdleState() {
   );
 }
 
-function SearchSummaryStrip({ searchState, onRefine }) {
+function SearchSummaryStrip({ searchState, viewMode, onChangeView, mapMetric, onChangeMapMetric }) {
   const configSummary = window.GovGoSearchContracts?.describeConfig
     ? window.GovGoSearchContracts.describeConfig(searchState.config)
     : {
@@ -668,12 +947,11 @@ function SearchSummaryStrip({ searchState, onRefine }) {
       relevanceLabel: "Permissivo",
       sortLabel: "Similaridade",
       minSimilarityLabel: "0.00",
-      limitLabel: "10",
-      topCategoriesLabel: "10",
     };
   const activeFilterSummary = window.GovGoSearchContracts?.describeActiveFilters
     ? window.GovGoSearchContracts.describeActiveFilters(searchState.filters)
     : [];
+  const metricLabel = MAP_METRIC_OPTIONS.find((option) => option.value === mapMetric)?.label || configSummary.sortLabel;
 
   return (
     <div style={{
@@ -682,42 +960,350 @@ function SearchSummaryStrip({ searchState, onRefine }) {
       alignItems: "flex-start",
       justifyContent: "space-between",
       gap: 12,
-      padding: "12px 14px",
+      padding: "8px 10px",
       background: "var(--paper)",
       border: "1px solid var(--hairline)",
       borderRadius: 10,
-      marginBottom: 14,
+      marginBottom: 6,
     }}>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, flex: 1, minWidth: 220 }}>
         <Chip tone="blue">{configSummary.typeLabel}</Chip>
         <Chip tone="blue">{configSummary.approachLabel}</Chip>
         <Chip tone="blue">{configSummary.relevanceLabel}</Chip>
-        <Chip tone="blue">{configSummary.sortLabel}</Chip>
+        <Chip tone="blue">{metricLabel}</Chip>
         {Number(searchState.config?.minSimilarity || 0) > 0 && (
-          <Chip tone="orange">≥ {configSummary.minSimilarityLabel}</Chip>
+          <Chip tone="orange">&gt;= {configSummary.minSimilarityLabel}</Chip>
         )}
-        {searchState.config?.searchApproach !== "direct" && (
-          <Chip tone="blue">Categorias: {configSummary.topCategoriesLabel}</Chip>
-        )}
-        <Chip tone="blue">Resultados: {configSummary.limitLabel}</Chip>
-        {searchState.config?.filterExpired && <Chip tone="blue">Filtra encerrados</Chip>}
         {activeFilterSummary.map((item) => (
           <Chip key={item.id} tone={item.tone || "blue"}>{item.label}</Chip>
         ))}
       </div>
 
-      <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
-        <Button
-          kind="ghost"
-          size="sm"
-          icon={React.createElement(Icon.filter, { size: 14 })}
-          onClick={() => onRefine?.("filters")}
+      <div style={{ display: "flex", gap: 8, marginLeft: "auto", alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
+        <div
+          role="tablist"
+          aria-label="Metrica principal dos resultados"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 4,
+            padding: 3,
+            background: "var(--surface-sunk)",
+            border: "1px solid var(--hairline)",
+            borderRadius: 9,
+          }}
         >
-          Refinar busca
-        </Button>
-        <Button size="sm" icon={React.createElement(Icon.download, { size: 14 })}>Exportar</Button>
-        <Button kind="primary" size="sm" icon={React.createElement(Icon.starFill, { size: 14 })}>Salvar busca</Button>
+          {MAP_METRIC_OPTIONS.map((option) => {
+            const isActive = option.value === mapMetric;
+            const icon = option.value === "date"
+              ? <Icon.clock size={13} />
+              : option.value === "value"
+              ? <Icon.chart size={13} />
+              : <Icon.sparkle size={13} />;
+            return (
+              <button
+                key={option.value}
+                onClick={() => onChangeMapMetric?.(option.value)}
+                style={{
+                  all: "unset",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 7,
+                  padding: "5px 10px",
+                  borderRadius: 7,
+                  cursor: "pointer",
+                  background: isActive ? "var(--paper)" : "transparent",
+                  color: isActive ? "var(--orange-700)" : "var(--ink-2)",
+                  boxShadow: isActive ? "var(--shadow-xs)" : "none",
+                  border: isActive ? "1px solid var(--hairline)" : "1px solid transparent",
+                  fontSize: 12,
+                  fontWeight: 600,
+                }}
+              >
+                <span style={{ display: "inline-flex", color: isActive ? "var(--orange)" : "var(--ink-3)" }}>{icon}</span>
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+        <div
+          role="tablist"
+          aria-label="Modo de visualizacao dos resultados"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 4,
+            padding: 3,
+            background: "var(--surface-sunk)",
+            border: "1px solid var(--hairline)",
+            borderRadius: 9,
+          }}
+        >
+          {RESULTS_VIEW_OPTIONS.map((option) => {
+            const isActive = option.value === viewMode;
+            const iconName = option.icon;
+            return (
+              <button
+                key={option.value}
+                onClick={() => onChangeView?.(option.value)}
+                style={{
+                  all: "unset",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "5px 10px",
+                  borderRadius: 7,
+                  cursor: "pointer",
+                  background: isActive ? "var(--paper)" : "transparent",
+                  color: isActive ? "var(--orange-700)" : "var(--ink-2)",
+                  boxShadow: isActive ? "var(--shadow-xs)" : "none",
+                  border: isActive ? "1px solid var(--hairline)" : "1px solid transparent",
+                  fontSize: 12,
+                  fontWeight: 600,
+                }}
+              >
+                <span style={{ display: "inline-flex", color: isActive ? "var(--orange)" : "var(--ink-3)" }}>
+                  {iconName === "map" ? <Icon.map size={14} /> : <Icon.table size={14} />}
+                </span>
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+        <Button size="sm" style={{ padding: "5px 10px", fontSize: 12 }} icon={React.createElement(Icon.download, { size: 13 })}>Exportar</Button>
+        <Button kind="primary" size="sm" style={{ padding: "5px 10px", fontSize: 12 }} icon={React.createElement(Icon.starFill, { size: 13 })}>Salvar</Button>
       </div>
+    </div>
+  );
+}
+
+function SearchResultsMap({ editais, metric, onOpen }) {
+  const frameRef = React.useRef(null);
+  const hostRef = React.useRef(null);
+  const mapRef = React.useRef(null);
+  const layerRef = React.useRef(null);
+  const lastBoundsKeyRef = React.useRef("");
+
+  const prepared = React.useMemo(() => {
+    let basePoints = (Array.isArray(editais) ? editais : [])
+      .map((item) => {
+        const coords = resolveMapCoordinatePair(item);
+        return {
+          edital: item,
+          lat: coords.lat,
+          lon: coords.lon,
+          rawValue: buildMapMetricValue(item, metric),
+          hash: hashString(`${item?.itemId || item?.id || item?.rank}-${item?.mun}-${item?.uf}`),
+        };
+      })
+      .filter((item) => Number.isFinite(Number(item?.lat)) && Number.isFinite(Number(item?.lon)));
+
+    const normalBrazilHits = basePoints.filter((point) => isLikelyBrazilCoordinate(point.lat, point.lon)).length;
+    const swappedBrazilHits = basePoints.filter((point) => isLikelyBrazilCoordinate(point.lon, point.lat)).length;
+    if (basePoints.length > 0 && swappedBrazilHits > normalBrazilHits) {
+      basePoints = basePoints.map((point) => ({
+        ...point,
+        lat: point.lon,
+        lon: point.lat,
+      }));
+    }
+
+    const grouped = new Map();
+    basePoints.forEach((point) => {
+      const key = `${point.lat.toFixed(6)}|${point.lon.toFixed(6)}`;
+      if (!grouped.has(key)) {
+        grouped.set(key, []);
+      }
+      grouped.get(key).push(point);
+    });
+
+    grouped.forEach((group) => {
+      group.sort((left, right) => left.hash - right.hash);
+      group.forEach((point, index) => {
+        const jittered = jitterLatLon(point.lat, point.lon, index, group.length, point.hash);
+        point.displayLat = jittered.lat;
+        point.displayLon = jittered.lon;
+      });
+    });
+
+    const validValues = basePoints
+      .map((point) => point.rawValue)
+      .filter((value) => value !== null && value !== undefined && Number.isFinite(Number(value)))
+      .map(Number);
+    const minValue = validValues.length ? Math.min(...validValues) : 0;
+    const maxValue = validValues.length ? Math.max(...validValues) : 1;
+    const range = maxValue - minValue || 1;
+
+    return basePoints.map((point) => {
+      const numericValue = point.rawValue === null || point.rawValue === undefined ? null : Number(point.rawValue);
+      let normalizedValue = 0.5;
+      if (numericValue !== null && Number.isFinite(numericValue)) {
+        if (metric === "date") {
+          normalizedValue = (maxValue - numericValue) / range;
+        } else {
+          normalizedValue = (numericValue - minValue) / range;
+        }
+      }
+      normalizedValue = Math.max(0, Math.min(1, normalizedValue));
+      const size = Math.round(interpolateNumber(18, 30, normalizedValue));
+      const tone = buildMapMetricTone(metric, normalizedValue);
+      return {
+        ...point,
+        normalizedValue,
+        size,
+        tone,
+      };
+    });
+  }, [editais, metric]);
+
+  React.useEffect(() => {
+    if (!hostRef.current || mapRef.current || !window.L) {
+      return undefined;
+    }
+
+    const map = window.L.map(hostRef.current, {
+      zoomControl: true,
+      attributionControl: true,
+      scrollWheelZoom: true,
+    });
+    window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 18,
+      attribution: "&copy; OpenStreetMap",
+    }).addTo(map);
+
+    const layerGroup = window.L.layerGroup().addTo(map);
+    map.setView(MAP_FALLBACK_CENTER, 4);
+
+    mapRef.current = map;
+    layerRef.current = layerGroup;
+
+    const resizeObserver = typeof ResizeObserver !== "undefined"
+      ? new ResizeObserver(() => map.invalidateSize())
+      : null;
+    resizeObserver?.observe(hostRef.current);
+
+    setTimeout(() => map.invalidateSize(), 0);
+
+    return () => {
+      resizeObserver?.disconnect();
+      map.remove();
+      mapRef.current = null;
+      layerRef.current = null;
+      lastBoundsKeyRef.current = "";
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const map = mapRef.current;
+    const layerGroup = layerRef.current;
+    if (!map || !layerGroup || !window.L) {
+      return;
+    }
+
+    layerGroup.clearLayers();
+    if (!prepared.length) {
+      map.setView(MAP_FALLBACK_CENTER, 4);
+      lastBoundsKeyRef.current = "";
+      return;
+    }
+
+    const bounds = [];
+    prepared.forEach((point) => {
+      const html = `
+        <div style="
+          width:${point.size}px;
+          height:${point.size}px;
+          border-radius:999px;
+          background:${point.tone.fill};
+          border:2px solid rgba(255,255,255,.96);
+          box-shadow:0 8px 20px ${point.tone.shadow};
+          display:flex;
+          align-items:center;
+          justify-content:center;
+        ">
+          <span style="
+            width:${Math.max(6, Math.round(point.size * 0.24))}px;
+            height:${Math.max(6, Math.round(point.size * 0.24))}px;
+            border-radius:999px;
+            background:rgba(255,255,255,.96);
+          "></span>
+        </div>
+      `;
+
+      const marker = window.L.marker([point.displayLat, point.displayLon], {
+        icon: window.L.divIcon({
+          className: "govgo-map-pin-icon",
+          html,
+          iconSize: [point.size, point.size],
+          iconAnchor: [point.size / 2, point.size / 2],
+        }),
+      });
+      marker.bindTooltip(buildMapTooltipHtml(point.edital, metric), {
+        sticky: true,
+        direction: "top",
+        className: "govgo-map-tooltip",
+        offset: [0, -Math.round(point.size / 2)],
+        opacity: 1,
+      });
+      marker.on("click", () => onOpen?.(point.edital));
+      marker.addTo(layerGroup);
+      bounds.push([point.displayLat, point.displayLon]);
+    });
+
+    const boundsKey = bounds.map(([lat, lon]) => `${lat.toFixed(5)},${lon.toFixed(5)}`).join("|");
+    if (bounds.length === 1) {
+      const [lat, lon] = bounds[0];
+      if (lastBoundsKeyRef.current !== boundsKey) {
+        map.setView([lat, lon], 7);
+        lastBoundsKeyRef.current = boundsKey;
+      }
+    } else if (bounds.length > 1 && lastBoundsKeyRef.current !== boundsKey) {
+      map.fitBounds(bounds, { padding: [24, 24], maxZoom: 7 });
+      lastBoundsKeyRef.current = boundsKey;
+    }
+    setTimeout(() => map.invalidateSize(), 0);
+  }, [prepared, metric, onOpen]);
+
+  if (!window.L) {
+    return (
+      <div style={{ background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 10, padding: 24, color: "var(--ink-3)" }}>
+        O mapa ainda nao foi carregado neste ambiente.
+      </div>
+    );
+  }
+
+  if (!prepared.length) {
+    return (
+      <div style={{
+        background: "var(--paper)",
+        border: "1px solid var(--hairline)",
+        borderRadius: 10,
+        padding: 32,
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+        color: "var(--ink-3)",
+      }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink-2)" }}>Nao ha coordenadas suficientes para montar este mapa.</div>
+        <div style={{ fontSize: 12 }}>Os resultados continuam disponiveis normalmente na tabela.</div>
+      </div>
+    );
+  }
+
+  return (
+    <div ref={frameRef} style={{
+      flex: 1,
+      height: "100%",
+      minHeight: 0,
+      display: "flex",
+      position: "relative",
+      alignSelf: "stretch",
+      background: "var(--paper)",
+      border: "1px solid var(--hairline)",
+      borderRadius: 10,
+      overflow: "hidden",
+    }}>
+      <div ref={hostRef} style={{ width: "100%", height: "100%" }} />
     </div>
   );
 }
@@ -744,6 +1330,8 @@ function BuscaWorkspace() {
   const currentSearchState = currentSearchTabId ? (searchTabs[currentSearchTabId] || createSearchTabState()) : createSearchTabState();
   const currentHasFilters = hasActiveSearchFiltersState(currentSearchState.filters);
   const currentResultsSort = resolveResultsSort(currentSearchState);
+  const currentViewMode = normalizeSearchViewMode(currentSearchState.viewMode);
+  const currentMapMetric = normalizeMapMetric(currentSearchState.mapMetric || currentResultsSort.field);
   const currentDisplayResults = React.useMemo(
     () => sortEditais(currentSearchState.results, currentResultsSort),
     [currentSearchState.results, currentResultsSort.field, currentResultsSort.direction]
@@ -784,18 +1372,20 @@ function BuscaWorkspace() {
 
     setSearchTabs((prev) => ({
       ...prev,
-      [targetTabId]: {
-        ...(prev[targetTabId] || createSearchTabState()),
-        query: q,
-        loading: true,
-        error: "",
-        count: null,
-        results: null,
-        localSort: normalizeResultsSort(previousState.localSort),
-        config: form,
-        filters: normalizedFilters,
-      },
-    }));
+        [targetTabId]: {
+          ...(prev[targetTabId] || createSearchTabState()),
+          query: q,
+          loading: true,
+          error: "",
+          count: null,
+          results: null,
+          localSort: normalizeResultsSort(previousState.localSort),
+          viewMode: normalizeSearchViewMode(previousState.viewMode),
+          mapMetric: normalizeMapMetric(previousState.mapMetric),
+          config: form,
+          filters: normalizedFilters,
+        },
+      }));
     setTabs((prev) => prev.map((tab) => (
       tab.id === targetTabId && tab.kind === "busca"
         ? { ...tab, title: tabTitle, count: null }
@@ -830,6 +1420,8 @@ function BuscaWorkspace() {
             count: null,
             results: null,
             localSort: normalizeResultsSort((prev[targetTabId] || previousState).localSort),
+            viewMode: normalizeSearchViewMode((prev[targetTabId] || previousState).viewMode),
+            mapMetric: normalizeMapMetric((prev[targetTabId] || previousState).mapMetric),
             config: form,
             filters: normalizedFilters,
           },
@@ -850,9 +1442,11 @@ function BuscaWorkspace() {
           query: q,
           loading: false,
           error: "",
-          results: editais,
+          results: editais.map(normalizePersistedEditalResult),
           count,
           localSort: normalizeResultsSort((prev[targetTabId] || previousState).localSort),
+          viewMode: normalizeSearchViewMode((prev[targetTabId] || previousState).viewMode),
+          mapMetric: normalizeMapMetric((prev[targetTabId] || previousState).mapMetric),
           config: form,
           filters: normalizedFilters,
         },
@@ -875,6 +1469,8 @@ function BuscaWorkspace() {
           count: null,
           results: null,
           localSort: normalizeResultsSort((prev[targetTabId] || previousState).localSort),
+          viewMode: normalizeSearchViewMode((prev[targetTabId] || previousState).viewMode),
+          mapMetric: normalizeMapMetric((prev[targetTabId] || previousState).mapMetric),
           config: form,
           filters: normalizedFilters,
         },
@@ -903,6 +1499,8 @@ function BuscaWorkspace() {
         count: null,
         results: null,
         localSort: null,
+        viewMode: "table",
+        mapMetric: normalizeMapMetric(getConfigResultsSort(form).field),
         config: form,
         filters,
       }),
@@ -1039,6 +1637,40 @@ function BuscaWorkspace() {
     });
   };
 
+  const handleChangeResultsView = (viewMode) => {
+    if (!currentSearchTabId) {
+      return;
+    }
+    setSearchTabs((prev) => {
+      const tabState = prev[currentSearchTabId] || createSearchTabState();
+      return {
+        ...prev,
+        [currentSearchTabId]: {
+          ...tabState,
+          viewMode: normalizeSearchViewMode(viewMode),
+        },
+      };
+    });
+  };
+
+  const handleChangeMapMetric = (metric) => {
+    if (!currentSearchTabId) {
+      return;
+    }
+    setSearchTabs((prev) => {
+      const tabState = prev[currentSearchTabId] || createSearchTabState();
+      const normalizedMetric = normalizeMapMetric(metric);
+      return {
+        ...prev,
+        [currentSearchTabId]: {
+          ...tabState,
+          mapMetric: normalizedMetric,
+          localSort: { field: normalizedMetric, direction: "desc" },
+        },
+      };
+    });
+  };
+
   const openSearchRailPanel = (panel) => {
     if (typeof window !== "undefined" && window.dispatchEvent) {
       window.dispatchEvent(new CustomEvent("govgo:search-rail-open", { detail: { panel } }));
@@ -1068,31 +1700,60 @@ function BuscaWorkspace() {
         ) : current?.kind === "edital" && !currentEdital ? (
           <div style={{ padding: 32, color: "var(--ink-3)" }}>Carregando edital...</div>
         ) : current?.kind === "busca" ? (
-          <div style={{ overflowY: "auto", padding: "18px 24px 40px", flex: 1 }}>
+          <div
+            style={{
+              padding: "8px 10px 4px",
+              flex: 1,
+              minHeight: 0,
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
             <SearchSummaryStrip
               searchState={currentSearchState}
-              onRefine={(panel) => openSearchRailPanel(panel || "filters")}
+              viewMode={currentViewMode}
+              onChangeView={handleChangeResultsView}
+              mapMetric={currentMapMetric}
+              onChangeMapMetric={handleChangeMapMetric}
             />
-
-            {currentSearchState.loading ? (
-              <LoadingState />
-            ) : currentSearchState.error ? (
-              <ErrorState
-                message={currentSearchState.error}
-                onRetry={() => runSearch(currentSearchState.query, { ...currentSearchState.config, uiFilters: currentSearchState.filters }, currentSearchTabId)}
-              />
-            ) : currentSearchState.results && currentSearchState.results.length > 0 ? (
-              <EditaisTable
-                editais={currentDisplayResults}
-                onOpen={openEdital}
-                currentSort={currentResultsSort}
-                onSort={handleSortResults}
-              />
-            ) : currentSearchState.results && currentSearchState.results.length === 0 ? (
-              <EmptyState query={currentSearchState.query} hasFilters={currentHasFilters} />
-            ) : (
-              <IdleState />
-            )}
+            <div
+              style={{
+                flex: 1,
+                minHeight: 0,
+                overflow: currentViewMode === "map" ? "hidden" : "auto",
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              {currentSearchState.loading ? (
+                <LoadingState />
+              ) : currentSearchState.error ? (
+                <ErrorState
+                  message={currentSearchState.error}
+                  onRetry={() => runSearch(currentSearchState.query, { ...currentSearchState.config, uiFilters: currentSearchState.filters }, currentSearchTabId)}
+                />
+              ) : currentSearchState.results && currentSearchState.results.length > 0 ? (
+                currentViewMode === "map" ? (
+                  <SearchResultsMap
+                    editais={currentDisplayResults}
+                    metric={currentMapMetric}
+                    onOpen={openEdital}
+                  />
+                ) : (
+                  <EditaisTable
+                    editais={currentDisplayResults}
+                    onOpen={openEdital}
+                    currentSort={currentResultsSort}
+                    onSort={handleSortResults}
+                  />
+                )
+              ) : currentSearchState.results && currentSearchState.results.length === 0 ? (
+                <EmptyState query={currentSearchState.query} hasFilters={currentHasFilters} />
+              ) : (
+                <IdleState />
+              )}
+            </div>
           </div>
         ) : (
           <div style={{ overflowY: "auto", padding: "18px 24px 40px", flex: 1 }}>
