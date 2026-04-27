@@ -4,6 +4,30 @@ const EDITAL_DETAIL_CACHE_PREFIX = "govgo.busca.edital-detail.v1:";
 const EMPTY_DOCUMENT_VIEW = { status: "idle", summary: "", markdown: "", error: "", markdownPath: "", summaryPath: "", updatedAt: "", cached: false };
 const EMPTY_DOCUMENTS_SUMMARY = { status: "idle", summary: "", error: "", updatedAt: "", documentsUsed: 0, cached: false };
 
+function buildMarkdownDownloadName(name) {
+  const raw = String(name || "").trim();
+  if (!raw) return "documento.md";
+  const sanitized = raw.replace(/[<>:"|?*\\\/]+/g, "_");
+  if (/\.[a-z0-9]{1,6}$/i.test(sanitized)) {
+    return sanitized.replace(/\.[a-z0-9]{1,6}$/i, ".md");
+  }
+  return `${sanitized}.md`;
+}
+
+function downloadMarkdownFile(fileName, content) {
+  const markdown = String(content || "");
+  if (!markdown.trim() || typeof document === "undefined") return;
+  const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
+  const href = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = href;
+  anchor.download = buildMarkdownDownloadName(fileName);
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(href);
+}
+
 function readPersistedEditalDetail(pncpId) {
   if (!pncpId || typeof window === "undefined" || !window.localStorage) {
     return null;
@@ -302,14 +326,32 @@ function EditalDetail({ edital }) {
     if (Number.isNaN(parsed.getTime())) return String(value);
     return new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" }).format(parsed);
   };
-  const getDocumentExtension = (document) => {
+  const getDocumentExtension = (document, artifactView) => {
+    const archiveHints = [
+      String(document.nome || ""),
+      String(document.url || ""),
+      String(document.tipo || ""),
+      String(artifactView?.markdown || ""),
+      String(artifactView?.summary || ""),
+    ].join(" ").toLowerCase();
+    if (/\brar\b/.test(archiveHints)) return "RAR";
+    if (/\b(zip|pkzip|compactad|compactado|compactada)\b/.test(archiveHints)) return "ZIP";
+
     const fromName = String(document.nome || "").split(".").pop() || "";
     if (fromName && fromName !== document.nome) return fromName.slice(0, 5).toUpperCase();
     const sanitizedUrl = String(document.url || "").split("?")[0];
     const fromUrl = sanitizedUrl.split(".").pop() || "";
     if (fromUrl && fromUrl !== sanitizedUrl) return fromUrl.slice(0, 5).toUpperCase();
-    const typeText = String(document.tipo || "DOC").replace(/[^a-z0-9]/gi, "");
-    return (typeText.slice(0, 4) || "DOC").toUpperCase();
+    const typeText = String(document.tipo || "").trim();
+    const normalizedType = typeText.replace(/[^a-z0-9]/gi, "").toUpperCase();
+    const markdownHead = String(artifactView?.markdown || "").slice(0, 220).toLowerCase();
+
+    if (normalizedType === "BRPN") return "PDF";
+    if (normalizedType === "EDITAL") return "PDF";
+    if (/\bpreg[aã]o eletr[oô]nico\b|\bedital\b|prefeitura|munic[ií]pio/.test(markdownHead)) return "PDF";
+    if (!normalizedType && String(artifactView?.markdown || "").trim()) return "PDF";
+
+    return (normalizedType.slice(0, 4) || "PDF").toUpperCase();
   };
   const getDocumentTone = (extension) => {
     if (extension === "PDF") return { bg: "var(--orange-50)", fg: "var(--orange-700)" };
@@ -320,9 +362,11 @@ function EditalDetail({ edital }) {
   };
   const documentRows = Array.isArray(docsState.documents)
     ? docsState.documents.map((doc, index) => {
-        const extension = getDocumentExtension(doc);
+        const key = `${doc.row_number || index + 1}-${doc.url || doc.nome || index}`;
+        const artifactView = documentViews[key] || EMPTY_DOCUMENT_VIEW;
+        const extension = getDocumentExtension(doc, artifactView);
         return {
-          key: `${doc.row_number || index + 1}-${doc.url || doc.nome || index}`,
+          key,
           name: doc.nome || "Documento",
           url: doc.url || "",
           type: doc.tipo || "N/I",
@@ -331,8 +375,8 @@ function EditalDetail({ edital }) {
           sizeLabel: formatDocumentSize(doc.tamanho),
           dateLabel: formatDocumentDate(doc.modificacao),
           origem: doc.origem || "",
-          hasSummary: !!(doc.has_summary || doc.hasSummary),
-          hasMarkdown: !!(doc.has_markdown || doc.hasMarkdown),
+          hasSummary: !!(doc.has_summary || doc.hasSummary || artifactView.summary),
+          hasMarkdown: !!(doc.has_markdown || doc.hasMarkdown || artifactView.markdown || artifactView.markdownPath),
           cachedAt: doc.cached_at || doc.cachedAt || "",
         };
       })
@@ -349,11 +393,6 @@ function EditalDetail({ edital }) {
     : null;
   const selectedDocument = documentRows.find((document) => document.key === selectedDocumentKey) || documentRows[0] || null;
   const selectedDocumentView = selectedDocument ? (documentViews[selectedDocument.key] || EMPTY_DOCUMENT_VIEW) : EMPTY_DOCUMENT_VIEW;
-  const selectedDocumentMetadata = [
-    selectedDocument?.type && selectedDocument.type !== "N/I" ? selectedDocument.type : "",
-    selectedDocument?.sizeLabel || "",
-    selectedDocument?.dateLabel || "",
-  ].filter(Boolean);
   const updateDocumentArtifactFlags = (documentUrl, documentName, artifactView) => {
     const hasSummary = !!String(artifactView?.summary || "").trim();
     const hasMarkdown = !!(String(artifactView?.markdown || "").trim() || String(artifactView?.markdownPath || "").trim());
@@ -579,7 +618,6 @@ function EditalDetail({ edital }) {
         documents: cachedDocuments,
         error: "",
       });
-      return;
     }
 
     if (!pncpId) {
@@ -602,11 +640,13 @@ function EditalDetail({ edital }) {
     }
 
     let cancelled = false;
-    setDocsState({
-      status: "loading",
-      documents: [],
-      error: "",
-    });
+    if (!Array.isArray(cachedDocuments)) {
+      setDocsState({
+        status: "loading",
+        documents: [],
+        error: "",
+      });
+    }
 
     loadEditalDocuments({ pncpId, limit: 200 })
       .then((payload) => {
@@ -873,6 +913,27 @@ function EditalDetail({ edital }) {
           },
         }));
       });
+  };
+
+  const openOriginalDocument = (documentItem) => {
+    const documentUrl = String(documentItem?.url || "").trim();
+    if (!documentUrl) return;
+    const anchor = document.createElement("a");
+    anchor.href = documentUrl;
+    anchor.target = "_blank";
+    anchor.rel = "noopener noreferrer";
+    anchor.download = "";
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+  };
+
+  const downloadDocumentMarkdown = (documentItem) => {
+    if (!documentItem) return;
+    const artifactView = documentViews[documentItem.key] || EMPTY_DOCUMENT_VIEW;
+    if (String(artifactView.markdown || "").trim()) {
+      downloadMarkdownFile(documentItem.name, artifactView.markdown);
+    }
   };
 
   return (
@@ -1268,9 +1329,17 @@ function EditalDetail({ edital }) {
                         documentRows.map((document) => {
                           const active = selectedDocument && selectedDocument.key === document.key;
                           return (
-                            <button
+                            <div
                               key={document.key}
                               onClick={() => setSelectedDocumentKey(document.key)}
+                              onKeyDown={(event) => {
+                                if (event.key === "Enter" || event.key === " ") {
+                                  event.preventDefault();
+                                  setSelectedDocumentKey(document.key);
+                                }
+                              }}
+                              role="button"
+                              tabIndex={0}
                               style={{
                                 all: "unset",
                                 cursor: "pointer",
@@ -1313,7 +1382,55 @@ function EditalDetail({ edital }) {
                                   {document.dateLabel && <><span>{"\u00b7"}</span><span>{document.dateLabel}</span></>}
                                 </div>
                               </div>
-                            </button>
+                              <div style={{display: "flex", flexDirection: "column", gap: 6, alignItems: "center", justifyContent: "center", flexShrink: 0}}>
+                                <button
+                                  title="Baixar arquivo original"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    openOriginalDocument(document);
+                                  }}
+                                  style={{
+                                    all: "unset",
+                                    cursor: document.url ? "pointer" : "default",
+                                    width: 24,
+                                    height: 24,
+                                    borderRadius: 7,
+                                    border: "1px solid var(--hairline)",
+                                    background: "var(--paper)",
+                                    color: "var(--ink-2)",
+                                    opacity: document.url ? 1 : 0.35,
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                  }}
+                                >
+                                  <Icon.download size={12}/>
+                                </button>
+                                <button
+                                  title={document.hasMarkdown ? "Baixar markdown" : "Markdown ainda indisponivel"}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    downloadDocumentMarkdown(document);
+                                  }}
+                                  style={{
+                                    all: "unset",
+                                    cursor: document.hasMarkdown ? "pointer" : "default",
+                                    width: 24,
+                                    height: 24,
+                                    borderRadius: 7,
+                                    border: "1px solid var(--hairline)",
+                                    background: "var(--paper)",
+                                    color: "var(--deep-blue)",
+                                opacity: document.hasMarkdown ? 1 : 0.35,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                                >
+                                  <Icon.terminal size={12}/>
+                                </button>
+                              </div>
+                            </div>
                           );
                         })
                       )}
@@ -1323,67 +1440,6 @@ function EditalDetail({ edital }) {
                   <div style={{display: "flex", flexDirection: "column", minWidth: 0, minHeight: 0}}>
                     {selectedDocument ? (
                       <>
-                        <div style={{padding: "10px 14px", borderBottom: "1px solid var(--hairline)"}}>
-                          <div style={{display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14, flexWrap: "wrap"}}>
-                            <div style={{minWidth: 0}}>
-                              <div style={{display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap"}}>
-                                <div style={{
-                                  width: 32,
-                                  height: 38,
-                                  flexShrink: 0,
-                                  background: selectedDocument.tone.bg,
-                                  color: selectedDocument.tone.fg,
-                                  borderRadius: 8,
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  fontSize: 9,
-                                  fontWeight: 700,
-                                  letterSpacing: ".04em",
-                                }}>{selectedDocument.extension}</div>
-                                <div style={{minWidth: 0}}>
-                                  <div style={{fontSize: 13.25, color: "var(--ink-1)", fontWeight: 600, lineHeight: 1.25}}>{selectedDocument.name}</div>
-                                  <div style={{display: "flex", gap: 8, flexWrap: "wrap", marginTop: 2, fontSize: 11.5, color: "var(--ink-3)"}}>
-                                    {selectedDocumentMetadata.map((item, index) => (
-                                      <React.Fragment key={`${item}-${index}`}>
-                                        {index > 0 && <span>{"\u00b7"}</span>}
-                                        <span>{item}</span>
-                                      </React.Fragment>
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div style={{display: "flex", gap: 8, flexWrap: "wrap"}}>
-                              <button
-                                onClick={() => {
-                                  if (selectedDocument.url) {
-                                    window.open(selectedDocument.url, "_blank", "noopener,noreferrer");
-                                  }
-                                }}
-                                style={{
-                                  all: "unset",
-                                  cursor: selectedDocument.url ? "pointer" : "default",
-                                  padding: "10px 14px",
-                                  borderRadius: 10,
-                                  background: "var(--deep-blue)",
-                                  color: "#fff",
-                                  opacity: selectedDocument.url ? 1 : 0.5,
-                                  fontSize: 12.5,
-                                  fontWeight: 600,
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: 8,
-                                }}
-                              >
-                                <Icon.download size={12}/>
-                                Baixar
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-
                         <div style={{flex: 1, minHeight: 0, background: "var(--workspace)", padding: 14, overflow: "hidden"}}>
                           <div style={{
                             height: "100%",
