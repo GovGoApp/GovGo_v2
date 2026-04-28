@@ -48,7 +48,7 @@ function TweaksPanel({tweaks, setTweak}) {
       <div style={{padding: 14}}>
         <Row label="Modo">
           <div style={{display: "flex", flexWrap: "wrap", gap: 5}}>
-            {[["oportunidades","Oport."],["fornecedores","Forn."],["mercado","Mercado"],["relatorios","Relat."],["designsystem","DS"]].map(([v,l]) => (
+            {[["busca","Busca"],["fornecedores","Forn."],["mercado","Mercado"],["relatorios","Relat."],["designsystem","DS"]].map(([v,l]) => (
               <Opt key={v} v={v} cur={tweaks.mode} onChange={x => setTweak("mode", x)}>{l}</Opt>
             ))}
           </div>

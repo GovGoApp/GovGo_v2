@@ -82,7 +82,7 @@ function TopBar({mode}) {
 function LeftRail({mode, onMode}) {
   const items = [
     { id: "home",          label: "Início",         icon: <Icon.grid size={18}/> },
-    { id: "oportunidades", label: "Busca",          icon: <Icon.search size={18}/>, count: "214" },
+    { id: "busca",         label: "Busca",          icon: <Icon.search size={18}/>, count: "214" },
     { id: "fornecedores",  label: "Empresas",       icon: <Icon.building size={18}/> },
     { id: "mercado",       label: "Radar",          icon: <Icon.radar size={18}/>},
     { id: "relatorios",    label: "Relatórios",     icon: <Icon.terminal size={18}/> },

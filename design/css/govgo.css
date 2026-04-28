@@ -45,6 +45,12 @@
   --green-100:     #CDE5CF;
   --risk:          #B4481A;
   --risk-50:       #FBECE3;
+  --sim-1:         #062F5C;
+  --sim-2:         #1F6FD4;
+  --sim-3:         #6C9BD2;
+  --sim-4:         #E8884A;
+  --sim-5:         #B4481A;
+  --sim-track:     #E8ECF3;
 
   /* Neutrals */
   --paper:         #FFFFFF;
@@ -118,6 +124,12 @@
   --nav-blue:      #1E3A5F;
   --blue-50:       #17243A;
   --blue-100:      #1E3452;
+  --sim-1:         #5FA8FF;
+  --sim-2:         #7FB0F0;
+  --sim-3:         #9DBBE0;
+  --sim-4:         #FFA470;
+  --sim-5:         #FF6A3D;
+  --sim-track:     #2A3344;
   --blue-200:      #2A4976;
 
   --green:         #7BC77E;
@@ -688,18 +700,18 @@ a:hover { text-decoration: underline; }
 }
 .gg-score__track {
   width: 44px; height: 6px; border-radius: 3px;
-  background: var(--surface-sunk);
+  background: var(--sim-track);
   position: relative; overflow: hidden;
 }
 .gg-score__fill {
   position: absolute; inset: 0 auto 0 0; height: 100%;
   border-radius: 3px; background: var(--deep-blue);
 }
-.gg-score__fill--high   { background: #0B4A8A; }
-.gg-score__fill--medhi  { background: #1F6FD4; }
-.gg-score__fill--mid    { background: var(--orange); }
-.gg-score__fill--medlow { background: #EA8B4A; }
-.gg-score__fill--low    { background: var(--risk); }
+.gg-score__fill--high   { background: var(--sim-1); }
+.gg-score__fill--medhi  { background: var(--sim-2); }
+.gg-score__fill--mid    { background: var(--sim-3); }
+.gg-score__fill--medlow { background: var(--sim-4); }
+.gg-score__fill--low    { background: var(--sim-5); }
 .gg-score__value {
   font-family: var(--font-mono); font-size: 12px;
   color: var(--ink-1); font-weight: 500;

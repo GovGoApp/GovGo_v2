@@ -1,4 +1,4 @@
-// BuscaWorkspace — replica exata de ModeOportunidades (design/govgo/mode_oportunidades.jsx)
+// BuscaWorkspace — replica exata de ModeBusca (design/govgo/mode_busca.jsx)
 // com dados reais da API via GovGoSearchApi + GovGoSearchUiAdapter
 // O box de busca fica no SearchRail (AppShell), este componente so renderiza o workspace de abas.
 
@@ -95,23 +95,91 @@ function describeMapMetric(edital, metric) {
   return `${Math.round(Number(edital?.sim || 0) * 100)}% de similaridade`;
 }
 
-function buildMapMetricTone(metric, normalizedValue) {
+const DATE_PIN_SCALE = {
+  na: { fill: "#838383", shadow: "rgba(131,131,131,.18)", core: "#FFFFFF", innerScale: 0.22, ringWidth: 2 },
+  expired: { fill: "#800080", shadow: "rgba(128,0,128,.34)", core: "#FFF2FF", innerScale: 0.18, ringWidth: 3 },
+  today: { fill: "#B30000", shadow: "rgba(179,0,0,.38)", core: "#FFF0F0", innerScale: 0.18, ringWidth: 3 },
+  lt3: { fill: "#FF0000EE", shadow: "rgba(255,0,0,.34)", core: "#FFF0F0", innerScale: 0.18, ringWidth: 3 },
+  lt7: { fill: "#FF6200", shadow: "rgba(255,98,0,.30)", core: "#FFF5EF", innerScale: 0.19, ringWidth: 2 },
+  lt15: { fill: "#FFB200", shadow: "rgba(255,178,0,.26)", core: "#FFF9EE", innerScale: 0.2, ringWidth: 2 },
+  lt30: { fill: "#01B33A", shadow: "rgba(1,179,58,.22)", core: "#F1FFF5", innerScale: 0.22, ringWidth: 2 },
+  gt30: { fill: "#0099FF", shadow: "rgba(0,153,255,.2)", core: "#F2FAFF", innerScale: 0.23, ringWidth: 2 },
+};
+
+function resolveDatePinStatus(daysUntilClosing) {
+  if (daysUntilClosing === null || daysUntilClosing === undefined || !Number.isFinite(Number(daysUntilClosing))) {
+    return "na";
+  }
+  const days = Number(daysUntilClosing);
+  if (days < 0) return "expired";
+  if (days === 0) return "today";
+  if (days <= 3) return "lt3";
+  if (days <= 7) return "lt7";
+  if (days <= 15) return "lt15";
+  if (days <= 30) return "lt30";
+  return "gt30";
+}
+
+function resolveDatePinAppearance(daysUntilClosing) {
+  return DATE_PIN_SCALE[resolveDatePinStatus(daysUntilClosing)] || DATE_PIN_SCALE.na;
+}
+
+function buildMapPinAppearance(metric, rawValue, normalizedValue) {
   const t = Math.max(0, Math.min(1, normalizedValue));
   if (metric === "value") {
     return {
-      fill: `hsl(213 ${Math.round(interpolateNumber(62, 78, t))}% ${Math.round(interpolateNumber(72, 40, t))}%)`,
-      shadow: `hsla(213, 72%, 28%, ${interpolateNumber(0.18, 0.36, t).toFixed(2)})`,
+      fill: `hsl(${Math.round(interpolateNumber(210, 222, t))} ${Math.round(interpolateNumber(72, 84, t))}% ${Math.round(interpolateNumber(76, 34, t))}%)`,
+      shadow: `hsla(218, 78%, 24%, ${interpolateNumber(0.16, 0.38, t).toFixed(2)})`,
+      core: `hsl(${Math.round(interpolateNumber(208, 210, t))} ${Math.round(interpolateNumber(90, 95, t))}% ${Math.round(interpolateNumber(98, 88, t))}%)`,
+      innerScale: interpolateNumber(0.46, 0.34, t),
+      ringWidth: Math.round(interpolateNumber(2, 3, t)),
     };
   }
   if (metric === "date") {
+    return resolveDatePinAppearance(rawValue);
+  }
+  if (t >= 0.8) {
     return {
-      fill: `hsl(${Math.round(interpolateNumber(208, 18, t))} ${Math.round(interpolateNumber(56, 90, t))}% ${Math.round(interpolateNumber(60, 56, t))}%)`,
-      shadow: `hsla(${Math.round(interpolateNumber(208, 18, t))}, 75%, 28%, ${interpolateNumber(0.18, 0.36, t).toFixed(2)})`,
+      fill: "var(--sim-1)",
+      shadow: "rgba(6,47,92,.30)",
+      core: "#EAF3FF",
+      innerScale: 0.22,
+      ringWidth: 3,
+    };
+  }
+  if (t >= 0.6) {
+    return {
+      fill: "var(--sim-2)",
+      shadow: "rgba(31,111,212,.28)",
+      core: "#EEF5FF",
+      innerScale: 0.23,
+      ringWidth: 2,
+    };
+  }
+  if (t >= 0.4) {
+    return {
+      fill: "var(--sim-3)",
+      shadow: "rgba(108,155,210,.24)",
+      core: "#F2F7FF",
+      innerScale: 0.24,
+      ringWidth: 2,
+    };
+  }
+  if (t >= 0.2) {
+    return {
+      fill: "var(--sim-4)",
+      shadow: "rgba(232,136,74,.20)",
+      core: "#FFF6F0",
+      innerScale: 0.25,
+      ringWidth: 2,
     };
   }
   return {
-    fill: `hsl(24 ${Math.round(interpolateNumber(72, 92, t))}% ${Math.round(interpolateNumber(72, 52, t))}%)`,
-    shadow: `hsla(24, 80%, 26%, ${interpolateNumber(0.18, 0.36, t).toFixed(2)})`,
+    fill: "var(--sim-5)",
+    shadow: "rgba(180,72,26,.24)",
+    core: "#FFF4ED",
+    innerScale: 0.26,
+    ringWidth: 2,
   };
 }
 
@@ -252,6 +320,38 @@ function truncateObjectText(value, max = 170) {
     return text;
   }
   return `${text.slice(0, max - 3).trimEnd()}...`;
+}
+
+function buildSimilarityTableAppearance(score) {
+  const normalized = Math.max(0, Math.min(1, Number(score || 0)));
+  return buildMapPinAppearance("similarity", normalized, normalized);
+}
+
+function buildValueTableAppearance(value, minValue, maxValue) {
+  const numericValue = Number(value || 0);
+  const range = (maxValue - minValue) || 1;
+  const normalized = Number.isFinite(numericValue)
+    ? Math.max(0, Math.min(1, (numericValue - minValue) / range))
+    : 0.5;
+  return buildMapPinAppearance("value", numericValue, normalized);
+}
+
+function buildDateTableAppearance(dateLabel) {
+  const days = getDaysUntilClosing(dateLabel);
+  return buildMapPinAppearance("date", days, 0.5);
+}
+
+function SimilarityTableCell({ score }) {
+  const s = Math.max(0, Math.min(1, Number(score || 0)));
+  const tone = buildSimilarityTableAppearance(s);
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+      <span style={{ width: 44, height: 6, borderRadius: 3, background: "var(--sim-track)", position: "relative", overflow: "hidden" }}>
+        <span style={{ position: "absolute", inset: 0, width: `${s * 100}%`, background: tone.fill, borderRadius: 3 }} />
+      </span>
+      <span className="mono" style={{ fontSize: 12, color: "var(--ink-1)", fontWeight: 600 }}>{s.toFixed(3)}</span>
+    </span>
+  );
 }
 
 function ObjectCell({ text }) {
@@ -802,6 +902,16 @@ function normalizePersistedEditalResult(item) {
 
 // ─── Tabela de editais (grid identico ao design) ─────────────────────────────
 function EditaisTable({ editais, onOpen, currentSort, onSort }) {
+  const valueStats = React.useMemo(() => {
+    const values = (Array.isArray(editais) ? editais : [])
+      .map((item) => Number(item?.val || 0))
+      .filter((value) => Number.isFinite(value));
+    return {
+      min: values.length ? Math.min(...values) : 0,
+      max: values.length ? Math.max(...values) : 1,
+    };
+  }, [editais]);
+
   return (
     <div style={{
       flex: 1,
@@ -844,6 +954,8 @@ function EditaisTable({ editais, onOpen, currentSort, onSort }) {
           } catch (_) {}
           return false;
         })();
+        const valueTone = buildValueTableAppearance(e.val, valueStats.min, valueStats.max);
+        const dateTone = buildDateTableAppearance(e.end);
 
         return (
           <div key={`${e.rank}-${e.itemId || e.id || e.org}`} onClick={() => onOpen(e)}
@@ -882,11 +994,11 @@ function EditaisTable({ editais, onOpen, currentSort, onSort }) {
             </div>
             <span style={{ color: "var(--ink-2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.mun}</span>
             <span className="mono" style={{ color: "var(--ink-2)", fontWeight: 500 }}>{e.uf}</span>
-            <span><ScoreDot score={e.sim} /></span>
-            <span className="mono" style={{ textAlign: "right", fontWeight: 500, color: e.val === 0 ? "var(--ink-4)" : "var(--ink-1)" }}>
+            <span><SimilarityTableCell score={e.sim} /></span>
+            <span className="mono" style={{ textAlign: "right", fontWeight: 600, color: e.val === 0 ? "var(--ink-4)" : valueTone.fill }}>
               {e.val === 0 ? "-" : fmtBRL(e.val).replace("R$ ", "R$\u202F")}
             </span>
-            <span className="mono" style={{ textAlign: "right", color: pastDue ? "var(--risk)" : "var(--ink-1)", fontWeight: 500 }}>{e.end}</span>
+            <span className="mono" style={{ textAlign: "right", color: pastDue ? dateTone.fill : dateTone.fill, fontWeight: 600 }}>{e.end}</span>
           </div>
         );
       })}
@@ -957,7 +1069,7 @@ function SearchSummaryStrip({ searchState, viewMode, onChangeView, mapMetric, on
     <div style={{
       display: "flex",
       flexWrap: "wrap",
-      alignItems: "flex-start",
+      alignItems: "center",
       justifyContent: "space-between",
       gap: 12,
       padding: "8px 10px",
@@ -966,7 +1078,7 @@ function SearchSummaryStrip({ searchState, viewMode, onChangeView, mapMetric, on
       borderRadius: 10,
       marginBottom: 6,
     }}>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, flex: 1, minWidth: 220 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, flex: 1, minWidth: 220 }}>
         <Chip tone="blue">{configSummary.typeLabel}</Chip>
         <Chip tone="blue">{configSummary.approachLabel}</Chip>
         <Chip tone="blue">{configSummary.relevanceLabel}</Chip>
@@ -986,11 +1098,12 @@ function SearchSummaryStrip({ searchState, viewMode, onChangeView, mapMetric, on
           style={{
             display: "inline-flex",
             alignItems: "center",
-            gap: 4,
-            padding: 3,
+            gap: 0,
+            padding: 0,
             background: "var(--surface-sunk)",
             border: "1px solid var(--hairline)",
             borderRadius: 9,
+            overflow: "hidden",
           }}
         >
           {MAP_METRIC_OPTIONS.map((option) => {
@@ -1010,7 +1123,7 @@ function SearchSummaryStrip({ searchState, viewMode, onChangeView, mapMetric, on
                   alignItems: "center",
                   gap: 7,
                   padding: "5px 10px",
-                  borderRadius: 7,
+                  borderRadius: 0,
                   cursor: "pointer",
                   background: isActive ? "var(--paper)" : "transparent",
                   color: isActive ? "var(--orange-700)" : "var(--ink-2)",
@@ -1032,11 +1145,12 @@ function SearchSummaryStrip({ searchState, viewMode, onChangeView, mapMetric, on
           style={{
             display: "inline-flex",
             alignItems: "center",
-            gap: 4,
-            padding: 3,
+            gap: 0,
+            padding: 0,
             background: "var(--surface-sunk)",
             border: "1px solid var(--hairline)",
             borderRadius: 9,
+            overflow: "hidden",
           }}
         >
           {RESULTS_VIEW_OPTIONS.map((option) => {
@@ -1052,7 +1166,7 @@ function SearchSummaryStrip({ searchState, viewMode, onChangeView, mapMetric, on
                   alignItems: "center",
                   gap: 8,
                   padding: "5px 10px",
-                  borderRadius: 7,
+                  borderRadius: 0,
                   cursor: "pointer",
                   background: isActive ? "var(--paper)" : "transparent",
                   color: isActive ? "var(--orange-700)" : "var(--ink-2)",
@@ -1145,13 +1259,17 @@ function SearchResultsMap({ editais, metric, onOpen }) {
         }
       }
       normalizedValue = Math.max(0, Math.min(1, normalizedValue));
-      const size = Math.round(interpolateNumber(18, 30, normalizedValue));
-      const tone = buildMapMetricTone(metric, normalizedValue);
+      const size = metric === "value"
+        ? Math.round(interpolateNumber(14, 36, normalizedValue))
+        : metric === "date"
+        ? Math.round(interpolateNumber(11, 24, normalizedValue))
+        : Math.round(interpolateNumber(17, 30, normalizedValue));
+      const appearance = buildMapPinAppearance(metric, point.rawValue, normalizedValue);
       return {
         ...point,
         normalizedValue,
         size,
-        tone,
+        tone: appearance,
       };
     });
   }, [editais, metric]);
@@ -1209,23 +1327,26 @@ function SearchResultsMap({ editais, metric, onOpen }) {
 
     const bounds = [];
     prepared.forEach((point) => {
+      const ringWidth = Math.max(2, Number(point.tone.ringWidth || 2));
+      const innerScale = Math.max(0.16, Math.min(0.52, Number(point.tone.innerScale || 0.24)));
+      const innerSize = Math.max(5, Math.round(point.size * innerScale));
       const html = `
         <div style="
           width:${point.size}px;
           height:${point.size}px;
           border-radius:999px;
           background:${point.tone.fill};
-          border:2px solid rgba(255,255,255,.96);
+          border:${ringWidth}px solid rgba(255,255,255,.96);
           box-shadow:0 8px 20px ${point.tone.shadow};
           display:flex;
           align-items:center;
           justify-content:center;
         ">
           <span style="
-            width:${Math.max(6, Math.round(point.size * 0.24))}px;
-            height:${Math.max(6, Math.round(point.size * 0.24))}px;
+            width:${innerSize}px;
+            height:${innerSize}px;
             border-radius:999px;
-            background:rgba(255,255,255,.96);
+            background:${point.tone.core || "rgba(255,255,255,.96)"};
           "></span>
         </div>
       `;

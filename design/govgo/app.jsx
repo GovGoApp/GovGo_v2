@@ -4,7 +4,7 @@ const { useState: uSa, useEffect: uEa } = React;
 function App() {
   const [tweaks, setTweaks] = uSa(window.__TWEAKS || {});
   const [activityOpen, setActivityOpen] = uSa(true);
-  const mode = tweaks.mode || "home";
+  const mode = (tweaks.mode === "oportunidades" ? "busca" : tweaks.mode) || "home";
 
   const setTweak = (k, v) => {
     const next = {...tweaks, [k]: v};
@@ -40,7 +40,7 @@ function App() {
 
   const modeEls = {
     home:          <ModeHome onMode={m => setTweak("mode", m)}/>,
-    oportunidades: <ModeOportunidades/>,
+    busca:         <ModeBusca/>,
     fornecedores:  <ModeFornecedores/>,
     mercado:       <ModeMercado/>,
     relatorios:    <ModeRelatorios/>,
@@ -59,13 +59,13 @@ function App() {
       <TopBar mode={mode} onCommand={() => {}}/>
       <div style={{
         display: "grid",
-        gridTemplateColumns: mode === "oportunidades"
+        gridTemplateColumns: mode === "busca"
           ? "72px 320px 1fr"
           : "72px 1fr",
         flex: 1, minHeight: 0,
       }}>
         <LeftRail mode={mode} onMode={m => setTweak("mode", m)}/>
-        {mode === "oportunidades" && <SearchRail/>}
+        {mode === "busca" && <SearchRail/>}
         <main style={{minWidth: 0, overflow: "hidden"}}>
           {modeEls[mode]}
         </main>

@@ -4,7 +4,7 @@ function ModeHome({onMode}) {
 
   const modeCards = [
     {
-      id: "oportunidades", label: "Busca", tag: "Descobrir",
+      id: "busca", label: "Busca", tag: "Descobrir",
       title: "Busca semântica de editais",
       desc: "Ache oportunidades por palavra, objeto ou CNPJ. A IA do GovGo expande sinônimos e classifica por aderência.",
       icon: <Icon.search size={22}/>,
@@ -87,7 +87,7 @@ function ModeHome({onMode}) {
                 fontFamily: "var(--font-body)",
               }}/>
               <span style={{fontFamily: "var(--font-mono)", fontSize: 11, padding: "3px 7px", borderRadius: 5, background: "rgba(255,255,255,.12)", color: "rgba(255,255,255,.78)"}}>⌘K</span>
-              <button onClick={() => go("oportunidades")} style={{
+              <button onClick={() => go("busca")} style={{
                 all: "unset", cursor: "pointer", padding: "7px 14px", borderRadius: 7,
                 background: "var(--orange)", color: "white", fontWeight: 600, fontSize: 13,
               }}>Buscar</button>
@@ -95,7 +95,7 @@ function ModeHome({onMode}) {
 
             <div style={{display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap"}}>
               {["alimentação hospitalar", "merenda escolar", "locação de veículos", "serviços de limpeza"].map(s => (
-                <button key={s} onClick={() => go("oportunidades")} style={{
+                <button key={s} onClick={() => go("busca")} style={{
                   all: "unset", cursor: "pointer",
                   fontSize: 11.5, padding: "4px 10px", borderRadius: 99,
                   background: "rgba(255,255,255,.07)", color: "rgba(255,255,255,.82)",
@@ -206,14 +206,14 @@ function ModeHome({onMode}) {
             <Icon.starFill size={14} style={{color: "var(--orange)"}}/>
             <div style={{fontFamily: "var(--font-display)", fontSize: 14, fontWeight: 600, color: "var(--ink-1)"}}>Editais favoritos</div>
             <span style={{flex: 1}}/>
-            <button onClick={() => go("oportunidades")} style={{
+            <button onClick={() => go("busca")} style={{
               all: "unset", cursor: "pointer", fontSize: 12, color: "var(--deep-blue)", fontWeight: 500,
               display: "inline-flex", alignItems: "center", gap: 4,
             }}>Ver todos <Icon.chevRight size={12}/></button>
           </div>
           <div>
             {favoritos.map((f, i) => (
-              <button key={f.id} onClick={() => go("oportunidades")} style={{
+              <button key={f.id} onClick={() => go("busca")} style={{
                 all: "unset", cursor: "pointer", display: "grid",
                 gridTemplateColumns: "1fr 140px 130px",
                 padding: "13px 18px", gap: 12, width: "100%", boxSizing: "border-box",
@@ -243,11 +243,11 @@ function ModeHome({onMode}) {
               <Icon.history size={14} style={{color: "var(--ink-2)"}}/>
               <div style={{fontFamily: "var(--font-display)", fontSize: 13.5, fontWeight: 600, color: "var(--ink-1)"}}>Buscas recentes</div>
               <span style={{flex: 1}}/>
-              <button onClick={() => go("oportunidades")} style={{all: "unset", cursor: "pointer", fontSize: 11.5, color: "var(--deep-blue)", fontWeight: 500}}>Todas</button>
+              <button onClick={() => go("busca")} style={{all: "unset", cursor: "pointer", fontSize: 11.5, color: "var(--deep-blue)", fontWeight: 500}}>Todas</button>
             </div>
             <div>
               {recentSearches.slice(0, 4).map((h, i) => (
-                <button key={i} onClick={() => go("oportunidades")} style={{
+                <button key={i} onClick={() => go("busca")} style={{
                   all: "unset", cursor: "pointer", display: "flex", alignItems: "center",
                   padding: "10px 16px", gap: 10, width: "100%", boxSizing: "border-box",
                   borderTop: i === 0 ? "none" : "1px solid var(--hairline-soft)",

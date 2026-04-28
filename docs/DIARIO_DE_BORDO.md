@@ -116,7 +116,24 @@ O detalhe do edital em `#/busca/detalhe` deixou de depender de mock visual. Ele 
 
 O pipeline homologado de documentos em `homologation/documents/browser/app.py` e `src/backend/search/api/documents_homologation_runtime.py` ja esta costurado ao fluxo real do detalhe do edital. Na abertura do edital, o v2 pode iniciar automaticamente a geracao do Markdown do documento selecionado e do resumo consolidado.
 
-A UI continua derivada principalmente de `design/govgo/shell.jsx` e `design/govgo/mode_oportunidades_detail.jsx`, enquanto a camada real de estado, contratos e APIs esta em `src/features/`, `src/services/` e `src/backend/`.
+A UI continua derivada principalmente de `design/govgo/shell.jsx` e `design/govgo/mode_busca_detail.jsx`, enquanto a camada real de estado, contratos e APIs esta em `src/features/`, `src/services/` e `src/backend/`.
+
+## Entradas por data
+
+### 2026-04-27
+
+- foi consolidada a trilha completa dos calculos de similaridade do projeto;
+- foi criado o documento `docs/MATRIZ_SIMILARIDADE_V1_V2.md` como referencia tecnica oficial para:
+  - modos de busca;
+  - formulas de score;
+  - diferenca entre `similarity`, `confidence`, `top_similarities` e scores de concorrencia;
+  - ordem real do pipeline no v2;
+  - pontos em que filtro, ordenacao e apresentacao visual mudam a lista sem recalcular o score;
+- esse documento passa a ser leitura recomendada sempre que houver discussao sobre:
+  - interpretacao de score;
+  - calibracao de UI da similaridade;
+  - comparacao entre modos de busca;
+  - ajuste de explicacao da `Similaridade IA` no detalhe do edital.
 
 O bootstrap de Documentos foi configurado para apontar primeiro para a copia local do v2 e gravar artefatos em `homologation/documents/artifacts/`.
 
@@ -211,7 +228,7 @@ Tambem foi criada uma passagem de busca entre `#/busca/detalhe` e `#/busca`: qua
 As proximas prioridades concretas sao estas:
 
 1. estabilizar a UX da aba `Documentos` no detalhe do edital, especialmente scroll, loading, renderizacao do Markdown e estados de reabertura;
-2. revisar e corrigir textos com encoding quebrado ainda remanescentes em `design/govgo/mode_oportunidades_detail.jsx` e correlatos;
+2. revisar e corrigir textos com encoding quebrado ainda remanescentes em `design/govgo/mode_busca_detail.jsx` e correlatos;
 3. continuar reduzindo dependencia direta de `design/govgo/*.jsx`, internalizando gradualmente o que hoje so existe no shell e no detalhe;
 4. reforcar logs, tratamento de erro e observabilidade do fluxo de Markdown e resumo consolidado de documentos;
 5. so depois expandir o mesmo padrao real para os demais modulos homologados.

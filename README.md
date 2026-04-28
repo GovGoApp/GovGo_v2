@@ -423,7 +423,7 @@ O detalhe do edital e renderizado hoje por um componente que ainda nasce em `des
 
 Arquivo principal:
 
-- [design/govgo/mode_oportunidades_detail.jsx](design/govgo/mode_oportunidades_detail.jsx)
+- [design/govgo/mode_busca_detail.jsx](design/govgo/mode_busca_detail.jsx)
 
 Entrada de pagina:
 
@@ -870,7 +870,7 @@ Se voce vai mexer no projeto pela primeira vez:
 - [src/app/shell/AppShell.jsx](src/app/shell/AppShell.jsx)
 - [design/govgo/shell.jsx](design/govgo/shell.jsx)
 - [src/features/busca/BuscaWorkspace.jsx](src/features/busca/BuscaWorkspace.jsx)
-- [design/govgo/mode_oportunidades_detail.jsx](design/govgo/mode_oportunidades_detail.jsx)
+- [design/govgo/mode_busca_detail.jsx](design/govgo/mode_busca_detail.jsx)
 - [src/backend/search/api/service.py](src/backend/search/api/service.py)
 - [src/backend/search/core/adapter.py](src/backend/search/core/adapter.py)
 

@@ -10,14 +10,14 @@
     busca: {
       key: "busca",
       title: "Busca",
-      mode: "oportunidades",
+      mode: "busca",
       componentName: "BuscaPage",
       withSearchRail: true,
     },
     "busca-detalhe": {
       key: "busca-detalhe",
       title: "Busca Detalhe",
-      mode: "oportunidades",
+      mode: "busca",
       componentName: "BuscaDetalhePage",
       withSearchRail: true,
     },
@@ -61,6 +61,7 @@
 
   const legacyModeToRoute = {
     home: "inicio",
+    busca: "busca",
     oportunidades: "busca",
     fornecedores: "empresas",
     mercado: "radar",
@@ -72,6 +73,7 @@
     acc[routeKey] = legacyMode;
     return acc;
   }, {});
+  routeToLegacyMode.busca = "busca";
 
   function parseHash(hash) {
     const normalized = (hash || "").replace(/^#/, "").replace(/^\//, "");

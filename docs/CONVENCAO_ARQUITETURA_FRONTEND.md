@@ -117,7 +117,7 @@ Cada `mode_*.jsx` deve ser tratado como especificacao de composicao da respectiv
 Em outras palavras:
 
 - `mode_home.jsx` define a base da tela Inicio;
-- `mode_oportunidades.jsx` define a base da tela Busca;
+- `mode_busca.jsx` define a base da tela Busca;
 - `mode_fornecedores.jsx` define a base da tela Empresas;
 - `mode_mercado.jsx` define a base da tela Radar;
 - `mode_relatorios.jsx` define a base da tela Relatorios.

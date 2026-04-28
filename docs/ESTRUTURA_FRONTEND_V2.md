@@ -166,8 +166,8 @@ Base de fixtures e cenarios da UI antes da integracao completa com backend.
 | `design/govgo/primitives.jsx` | `src/design-system/primitives/` | biblioteca base |
 | `design/govgo/shell.jsx` | `src/app/shell/` | moldura oficial da app |
 | `design/govgo/mode_home.jsx` | `src/pages/inicio/` e `src/features/inicio/` | tela Inicio |
-| `design/govgo/mode_oportunidades.jsx` | `src/pages/busca/` e `src/features/busca/` | tela Busca |
-| `design/govgo/mode_oportunidades_detail.jsx` | `src/pages/busca-detalhe/` e `src/features/documentos/` | detalhe e documentos |
+| `design/govgo/mode_busca.jsx` | `src/pages/busca/` e `src/features/busca/` | tela Busca |
+| `design/govgo/mode_busca_detail.jsx` | `src/pages/busca-detalhe/` e `src/features/documentos/` | detalhe e documentos |
 | `design/govgo/mode_fornecedores.jsx` | `src/pages/empresas/` e `src/features/empresas/` | nomenclatura de produto aprovada |
 | `design/govgo/mode_mercado.jsx` | `src/pages/radar/` e `src/features/radar/` | tela Radar |
 | `design/govgo/mode_relatorios.jsx` | `src/pages/relatorios/` e `src/features/relatorios/` | tela Relatorios |

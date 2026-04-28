@@ -1,4 +1,4 @@
-// Reusable primitives — buttons, inputs, chips, cards, kpi, table, sparklines
+// Reusable primitives - buttons, inputs, chips, cards, kpi, table, sparklines
 const { useState, useEffect, useRef, useMemo } = React;
 
 // ---------- Circular progress ----------
@@ -274,18 +274,32 @@ function Collapsible({title, icon, children, defaultOpen = true, extra}) {
   );
 }
 
+function resolveScoreSimilarityColor(score) {
+  const s = Math.max(0, Math.min(1, Number(score || 0)));
+  if (s >= 0.8) return "var(--sim-1)";
+  if (s >= 0.6) return "var(--sim-2)";
+  if (s >= 0.4) return "var(--sim-3)";
+  if (s >= 0.2) return "var(--sim-4)";
+  return "var(--sim-5)";
+}
+
+function labelScoreSimilarity(score) {
+  const s = Math.max(0, Math.min(1, Number(score || 0)));
+  if (s >= 0.8) return "Excepcional";
+  if (s >= 0.6) return "Alta";
+  if (s >= 0.4) return "Média";
+  if (s >= 0.2) return "Baixa";
+  return "Divergente";
+}
+
 // ---------- Score dot / badge ----------
 function ScoreDot({score}) {
-  // score 0..1
-  const s = Math.max(0, Math.min(1, score));
-  let bg = "var(--risk)", label = "Baixa";
-  if (s >= 0.9) { bg = "#0B4A8A"; label = "Alta"; }
-  else if (s >= 0.8) { bg = "#1F6FD4"; label = "Alta"; }
-  else if (s >= 0.7) { bg = "#FF5722"; label = "Média"; }
-  else if (s >= 0.6) { bg = "#EA8B4A"; label = "Média"; }
+  const s = Math.max(0, Math.min(1, Number(score || 0)));
+  const bg = resolveScoreSimilarityColor(s);
+  const label = labelScoreSimilarity(s);
   return (
-    <span style={{display: "inline-flex", alignItems: "center", gap: 8}}>
-      <span style={{width: 44, height: 6, borderRadius: 3, background: "var(--surface-sunk)", position:"relative", overflow:"hidden"}}>
+    <span style={{display: "inline-flex", alignItems: "center", gap: 8}} title={`${label} - ${s.toFixed(3)}`}>
+      <span style={{width: 44, height: 6, borderRadius: 3, background: "var(--sim-track)", position:"relative", overflow:"hidden"}}>
         <span style={{position:"absolute", inset: 0, width: `${s*100}%`, background: bg, borderRadius: 3}}/>
       </span>
       <span className="mono" style={{fontSize: 12, color: "var(--ink-1)", fontWeight: 500}}>{s.toFixed(3)}</span>
@@ -319,7 +333,7 @@ function fmtBRL(v, compact) {
 }
 function fmtNum(v) { return v.toLocaleString("pt-BR"); }
 
-// ---------- Mode search bar — appears at the top of each mode ----------
+// ---------- Mode search bar - appears at the top of each mode ----------
 function ModeSearchBar({placeholder, value, chips, right, icon = <Icon.search size={16}/>, tone = "default"}) {
   const [v, setV] = useState(value || "");
   const isOrange = tone === "orange";
@@ -345,7 +359,7 @@ function ModeSearchBar({placeholder, value, chips, right, icon = <Icon.search si
         fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-3)",
         padding: "2px 6px", background: "var(--surface-sunk)", border: "1px solid var(--hairline)",
         borderRadius: 4,
-      }}>⌘K</span>
+      }}>Ctrl+K</span>
     </div>
   );
 }
