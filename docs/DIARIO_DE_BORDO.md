@@ -426,3 +426,87 @@ A partir de 2026-04-24, o registro do diario deve ser separado por data dentro d
 - o risco residual mais claro neste momento e a necessidade de continuar estabilizando a aba `Documentos`, especialmente no comportamento de scroll, renderizacao e pequenos detalhes visuais.
 - os fluxos de arquivo local real e de documento PNCP escolhido foram promovidos a testes explicitos do browser, com cards proprios no padrao visual dos outros testes do laboratorio.
 - o teste automatizado de selecao de fonte passou a validar tambem a existencia desses cards explicitos na pagina inicial do browser tester.
+
+### 2026-04-28
+
+- a Busca ganhou modo `Mapa` ao lado do modo `Tabela`, reaproveitando o mesmo conjunto de resultados e o mesmo fluxo de abertura do detalhe do edital.
+- o modo `Mapa` passou a operar dentro do limite do viewport, enquanto o modo `Tabela` passou a ter scroll interno proprio na area de resultados.
+- a barra superior da Busca foi reorganizada para acomodar o toggle `Tabela | Mapa`, o toggle de ordenacao/visualizacao por `Similaridade | Valor | Encerramento` e a reducao de paddings verticais e espacamentos.
+- a coluna da esquerda e a area de resultados foram reequilibradas para impedir que o mapa crescesse ate o fim da SearchRail.
+- a cadeia de coordenadas do mapa foi revisada de ponta a ponta, incluindo o join com `public.municipios` por `public.contratacao.unidade_orgao_codigo_ibge = public.municipios.municipio`, a normalizacao no adapter e a reidratacao no browser.
+- a depuracao confirmou que boa parte da confusao vinha de resultados antigos persistidos no browser, exigindo cuidado especial ao validar tabs reidratadas.
+- as paletas visuais do mapa e da tabela foram alinhadas por metrica, com atencao especial para a regua de `Encerramento` derivada do v1 e para a paleta discreta de `Similaridade`.
+- os pins do mapa, as barrinhas de similaridade da tabela e o card `Similaridade IA` do detalhe passaram a falar a mesma lingua visual.
+- o card `Similaridade IA` do detalhe recebeu barrinha horizontal alinhada ao numero, espelhando o padrao visual da tabela.
+- a aba `Documentos` do detalhe recebeu pequenos refinamentos no header do visualizador e nos cards laterais de arquivo, incluindo downloads dedicados do original e do `.md`.
+- foi criada `docs/MATRIZ_SIMILARIDADE_V1_V2.md` como referencia tecnica oficial das formulas, variacoes de calculo e exibicao da similaridade no sistema.
+- foi feita uma nova rodada de limpeza de encoding em componentes de UI, com correcao dos textos visiveis em `design/govgo/mode_busca_detail.jsx` e `design/govgo/primitives.jsx`.
+- foi adicionado `.editorconfig` na raiz do v2 para forcar `utf-8` e reduzir o risco de novas regressões de codificacao.
+- os arquivos `design/govgo/mode_oportunidades.jsx` e `design/govgo/mode_oportunidades_detail.jsx` foram renomeados para `design/govgo/mode_busca.jsx` e `design/govgo/mode_busca_detail.jsx`, com atualizacao dos pontos de carga, docs e aliases de compatibilidade.
+- foi concluido um estudo completo da plataforma de usuario do v1, cobrindo auth, sessao, usuario atual, historico de prompts/resultados, favoritos, boletins, emails, artefatos documentais por usuario, billing, limites, uso, mensagens do usuario e notificacoes de UI.
+- esse estudo foi consolidado em `docs/ESTUDO_PLATAFORMA_USUARIO_V1_V2.md`, que passa a ser a referencia principal para qualquer frente de `login/signup`, favoritos, historico, boletins, avisos/mensagens, billing e limites no v2.
+- ficou explicitado que o v2, hoje, ainda nao possui camada real de usuario: `src/features/auth`, `src/features/favoritos`, `src/features/historico` e `src/features/usuario` existem como destino arquitetural, mas ainda nao tem implementacao funcional; a shell atual mostra principalmente placeholders visuais.
+- ficou mapeado que a camada de usuario do v1 nao e apenas `auth`: ela depende tambem de `user_prompts`, `user_results`, `user_bookmarks`, `user_schedule`, `user_boletim`, `user_documents`, `user_resumos`, `user_settings`, `user_payment`, `user_usage_events`, `user_usage_counters`, `user_message` e `auth.users`.
+- tambem ficou registrado que o v1 nao tem um modulo persistido completo de "alertas" separado de boletins e mensagens; o que existe hoje e: boletins agendados, toasts de feedback (`gvg_notifications.py`) e mensagens do usuario para suporte (`user_message`).
+- a conclusao tecnica oficial desta frente passou a ser: nao inventar produto novo de usuario; reaproveitar os modulos do v1 como backend/plataforma e trazer as mesmas funcionalidades para a nova UI do v2.
+- a ordem recomendada para a proxima implementacao passou a ser: `auth + sessao + usuario atual`, depois `favoritos`, depois `historico`, depois `boletins`, depois `artefatos documentais por usuario`, e por fim `billing/limites/uso` e `mensagens`.
+- a implantacao da Fase A de usuario foi iniciada pelo Auth: foram criados endpoints locais `/api/auth/login`, `/api/auth/signup`, `/api/auth/confirm`, `/api/auth/forgot`, `/api/auth/reset`, `/api/auth/logout` e `/api/auth/me`, reaproveitando `src/backend/search/v1_copy/gvg_browser/gvg_auth.py`.
+- a sessao do v2 passou a usar cookies HttpOnly (`govgo_access_token` e `govgo_refresh_token`) servidos por `run.py`, preservando a direcao do v1 de nao deixar token sensivel em stores visiveis da UI.
+- foi criada a camada frontend inicial de usuario com `src/services/api/userApi.jsx` e `src/app/providers/AuthProvider.jsx`, expondo estado de sessao, usuario atual, login, signup, confirmacao, recuperacao, reset e logout.
+- foi criada a tela real `src/features/auth/AuthPage.jsx`, com CSS proprio em `src/features/auth/auth.css`, traduzindo o prototipo `design/GovGo Login.html` para componentes do v2.
+- a nova tela de login/cadastro usa os logos reais `src/assets/logos/govgo_logo_light_mode.png` e `src/assets/logos/govgo_logo_dark_mode.png`, com suporte a modo claro/escuro e recorte visual para compensar a margem interna dos PNGs.
+- o router passou a reconhecer `#/login`, `#/cadastro`, `#/signup` e `#/reset`; as rotas existentes passam a exigir autenticacao por padrao, com redirecionamento para `#/login` quando nao houver sessao.
+- o shell passou a aceitar rotas sem shell para Auth e o topbar passou a consumir a sessao para exibir iniciais reais e acao de logout.
+- a validacao local confirmou que `/api/auth/me` retorna `401` sem sessao, login vazio retorna `400`, o `index.html` carrega os novos arquivos de Auth e as telas `#/login` e `#/login?mode=signup` renderizam corretamente em captura headless; tambem foi validado visualmente o tema escuro via `#/login?theme=dark`.
+- a ligacao com Supabase Auth foi corrigida: o v2 aceita `SUPABASE_KEY` como alias de `SUPABASE_ANON_KEY` e, quando o `.env` da raiz ainda contem placeholder, busca a chave anon real na copia local `src/backend/search/v1_copy/gvg_browser/.env` sem duplicar segredo no repositorio.
+- como o `supabase-py` quebra neste ambiente apos o bootstrap legado por conflito de `pydantic`, a camada de Auth do v2 passou a falar diretamente com a API HTTP oficial do Supabase Auth (`/auth/v1/token`, `/signup`, `/verify`, `/recover`, `/user`, `/logout`).
+- a validacao da conexao real com Supabase Auth confirmou que credenciais falsas deixam de retornar "Cliente Supabase nao inicializado" e passam a retornar "E-mail ou senha invalidos.", provando que o backend local ja alcanca a base de usuarios Supabase.
+- a implantacao de Favoritos reais foi iniciada e ligada a `public.user_bookmarks`, reaproveitando as funcoes do v1 em `gvg_user.py`: `fetch_bookmarks`, `add_bookmark` e `remove_bookmark`.
+- foram criados endpoints autenticados de favoritos: `GET /api/user/favorites`, `POST /api/user/favorites` e `DELETE /api/user/favorites/:pncp`, todos exigindo sessao Supabase via cookie.
+- foi confirmado no banco que `user_bookmarks` possui `id`, `created_at`, `user_id`, `numero_controle_pncp`, `rotulo` e `active`, mantendo a regra v1 de soft-delete e reativacao.
+- foi criado `src/app/providers/FavoritesProvider.jsx`, carregando favoritos apos login, limpando no logout, expondo `isFavorite`, `addFavorite`, `removeFavorite` e `toggleFavorite`.
+- `src/services/api/userApi.jsx` passou a expor chamadas de favoritos, e o shell passou a carregar `FavoritesProvider` junto do `AuthProvider`.
+- a rail de Busca deixou de usar `DATA.favoritos` no bloco principal e passou a renderizar favoritos reais, com estados de anonimo, loading e vazio; o contador agora vem de `favorites.length`.
+- o bookmark na tabela de resultados da Busca deixou de ser decorativo e passou a alternar favorito real sem abrir o detalhe do edital; o botao `Salvar` do detalhe tambem passou a usar o estado real de favoritos.
+- as validacoes locais confirmaram que os endpoints de favoritos retornam `401` sem sessao, que o schema real da tabela e acessivel e que a pagina carrega sem quebrar quando uma rota protegida redireciona para login.
+- a Home e o ActivityRail tambem deixaram de consumir `DATA.favoritos`; agora usam o mesmo `FavoritesProvider`, exibem contagem real e estados de anonimo/loading/vazio.
+- foi feita validacao headless isolada da Home com favoritos simulados, confirmando renderizacao do bloco real sem erros de console.
+- o clique em favorito deixou de navegar para `#/busca/detalhe/:id` e passou a abrir uma aba dentro do workspace da Busca, usando `window._govgoOpenFavorite` quando a Busca esta montada e `GovGoSearchUiAdapter.setPendingFavorite` quando o usuario vem de outra tela.
+- abas abertas a partir de favoritos agora usam icone de bookmark preenchido e preservam `rank` vazio quando a origem nao tem ranking; o PNCP nao e mais usado como rank.
+- foi criado o endpoint autenticado `GET /api/user/favorite-detail?pncp_id=...`, que valida o favorito do usuario, busca o edital completo em `public.contratacao` por PNCP e devolve um shape compativel com o detalhe real da Busca.
+- o salvamento de favorito passou a enviar o objeto completo para o backend, que reaproveita `generate_contratacao_label` do v1 para gerar o `rotulo` curto salvo em `user_bookmarks`; o card usa esse resumo como primeira linha.
+- os cards de favoritos da rail e do ActivityRail foram refeitos no formato v1: resumo/rotulo, local, orgao e data de encerramento com tag de prazo; o icone de bookmark foi ampliado e passou a usar estado preenchido.
+- a tabela de resultados e o detalhe do edital passaram a usar bookmark vazio/preenchido com tamanho maior; no detalhe, o controle saiu do rodape e foi colocado no canto inferior direito do cabecalho.
+- o cabecalho do detalhe deixou de criar valores falsos a partir de `rank`; UASG, processo, edital, fonte e esfera agora usam apenas dados vindos do edital/BD, com travessao quando a informacao nao existe.
+- a validacao headless do workspace de Busca confirmou abertura de favorito em aba, sem `NaN` no cabecalho e sem texto de rank contendo PNCP.
+- apos relato de quebra no mapa da Busca, o componente `SearchResultsMap` foi reforcado: coordenadas passam a ser coercidas para numero antes do agrupamento, a inicializacao do Leaflet limpa `container._leaflet_id` quando necessario e operacoes de criacao/atualizacao de mapa e marcadores passaram a ter tratamento de erro.
+- foi validado o ciclo real busca -> alternar para Mapa com consulta `merenda escolar`, confirmando renderizacao Leaflet/OpenStreetMap sem erro de console.
+- apos alerta urgente do usuario de regressao nas coordenadas do mapa, as alteracoes defensivas feitas em `SearchResultsMap` foram revertidas integralmente, restaurando o fluxo anterior de coordenadas/pins da Busca.
+- fica registrado que a frente de Favoritos nao deve alterar `SearchResultsMap`, `resolveMapCoordinatePair` nem a cadeia de coordenadas do mapa sem pedido explicito do usuario.
+- apos novo alerta de pins proximos de `(0,0)`, a validacao de coordenadas passou a descartar pares fora da faixa geografica do Brasil antes de chegarem ao mapa, impedindo que dados persistidos ou corrompidos renderizem em coordenadas invalidas.
+- a validacao tecnica confirmou que a API e `public.municipios` continuam entregando coordenadas reais do Brasil; tambem foi identificado servidor `run.py` antigo na porta `8765`, exigindo reinicio para carregar o codigo atual.
+- o logo da tela inicial de carregamento de sessao foi ampliado e passou a usar recorte visual proprio, evitando que a margem interna dos PNGs deixe a marca pequena no card `Carregando sessao...`.
+- o fluxo de salvar Favoritos foi estabilizado: reativacoes em `public.user_bookmarks` agora atualizam `created_at = now()`, impedindo que favoritos reativados desaparecam do topo apos o reload da lista.
+- o provider de Favoritos deixou de inserir o card como salvo antes da confirmacao do backend; em caso de falha, a lista volta ao estado real do banco e o erro aparece no painel de Favoritos.
+- a validacao controlada de banco confirmou o ciclo `inactive -> upsert active com created_at novo -> listagem -> soft delete -> cleanup` usando usuario temporario e o PNCP `47563739000175-1-000361/2025`.
+- apos regressao visual no estado de Favoritos, o provider voltou a atualizar a UI imediatamente ao clicar em bookmark, mas agora mescla essa atualizacao com a resposta confirmada do backend para evitar que o card suma quando o banco confirma a gravacao.
+- apos `Failed to fetch` na lista de Favoritos causado por servidor duplicado/reinicio, foi mantido apenas um `run.py` na porta `8765` e o provider passou a tentar recarregar favoritos automaticamente em falhas transitorias de rede.
+- a causa real do `Failed to fetch` em Favoritos foi identificada: `raw.created_at` vinha do PostgreSQL como `datetime`, quebrava `json.dumps` no `run.py` e encerrava a conexao HTTP antes da resposta.
+- a resposta de Favoritos agora sanitiza `raw` com `_json_safe`, convertendo datas e decimais para JSON nativo; alem disso, `_write_json` em `run.py` ganhou serializacao defensiva para `datetime`, `date` e `Decimal`, evitando que uma rota inteira caia por payload nao serializavel.
+- o salvamento de Favoritos foi corrigido no endpoint v2: a escrita em `public.user_bookmarks` agora usa SQL direto com `ON CONFLICT`, `uid` autenticado e reativacao de registros inativos, sem depender da funcao v1 que escondia falhas.
+- a listagem/remocao de Favoritos tambem passou a usar SQL direto por usuario autenticado, e o frontend foi blindado para escolher primeiro identificadores com formato real de PNCP, evitando salvar `rank` ou IDs internos por engano.
+- a validacao de banco com usuario temporario confirmou ciclo completo `upsert -> list -> soft delete -> cleanup` em `user_bookmarks`.
+- o layout dos cards de Favoritos foi ajustado para voltar a uma borda cinza neutra e usar hierarquia tipografica mais alinhada ao design system v2, mantendo as quatro linhas do v1: resumo/rotulo, local, orgao e encerramento com tag.
+- a regua de encerramento do v1 foi centralizada no shell e reaplicada em Favoritos, tabela de resultados, detalhe do edital e pins do mapa: sem data cinza, expirada roxo, ate 3 dias vermelho, ate 7 dias laranja, ate 15 dias amarelo, ate 30 dias verde e mais de 30 dias azul.
+- a tabela de resultados passou a exibir a tag textual de encerramento junto da data, e o detalhe do edital passou a usar a mesma tag no cabecalho e no KPI de `Encerramento`.
+- os icones das abas do workspace da Busca foram ampliados de 12/13px para 16px, com contenedor estavel para preservar alinhamento visual.
+- o card de Favoritos voltou a priorizar o favorito confirmado pelo backend apos salvar, permitindo que o `rotulo`/resumo curto gerado pela IA substitua o texto otimista completo do objeto.
+- a listagem de Favoritos passou a recompor e persistir o `rotulo` curto quando registros antigos vierem sem resumo ou com o objeto completo no campo `rotulo`, mantendo o card alinhado ao comportamento do v1.
+- o card de Favoritos passou a usar um unico slot para a primeira linha: enquanto o resumo IA esta pendente, exibe o objeto original em cinza truncado; ao receber o `rotulo`, substitui pelo resumo em preto.
+- o cabecalho do detalhe do edital passou a hidratar dados completos por PNCP quando a aba vier de resultado antigo ou payload resumido, preenchendo UASG, Processo e Edital com campos reais da tabela `contratacao`.
+- a data de encerramento que vence hoje ganhou status visual proprio em vermelho escuro (`#B30000`), aplicado na tag, na cor da fonte e nos pins do mapa.
+- o card de Favoritos passou a exibir o objeto original em uma linha cinza truncada antes do resumo curto em preto, deixando visivel a transicao do texto completo para o rotulo gerado pela IA.
+- foi revista a leitura de `design/` a luz de duas informacoes novas do usuario: o Modo Empresa ja existe no v1 como `search/gvg_select`, e o Modo Relatorio ja existe no v1 como `db/reports/GvG_SU_Report_v3.py`.
+- foi criado `docs/ROADMAP_COMPLETO_V2_POS_DESIGN_E_V1.md`, consolidando o roadmap atualizado que separa migracao fiel do v1, traducao visual do design e expansoes reais da v2.
+- os documentos `docs/MATRIZ_V1_V2.md`, `docs/ESTRATEGIA_V1_NO_V2.md` e `docs/PLANO_MESTRE_V1_V2.md` foram ajustados para trocar a origem generica de empresas por `gvg_select` e para registrar a nomenclatura oficial Modo Empresa e Modo Relatorio.
+- ficou registrado como risco especifico do Modo Empresa a divergencia entre `public.so_prompt` no schema exportado e `sommelier.prompt` citado pelo README/codigo recente do `gvg_select`, exigindo confirmacao no banco ativo antes da implantacao.

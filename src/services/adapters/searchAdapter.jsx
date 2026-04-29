@@ -2,6 +2,7 @@
   const LAST_RESPONSE_STORAGE_KEY = "govgo.v2.search.lastResponse";
   const LAST_EDITAL_STORAGE_KEY = "govgo.v2.search.lastEdital";
   const PENDING_SEARCH_STORAGE_KEY = "govgo.v2.search.pending";
+  const PENDING_FAVORITE_STORAGE_KEY = "govgo.v2.favorite.pending";
 
   const moneyFormatter = new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -287,6 +288,19 @@
     return pending;
   }
 
+  function setPendingFavorite(favorite) {
+    if (!favorite) {
+      return;
+    }
+    safeWriteJson(PENDING_FAVORITE_STORAGE_KEY, favorite);
+  }
+
+  function consumePendingFavorite() {
+    const pending = safeReadJson(PENDING_FAVORITE_STORAGE_KEY);
+    safeRemove(PENDING_FAVORITE_STORAGE_KEY);
+    return pending;
+  }
+
   window.GovGoSearchUiAdapter = {
     normalizeResponse,
     toEditalShape,
@@ -295,5 +309,7 @@
     findRememberedEdital,
     setPendingSearch,
     consumePendingSearch,
+    setPendingFavorite,
+    consumePendingFavorite,
   };
 })();

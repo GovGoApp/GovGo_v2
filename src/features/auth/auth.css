@@ -1,0 +1,338 @@
+.gg-auth-page {
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--workspace) 88%, var(--paper)), var(--workspace));
+  color: var(--ink-1);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: 18px;
+}
+
+.gg-auth-top {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.gg-auth-theme {
+  all: unset;
+  cursor: pointer;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-2);
+  background: var(--paper);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-xs);
+}
+
+.gg-auth-theme:hover {
+  background: var(--surface-sunk);
+}
+
+.gg-auth-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 20px 0;
+}
+
+.gg-auth-card {
+  width: min(460px, 100%);
+  background: var(--paper);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-lg);
+  padding: 30px 34px 26px;
+}
+
+.gg-auth-logo-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.gg-auth-logo {
+  width: 156px;
+  height: 42px;
+  object-fit: cover;
+  object-position: calc(50% - 10px) calc(50% + 4px);
+  display: block;
+}
+
+.gg-auth-back {
+  all: unset;
+  cursor: pointer;
+  color: var(--ink-3);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.gg-auth-back:hover {
+  color: var(--ink-1);
+}
+
+.gg-auth-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 21px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--ink-1);
+}
+
+.gg-auth-subtitle {
+  margin: 6px 0 0;
+  color: var(--ink-3);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.gg-auth-form {
+  margin-top: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.gg-auth-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.gg-auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gg-auth-label {
+  color: var(--ink-2);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.gg-auth-input-shell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  background: var(--blue-50);
+  border: 1.5px solid transparent;
+  border-radius: var(--r-pill);
+  padding: 0 14px;
+  transition: border-color 120ms, box-shadow 120ms, background 120ms;
+}
+
+.gg-auth-input-shell:focus-within {
+  border-color: var(--deep-blue);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--deep-blue) 14%, transparent);
+}
+
+.gg-auth-input {
+  all: unset;
+  flex: 1;
+  min-width: 0;
+  color: var(--ink-1);
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.gg-auth-input::placeholder {
+  color: var(--ink-4);
+}
+
+.gg-auth-inline-button {
+  all: unset;
+  cursor: pointer;
+  color: var(--ink-3);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.gg-auth-inline-button:hover {
+  color: var(--deep-blue);
+}
+
+.gg-auth-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.gg-auth-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-2);
+  font-size: 12.5px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.gg-auth-check input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--deep-blue);
+}
+
+.gg-auth-link {
+  all: unset;
+  cursor: pointer;
+  color: var(--orange);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.gg-auth-link:hover {
+  color: var(--orange-600);
+}
+
+.gg-auth-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.gg-auth-button {
+  all: unset;
+  cursor: pointer;
+  min-height: 42px;
+  padding: 0 22px;
+  border-radius: var(--r-pill);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  border: 1.5px solid transparent;
+  transition: background 120ms, color 120ms, transform 80ms, opacity 120ms;
+}
+
+.gg-auth-button:active {
+  transform: translateY(0.5px);
+}
+
+.gg-auth-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.56;
+}
+
+.gg-auth-button--primary {
+  background: var(--orange);
+  color: #fff;
+  border-color: var(--orange);
+  box-shadow: 0 1px 0 rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,.18);
+}
+
+.gg-auth-button--primary:hover:not(:disabled) {
+  background: var(--orange-600);
+}
+
+.gg-auth-button--outline {
+  background: var(--paper);
+  color: var(--orange);
+  border-color: var(--orange);
+}
+
+.gg-auth-button--outline:hover:not(:disabled) {
+  background: var(--orange-50);
+}
+
+.gg-auth-button--full {
+  width: 100%;
+}
+
+.gg-auth-message {
+  border-radius: var(--r-md);
+  padding: 10px 12px;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.gg-auth-message--error {
+  color: var(--risk);
+  background: var(--risk-50);
+  border: 1px solid color-mix(in oklab, var(--risk) 28%, var(--risk-50));
+}
+
+.gg-auth-message--notice {
+  color: var(--green);
+  background: var(--green-50);
+  border: 1px solid var(--green-100);
+}
+
+.gg-auth-footer {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  color: var(--ink-3);
+  font-size: 11.5px;
+  padding-bottom: 4px;
+}
+
+.gg-auth-loading {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: var(--workspace);
+}
+
+.gg-auth-loading-card {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  color: var(--ink-2);
+  background: var(--paper);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 14px 22px;
+  font-size: 13px;
+}
+
+.gg-auth-loading-logo {
+  width: 134px;
+  height: 40px;
+  object-fit: cover;
+  object-position: calc(50% - 8px) calc(50% + 4px);
+  display: block;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 560px) {
+  .gg-auth-page {
+    padding: 12px;
+  }
+
+  .gg-auth-card {
+    padding: 24px 20px 22px;
+  }
+
+  .gg-auth-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .gg-auth-actions {
+    flex-direction: column;
+  }
+
+  .gg-auth-button {
+    width: 100%;
+  }
+}

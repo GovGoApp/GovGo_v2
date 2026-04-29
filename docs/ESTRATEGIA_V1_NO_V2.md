@@ -64,8 +64,8 @@ O v1 nao e um sistema pequeno. Ele ja contem quase toda a espinha dorsal operaci
 | Documentos | `search/gvg_browser/gvg_documents.py` | Download, resumo, processamento de PDFs |
 | Exportacao | `search/gvg_browser/gvg_exporters.py` | XLSX, CSV, PDF, HTML |
 | Busca Browser | `search/gvg_browser/GvG_Search_Browser.py` | Fonte de regras e fluxos, nao de UI final |
-| Relatorios | `db/reports/GvG_SU_Report_v3.py` | Base funcional do modo Relatorios |
-| Empresas | `scripts/cnpj_search/cnpj_search_v1_3.py` | Base funcional do modo Empresas |
+| Modo Relatorio | `db/reports/GvG_SU_Report_v3.py` | Base funcional do Modo Relatorio |
+| Modo Empresa | `search/gvg_select/GvG_Select_v4.py` + `search/gvg_select/gvg_cnpj_search.py` | Base funcional do Modo Empresa |
 | Pipeline | `scripts/`, `db/`, `doc/ARQUITETURA_V1.md` | Atualizacao de dados e operacao |
 
 ### O que o design do v2 ja define
@@ -75,9 +75,9 @@ O design da v2 ja descreve uma arquitetura de produto muito clara:
 - um shell unico com navegacao por modos;
 - um modo de entrada (Inicio) com KPIs e atalhos;
 - um modo Busca orientado a descoberta de oportunidades;
-- um modo Empresas orientado a CNPJ, perfil, contratos e aderencia;
+- um Modo Empresa orientado a CNPJ, perfil, contratos e aderencia;
 - um modo Radar orientado a leitura de mercado e concorrencia;
-- um modo Relatorios orientado a perguntas analiticas e SQL assistido;
+- um Modo Relatorio orientado a perguntas analiticas e SQL assistido;
 - uma camada transversal de artefatos do usuario, historico, alertas e boletins.
 
 Esse design tambem define a base visual a partir da qual as paginas reais devem ser implementadas. Isso significa que migrar o v2 nao e copiar literalmente a pasta `design/` para producao, nem redesenhar interface por interpretacao livre. E implementar a UI real a partir do que `design/` ja determina.
@@ -115,16 +115,17 @@ Vem principalmente de:
 
 O modo Busca da v2 deve absorver o nucleo de busca do v1 quase sem mudar a logica de dominio. O que muda e a forma de expor essa logica: sair de callbacks Dash e entrar em endpoints e contratos de API.
 
-### Empresas
+### Modo Empresa
 
-Empresas e a evolucao do que hoje esta espalhado entre a experiencia de busca, consultas por CNPJ e o script de analise de empresa.
+Modo Empresa e a evolucao direta do que hoje existe no v1 como `gvg_select`.
 
 Vem principalmente de:
 
-- `scripts/cnpj_search/cnpj_search_v1_3.py`
-- consultas ja feitas no ecossistema do Search Browser;
-- tabelas e wrappers de usuario/resultados/documentos;
-- calculos de aderencia e historico competitivo.
+- `search/gvg_select/GvG_Select_v4.py`
+- `search/gvg_select/gvg_cnpj_search.py`
+- `search/gvg_select/gvg_cnpj_search_v2.py`
+- `contrato`, `contrato_emb`, `contratacao`, `contratacao_emb`, `cnae`, `municipios` e views de fornecedores;
+- historico/snapshots de CNPJ usados pelo proprio `gvg_select`.
 
 Aqui existe reaproveitamento relevante de logica, mas provavelmente sera necessario consolidar queries e servicos que hoje ainda vivem de forma mais experimental ou orientada a script.
 
@@ -202,7 +203,7 @@ O `design/govgo/data.jsx` e util como fixture, mas ele deve ser removido como fo
 Ordem recomendada:
 
 1. Busca
-2. Empresas
+2. Modo Empresa
 3. Inicio e camada de usuario
 4. Relatorios
 5. Radar
@@ -336,9 +337,9 @@ Entregas:
 - exportacao basica;
 - integracao do frontend com API.
 
-### Fase 2 - Colocar Empresas de pe no v2
+### Fase 2 - Colocar Modo Empresa de pe no v2
 
-Objetivo: transformar o legado do GvG Select no modo Empresas da v2.
+Objetivo: transformar o legado do GvG Select no Modo Empresa da v2.
 
 Entregas:
 

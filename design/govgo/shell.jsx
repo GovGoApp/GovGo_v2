@@ -3,12 +3,186 @@ const { useState: uS, useEffect: uE } = React;
 const GOVGO_LOGO_LIGHT_URL = "/src/assets/logos/govgo_logo_light_mode.png";
 const GOVGO_LOGO_DARK_URL = "/src/assets/logos/govgo_logo_dark_mode.png";
 
-function TopBar({mode}) {
+function getFavoritePncpId(favorite) {
+  return String(favorite?.pncpId || favorite?.numero_controle_pncp || favorite?.id || "").trim();
+}
+
+function openFavoriteInBusca(favorite, navigate) {
+  const pncpId = getFavoritePncpId(favorite);
+  if (!pncpId) return;
+  if (window._govgoOpenFavorite) {
+    window._govgoOpenFavorite(favorite);
+    return;
+  }
+  if (window.GovGoSearchUiAdapter?.setPendingFavorite) {
+    window.GovGoSearchUiAdapter.setPendingFavorite(favorite);
+  }
+  if (navigate) {
+    navigate("busca");
+    return;
+  }
+  window.location.hash = "#/busca";
+}
+
+const GOVGO_DEADLINE_COLORS = {
+  na: "#838383",
+  expired: "#800080",
+  today: "#B30000",
+  lt3: "#FF0000EE",
+  lt7: "#FF6200",
+  lt15: "#FFB200",
+  lt30: "#01B33A",
+  gt30: "#0099FF",
+};
+
+function parseGovGoDeadlineDate(value) {
+  const text = String(value || "").trim();
+  if (!text) return null;
+  const br = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  const iso = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  const date = br
+    ? new Date(Number(br[3]), Number(br[2]) - 1, Number(br[1]))
+    : iso
+      ? new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]))
+      : new Date(text);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatGovGoDeadlineDateLabel(value, date) {
+  const text = String(value || "").trim();
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(text)) {
+    return text;
+  }
+  if (!date) return text || "\u2014";
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${day}/${month}/${date.getFullYear()}`;
+}
+
+function getGovGoDeadlineMeta(value) {
+  const date = parseGovGoDeadlineDate(value);
+  if (!date) {
+    return { status: "na", label: formatGovGoDeadlineDateLabel(value, null), tag: "sem data", color: GOVGO_DEADLINE_COLORS.na, days: null };
+  }
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  date.setHours(0, 0, 0, 0);
+  const days = Math.round((date.getTime() - today.getTime()) / 86400000);
+  const label = formatGovGoDeadlineDateLabel(value, date);
+  if (days < 0) return { status: "expired", label, tag: "expirada", color: GOVGO_DEADLINE_COLORS.expired, days };
+  if (days === 0) return { status: "today", label, tag: "\u00e9 hoje!", color: GOVGO_DEADLINE_COLORS.today, days };
+  if (days <= 3) return { status: "lt3", label, tag: "em at\u00e9 3 dias", color: GOVGO_DEADLINE_COLORS.lt3, days };
+  if (days <= 7) return { status: "lt7", label, tag: "em at\u00e9 7 dias", color: GOVGO_DEADLINE_COLORS.lt7, days };
+  if (days <= 15) return { status: "lt15", label, tag: "em at\u00e9 15 dias", color: GOVGO_DEADLINE_COLORS.lt15, days };
+  if (days <= 30) return { status: "lt30", label, tag: "em at\u00e9 30 dias", color: GOVGO_DEADLINE_COLORS.lt30, days };
+  return { status: "gt30", label, tag: "mais de 30 dias", color: GOVGO_DEADLINE_COLORS.gt30, days };
+}
+
+if (typeof window !== "undefined") {
+  window.GovGoDeadline = {
+    colors: GOVGO_DEADLINE_COLORS,
+    parseDate: parseGovGoDeadlineDate,
+    getMeta: getGovGoDeadlineMeta,
+  };
+}
+
+function getFavoriteDateMeta(favorite) {
+  return getGovGoDeadlineMeta(
+    favorite?.date ||
+    favorite?.closingDateLabel ||
+    favorite?.closingDate ||
+    favorite?.data_encerramento_proposta ||
+    ""
+  );
+}
+
+function FavoriteCard({favorite, onOpen, onRemove}) {
+  const meta = getFavoriteDateMeta(favorite);
+  const local = [favorite?.municipality || favorite?.mun, favorite?.uf].filter(Boolean).join("/");
+  const org = favorite?.organization || favorite?.org || "-";
+  const summary = favorite?.summary || favorite?.objectSummary || favorite?.rotulo || favorite?.title || favorite?.objeto || getFavoritePncpId(favorite);
+  const isSummaryPending = Boolean(favorite?.summaryPending);
+  const originalObject = (
+    favorite?.objectFull ||
+    favorite?.objeto ||
+    favorite?.objeto_compra ||
+    favorite?.raw?.details?.objeto_compra ||
+    favorite?.raw?.objeto_compra ||
+    ""
+  );
+  const displaySummary = isSummaryPending ? (originalObject || summary) : summary;
+  return (
+    <div onClick={() => onOpen?.(favorite)} style={{
+      background: "var(--paper)",
+      border: "1px solid var(--hairline)",
+      borderRadius: 8,
+      padding: "9px 10px",
+      cursor: "pointer",
+      boxShadow: "var(--shadow-xs)",
+    }}>
+      <div style={{display: "flex", alignItems: "flex-start", gap: 8}}>
+        <div style={{flex: 1, minWidth: 0, textAlign: "left"}}>
+          <div title={displaySummary} style={{
+            fontFamily: "var(--font-display)",
+            fontSize: 13.25,
+            fontWeight: isSummaryPending ? 500 : 600,
+            color: isSummaryPending ? "var(--ink-3)" : "var(--ink-1)",
+            lineHeight: 1.22,
+            display: "-webkit-box",
+            WebkitLineClamp: isSummaryPending ? 1 : 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}>{displaySummary}</div>
+          <div style={{fontSize: 12.25, color: "var(--deep-blue)", fontStyle: "italic", lineHeight: 1.25, marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"}}>{local || "-"}</div>
+          <div style={{fontSize: 10.5, color: "var(--ink-2)", textTransform: "uppercase", letterSpacing: ".02em", lineHeight: 1.25, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"}}>{org}</div>
+          <div style={{display: "flex", alignItems: "center", gap: 6, marginTop: 3, minWidth: 0}}>
+            <span className="mono" style={{fontSize: 14.25, color: meta.color, fontWeight: 800, lineHeight: 1}}>{meta.label}</span>
+            {meta.tag && (
+              <span style={{
+                display: "inline-block",
+                fontSize: 10,
+                color: "white",
+                background: meta.color,
+                borderRadius: 12,
+                padding: "2px 6px",
+                fontWeight: 600,
+                lineHeight: 1,
+                whiteSpace: "nowrap",
+              }}>{meta.tag}</span>
+            )}
+          </div>
+        </div>
+        <button onClick={(event) => onRemove?.(event, favorite)} title="Remover favorito" style={{
+          all: "unset", cursor: "pointer", color: "var(--orange)", display: "inline-flex",
+          width: 30, height: 30, alignItems: "center", justifyContent: "center", borderRadius: 7,
+          flexShrink: 0,
+        }}>
+          <Icon.bookmarkFill size={21}/>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function TopBar({mode, navigate}) {
   const [theme, setTheme] = uS(() => {
     if (typeof document === 'undefined') return 'light';
     return document.documentElement.getAttribute('data-theme') || localStorage.getItem('govgo-theme') || 'light';
   });
+  const auth = window.useGovGoAuth ? window.useGovGoAuth() : null;
   const logoUrl = theme === "dark" ? GOVGO_LOGO_DARK_URL : GOVGO_LOGO_LIGHT_URL;
+  const isAuthenticated = auth && auth.status === "authenticated";
+  const displayName = isAuthenticated ? (auth.displayName || auth.user?.email || "Usuario") : "";
+  const initials = isAuthenticated ? (auth.initials || "GG") : "GG";
+  const handleLogout = async () => {
+    if (auth && auth.logout) {
+      await auth.logout();
+    }
+    if (navigate) {
+      navigate("login", { replace: true });
+    }
+  };
   const toggleTheme = () => {
     const next = theme === 'dark' ? 'light' : 'dark';
     setTheme(next);
@@ -73,7 +247,8 @@ function TopBar({mode}) {
           color: "white", fontFamily: "var(--font-display)", fontWeight: 600,
           display: "inline-flex", alignItems: "center", justifyContent: "center",
           fontSize: 12,
-        }}>RS</div>
+        }}>{initials}</div>
+        {isAuthenticated && <Button kind="ghost" size="sm" onClick={handleLogout}>Sair</Button>}
       </div>
     </header>
   );
@@ -383,7 +558,7 @@ function MultiSelectField({ options, values, onToggle, onToggleAll, allLabel = "
 }
 
 // ---------- Search rail (LEFT in Busca mode) ----------
-function SearchRail() {
+function SearchRail({navigate}) {
   const [panelOpen, setPanelOpen] = uS(false);
   const [activePanel, setActivePanel] = uS("filters");
   const [query, setQuery] = uS("");
@@ -427,6 +602,24 @@ function SearchRail() {
   const filterDateFieldOptions = window.GovGoSearchContracts?.FILTER_DATE_FIELD_OPTIONS || FILTER_DATE_FIELD_OPTIONS;
   const configSummary = describeSearchRailConfig(searchConfig);
   const isCategoryMode = searchConfig.searchApproach !== "direct";
+  const auth = window.useGovGoAuth ? window.useGovGoAuth() : null;
+  const favoritesState = window.useGovGoFavorites ? window.useGovGoFavorites() : null;
+  const favorites = favoritesState?.favorites || [];
+  const favoriteCount = favorites.length;
+
+  const openFavorite = (favorite) => {
+    openFavoriteInBusca(favorite, navigate);
+  };
+
+  const removeFavoriteFromRail = async (event, favorite) => {
+    event.stopPropagation();
+    if (!favoritesState?.removeFavorite) return;
+    try {
+      await favoritesState.removeFavorite(favorite);
+    } catch (error) {
+      console.warn("Falha ao remover favorito", error);
+    }
+  };
 
   const updateSearchConfig = (patchOrUpdater) => {
     setSearchConfig((current) => {
@@ -1008,25 +1201,52 @@ function SearchRail() {
         </div>
 
         {/* Favoritos / Histórico / Alertas / Boletins */}
-        <Collapsible title="Favoritos" icon={<Icon.starFill size={12}/>} extra={<span style={{fontSize: 11, color: "var(--ink-3)"}}>12</span>} defaultOpen>
+        <Collapsible title="Favoritos" icon={<Icon.starFill size={12}/>} extra={<span style={{fontSize: 11, color: "var(--ink-3)"}}>{favoriteCount}</span>} defaultOpen>
           <div style={{display: "flex", flexDirection: "column", gap: 6}}>
-            {DATA.favoritos.map(f => (
-              <div key={f.id} style={{
+            {auth?.status !== "authenticated" && (
+              <div style={{
                 background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 8,
-                padding: "10px 11px", cursor: "pointer",
+                padding: "10px 11px", color: "var(--ink-3)", fontSize: 12.5, lineHeight: 1.35,
               }}>
-                <div style={{display: "flex", alignItems: "flex-start", gap: 8}}>
-                  <div style={{flex: 1, minWidth: 0}}>
-                    <div style={{fontSize: 12.5, fontWeight: 600, color: "var(--ink-1)", lineHeight: 1.3, marginBottom: 2}}>{f.title}</div>
-                    <div style={{fontSize: 11, color: "var(--ink-3)"}}>{f.org}</div>
-                  </div>
-                  <Icon.bookmark size={13} s={1.6}/>
-                </div>
-                <div style={{display: "flex", alignItems: "center", gap: 6, marginTop: 8}}>
-                  <span style={{fontSize: 11, color: f.tone === "orange" ? "var(--orange)" : "var(--deep-blue)", fontWeight: 600}}>{f.date}</span>
-                  <Chip tone={f.tone === "orange" ? "orange" : "blue"}>vence em {f.status}</Chip>
-                </div>
+                Entre para carregar seus favoritos.
               </div>
+            )}
+            {auth?.status === "authenticated" && favoritesState?.status === "loading" && (
+              <div style={{
+                background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 8,
+                padding: "10px 11px", color: "var(--ink-3)", fontSize: 12.5,
+              }}>
+                Carregando favoritos...
+              </div>
+            )}
+            {auth?.status === "authenticated" && favoritesState?.status === "error" && favoritesState?.error && (
+              <div style={{
+                background: "color-mix(in oklab, var(--risk) 9%, var(--paper))",
+                border: "1px solid color-mix(in oklab, var(--risk) 24%, var(--hairline))",
+                borderRadius: 8,
+                padding: "10px 11px",
+                color: "var(--risk)",
+                fontSize: 12.5,
+                lineHeight: 1.35,
+              }}>
+                {favoritesState.error}
+              </div>
+            )}
+            {auth?.status === "authenticated" && favoritesState?.status !== "loading" && favorites.length === 0 && (
+              <div style={{
+                background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 8,
+                padding: "10px 11px", color: "var(--ink-3)", fontSize: 12.5, lineHeight: 1.35,
+              }}>
+                Nenhum edital favorito ainda.
+              </div>
+            )}
+            {favorites.map(f => (
+              <FavoriteCard
+                key={f.pncpId || f.id}
+                favorite={f}
+                onOpen={openFavorite}
+                onRemove={removeFavoriteFromRail}
+              />
             ))}
           </div>
         </Collapsible>
@@ -1086,6 +1306,25 @@ function SearchRail() {
 
 // ---------- Activity rail (RIGHT, collapsible) ----------
 function ActivityRail({open, onToggle}) {
+  const auth = window.useGovGoAuth ? window.useGovGoAuth() : null;
+  const favoritesState = window.useGovGoFavorites ? window.useGovGoFavorites() : null;
+  const favorites = favoritesState?.favorites || [];
+  const favoriteCount = favorites.length;
+
+  const openFavorite = (favorite) => {
+    openFavoriteInBusca(favorite, null);
+  };
+
+  const removeFavoriteFromActivity = async (event, favorite) => {
+    event.stopPropagation();
+    if (!favoritesState?.removeFavorite) return;
+    try {
+      await favoritesState.removeFavorite(favorite);
+    } catch (error) {
+      console.warn("Falha ao remover favorito", error);
+    }
+  };
+
   if (!open) {
     return (
       <aside style={{
@@ -1129,25 +1368,52 @@ function ActivityRail({open, onToggle}) {
         }}><Icon.chevRight size={13}/></button>
       </div>
       <div style={{flex: 1, overflowY: "auto", paddingBottom: 12}}>
-        <Collapsible title="Favoritos" icon={<Icon.starFill size={12}/>} extra={<span style={{fontSize: 11, color: "var(--ink-3)"}}>12</span>}>
+        <Collapsible title="Favoritos" icon={<Icon.starFill size={12}/>} extra={<span style={{fontSize: 11, color: "var(--ink-3)"}}>{favoriteCount}</span>}>
           <div style={{display: "flex", flexDirection: "column", gap: 6}}>
-            {DATA.favoritos.map(f => (
-              <div key={f.id} style={{
+            {auth?.status !== "authenticated" && (
+              <div style={{
                 background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 8,
-                padding: "10px 11px", cursor: "pointer",
+                padding: "10px 11px", color: "var(--ink-3)", fontSize: 12.5, lineHeight: 1.35,
               }}>
-                <div style={{display: "flex", alignItems: "flex-start", gap: 8}}>
-                  <div style={{flex: 1, minWidth: 0}}>
-                    <div style={{fontSize: 12.5, fontWeight: 600, color: "var(--ink-1)", lineHeight: 1.3, marginBottom: 2}}>{f.title}</div>
-                    <div style={{fontSize: 11, color: "var(--ink-3)"}}>{f.org}</div>
-                  </div>
-                  <Icon.bookmark size={13} s={1.6}/>
-                </div>
-                <div style={{display: "flex", alignItems: "center", gap: 6, marginTop: 8}}>
-                  <span style={{fontSize: 11, color: f.tone === "orange" ? "var(--orange)" : "var(--deep-blue)", fontWeight: 600}}>{f.date}</span>
-                  <Chip tone={f.tone === "orange" ? "orange" : "blue"}>vence em {f.status}</Chip>
-                </div>
+                Entre para carregar seus favoritos.
               </div>
+            )}
+            {auth?.status === "authenticated" && favoritesState?.status === "loading" && (
+              <div style={{
+                background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 8,
+                padding: "10px 11px", color: "var(--ink-3)", fontSize: 12.5,
+              }}>
+                Carregando favoritos...
+              </div>
+            )}
+            {auth?.status === "authenticated" && favoritesState?.status === "error" && favoritesState?.error && (
+              <div style={{
+                background: "color-mix(in oklab, var(--risk) 9%, var(--paper))",
+                border: "1px solid color-mix(in oklab, var(--risk) 24%, var(--hairline))",
+                borderRadius: 8,
+                padding: "10px 11px",
+                color: "var(--risk)",
+                fontSize: 12.5,
+                lineHeight: 1.35,
+              }}>
+                {favoritesState.error}
+              </div>
+            )}
+            {auth?.status === "authenticated" && favoritesState?.status !== "loading" && favorites.length === 0 && (
+              <div style={{
+                background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 8,
+                padding: "10px 11px", color: "var(--ink-3)", fontSize: 12.5, lineHeight: 1.35,
+              }}>
+                Nenhum edital favorito ainda.
+              </div>
+            )}
+            {favorites.map(f => (
+              <FavoriteCard
+                key={f.pncpId || f.id}
+                favorite={f}
+                onOpen={openFavorite}
+                onRemove={removeFavoriteFromActivity}
+              />
             ))}
           </div>
         </Collapsible>

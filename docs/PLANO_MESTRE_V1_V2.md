@@ -44,7 +44,7 @@ O criterio de sucesso da migracao nao e "integrar parte do v1". O criterio de su
 
 ### O que ja esta decidido
 
-- navegacao principal da v2: Inicio, Busca, Empresas, Radar, Relatorios;
+- navegacao principal da v2: Inicio, Busca, Modo Empresa, Radar, Modo Relatorio;
 - o design atual da v2 continua como referencia visual e funcional;
 - `design/` e a base canonica que define a camada visual da v2; a UI real nao e o codigo dessa pasta, mas deve ser implementada integralmente a partir dela;
 - a interface Dash do v1 nao entra como parte da experiencia final;
@@ -85,10 +85,10 @@ Essa base nao deve ser lida como lista opcional. Ela representa a cobertura func
 Entregar uma unica aplicacao, coerente e moderna, em que o usuario trabalha dentro de um workspace comum e pode:
 
 1. descobrir oportunidades em Busca;
-2. analisar empresas em Empresas;
+2. analisar empresas no Modo Empresa;
 3. acompanhar contexto e artefatos em Inicio;
 4. explorar concorrencia e mercado em Radar;
-5. fazer analise assistida em Relatorios.
+5. fazer analise assistida no Modo Relatorio.
 
 ## Objetivo tecnico
 
@@ -256,11 +256,11 @@ Escopo:
 - documentos;
 - exportacao basica.
 
-## Frente D - Empresas
+## Frente D - Modo Empresa
 
 Objetivo:
 
-Trazer o legado de CNPJ e aderencia para o modo Empresas.
+Trazer o legado de CNPJ e aderencia do `gvg_select` para o Modo Empresa.
 
 Escopo:
 
@@ -303,11 +303,11 @@ Escopo:
 - artefatos do usuario;
 - resumo operacional.
 
-## Frente G - Relatorios
+## Frente G - Modo Relatorio
 
 Objetivo:
 
-Levar o dominio NL -> SQL do v1 para o modo Relatorios do v2.
+Levar o dominio NL -> SQL do `gvg_report` para o Modo Relatorio do v2.
 
 Escopo:
 
@@ -413,7 +413,7 @@ Gate de saida:
 
 - modo Busca funcionando sem mock para os casos principais.
 
-## Fase 3 - Homologacao de Empresas
+## Fase 3 - Homologacao do Modo Empresa
 
 Objetivo:
 
@@ -431,11 +431,11 @@ Gate de saida:
 
 - perfil, historico e aderencia com respostas consistentes.
 
-## Fase 4 - Empresas real no v2
+## Fase 4 - Modo Empresa real no v2
 
 Objetivo:
 
-Conectar o modo Empresas do v2 ao backend real.
+Conectar o Modo Empresa do v2 ao backend real.
 
 Entregas:
 
@@ -447,7 +447,7 @@ Entregas:
 
 Gate de saida:
 
-- modo Empresas sem mock nos fluxos principais.
+- Modo Empresa sem mock nos fluxos principais.
 
 ## Fase 5 - Plataforma de usuario
 
@@ -489,11 +489,11 @@ Gate de saida:
 
 - Inicio operacional sem depender de fixtures estaticas.
 
-## Fase 7 - Homologacao e entrega de Relatorios
+## Fase 7 - Homologacao e entrega do Modo Relatorio
 
 Objetivo:
 
-Levar Relatorios para o v2 com seguranca e previsibilidade.
+Levar o Modo Relatorio para o v2 com seguranca e previsibilidade.
 
 Entregas:
 
@@ -592,7 +592,8 @@ Gate de saida:
 
 - `GvG_Search_Browser.py`
 - `GvG_SU_Report_v3.py`
-- `cnpj_search_v1_3.py`
+- `search/gvg_select/GvG_Select_v4.py`
+- `search/gvg_select/gvg_cnpj_search.py`
 - chamadas legadas de assistants acopladas a interfaces antigas
 
 ### Construir ou reprojetar
@@ -651,15 +652,15 @@ Um modulo so pode seguir para a fase seguinte quando passar por estes gates:
 ### Dependencias duras
 
 - Busca real depende da Fase 1 concluida;
-- Empresas real depende da homologacao de Empresas;
+- Modo Empresa real depende da homologacao do Modo Empresa;
 - Inicio real depende da plataforma de usuario;
 - Radar depende de dados confiaveis e agregacoes validadas;
 - producao depende de observabilidade, limites e runbooks.
 
 ### Dependencias suaves
 
-- parte da plataforma de usuario pode evoluir em paralelo com Busca e Empresas;
-- Relatorios pode ser homologado em paralelo com Empresas;
+- parte da plataforma de usuario pode evoluir em paralelo com Busca e Modo Empresa;
+- Modo Relatorio pode ser homologado em paralelo com Modo Empresa;
 - documentacao e triagem seguem continuamente durante o plano.
 
 ## Como usar este plano
@@ -684,7 +685,7 @@ Ao final da transicao:
 - o v2 sera a aplicacao usada pelo usuario;
 - o v1 tera sido absorvido como backend, servicos e jobs;
 - os modulos lentos ou instaveis terao sido corrigidos ou reprojetados antes de contaminar a UX;
-- Busca, Empresas, Inicio, Relatorios e Radar passarao a operar sob um shell unico e coerente;
+- Busca, Modo Empresa, Inicio, Modo Relatorio e Radar passarao a operar sob um shell unico e coerente;
 - a evolucao futura do produto passara a acontecer sobre a arquitetura da v2, e nao mais sobre a UI legada.
 
 ## Documentos complementares

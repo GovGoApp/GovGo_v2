@@ -27,9 +27,9 @@ Regra de uso:
 | Detalhe de edital | `GvG_Search_Browser.py` + `gvg_documents.py` | Busca | Encapsular e reprojetar no frontend v2 | Alta |
 | Download e resumo de documentos | `search/gvg_browser/gvg_documents.py` | Busca / Empresas / Relatorios | Reaproveitar com `DocumentService` | Media |
 | Exportar CSV/XLSX/PDF/HTML | `search/gvg_browser/gvg_exporters.py` | Busca / Relatorios / Empresas | Reaproveitar | Media |
-| Perfil de empresa por CNPJ | `scripts/cnpj_search/cnpj_search_v1_3.py` | Empresas | Encapsular em `CompanyService` | Alta |
-| Busca por nome de empresa | `cnpj_search_v1_3.py` + queries auxiliares | Empresas | Encapsular e melhorar desambiguacao | Alta |
-| Historico de contratos por empresa | `cnpj_search_v1_3.py` + banco v1 | Empresas | Encapsular | Alta |
+| Perfil de empresa por CNPJ | `search/gvg_select/GvG_Select_v4.py` + `search/gvg_select/gvg_cnpj_search.py` | Modo Empresa | Encapsular em `CompanyService` | Alta |
+| Busca por nome de empresa | `search/gvg_select` + views de fornecedores | Modo Empresa | Encapsular e melhorar desambiguacao | Alta |
+| Historico de contratos por empresa | `search/gvg_select` + `contrato`/`contrato_emb` + historico de snapshot | Modo Empresa | Encapsular | Alta |
 | Aderencia empresa -> oportunidade | `gvg_search_core.py` + logica do v1 | Empresas / Busca | Encapsular e consolidar | Alta |
 | Historico de prompts e resultados | `search/gvg_browser/gvg_user.py` | Inicio / camada transversal | Reaproveitar | Alta |
 | Bookmarks / favoritos | `search/gvg_browser/gvg_user.py` | Inicio / camada transversal | Reaproveitar | Alta |
@@ -40,9 +40,9 @@ Regra de uso:
 | Boletins agendados | `search/gvg_browser/gvg_boletim.py` | Inicio / camada transversal | Reaproveitar com worker | Media |
 | Notificacoes | `search/gvg_browser/gvg_notifications.py` | Inicio / camada transversal | Reaproveitar modelo e integrar com backend | Media |
 | Emails operacionais | `search/gvg_browser/gvg_email.py` | Camada transversal | Reaproveitar conforme necessidade | Baixa |
-| Relatorios NL -> SQL | `db/reports/GvG_SU_Report_v3.py` | Relatorios | Encapsular e expor via API | Alta |
-| Historico de SQL | `GvG_SU_Report_v3.py` | Relatorios | Encapsular e reprojetar no frontend | Media |
-| Export de relatorios | `GvG_SU_Report_v3.py` + `gvg_exporters.py` | Relatorios | Reaproveitar | Media |
+| Relatorios NL -> SQL | `db/reports/GvG_SU_Report_v3.py` | Modo Relatorio | Encapsular e expor via API | Alta |
+| Historico de SQL | `GvG_SU_Report_v3.py` | Modo Relatorio | Encapsular e reprojetar no frontend | Media |
+| Export de relatorios | `GvG_SU_Report_v3.py` + `gvg_exporters.py` | Modo Relatorio | Reaproveitar | Media |
 | Agregacoes de mercado | dados do v1 em `db/`, `scripts/`, `search/` | Radar | Construir `MarketService` novo sobre base existente | Alta |
 | Top compradores | base PNCP do v1 | Radar | Construir | Alta |
 | Top players / concorrentes | base PNCP do v1 | Radar | Construir | Alta |
@@ -76,7 +76,8 @@ Exemplos:
 
 - `GvG_Search_Browser.py`
 - `GvG_SU_Report_v3.py`
-- `cnpj_search_v1_3.py`
+- `search/gvg_select/GvG_Select_v4.py`
+- `search/gvg_select/gvg_cnpj_search.py`
 
 ### Construir
 

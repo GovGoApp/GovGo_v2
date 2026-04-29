@@ -6,6 +6,7 @@ const { useState: uSo, useEffect: uEf } = React;
 
 const EDITAIS_GRID_COLUMNS = "44px 56px minmax(190px,1.15fr) minmax(170px,1fr) minmax(110px,.8fr) 44px 130px 120px 112px";
 const HOME_SEARCH_TAB_ID = "search-home";
+const FAVORITES_SOURCE_TAB_ID = "favorites-source";
 const WORKSPACE_STORAGE_KEY = "govgo.busca.workspace.v2";
 const RESULTS_VIEW_OPTIONS = [
   { value: "table", label: "Tabela", icon: "table" },
@@ -17,6 +18,7 @@ const MAP_METRIC_OPTIONS = [
   { value: "date", label: "Encerramento" },
 ];
 const MAP_FALLBACK_CENTER = [-14.235, -51.9253];
+const WORKSPACE_TAB_ICON_SIZE = 16;
 
 function normalizeSearchViewMode(value) {
   return value === "map" ? "map" : "table";
@@ -45,22 +47,65 @@ function hashString(value) {
   return Math.abs(hash);
 }
 
+const BUSCA_DEADLINE_COLORS = {
+  na: "#838383",
+  expired: "#800080",
+  today: "#B30000",
+  lt3: "#FF0000EE",
+  lt7: "#FF6200",
+  lt15: "#FFB200",
+  lt30: "#01B33A",
+  gt30: "#0099FF",
+};
+
+function parseBuscaDeadlineDate(value) {
+  const text = String(value || "").trim();
+  if (!text) return null;
+  const br = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  const iso = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  const date = br
+    ? new Date(Number(br[3]), Number(br[2]) - 1, Number(br[1]))
+    : iso
+      ? new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]))
+      : new Date(text);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatBuscaDeadlineDateLabel(value, date) {
+  const text = String(value || "").trim();
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(text)) return text;
+  if (!date) return text || "\u2014";
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${day}/${month}/${date.getFullYear()}`;
+}
+
+function getBuscaDeadlineMeta(dateLabel) {
+  const shared = typeof window !== "undefined" ? window.GovGoDeadline : null;
+  if (shared && typeof shared.getMeta === "function") {
+    return shared.getMeta(dateLabel);
+  }
+  const date = parseBuscaDeadlineDate(dateLabel);
+  if (!date) {
+    return { status: "na", label: formatBuscaDeadlineDateLabel(dateLabel, null), tag: "sem data", color: BUSCA_DEADLINE_COLORS.na, days: null };
+  }
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  date.setHours(0, 0, 0, 0);
+  const days = Math.round((date.getTime() - today.getTime()) / 86400000);
+  const label = formatBuscaDeadlineDateLabel(dateLabel, date);
+  if (days < 0) return { status: "expired", label, tag: "expirada", color: BUSCA_DEADLINE_COLORS.expired, days };
+  if (days === 0) return { status: "today", label, tag: "\u00e9 hoje!", color: BUSCA_DEADLINE_COLORS.today, days };
+  if (days <= 3) return { status: "lt3", label, tag: "em at\u00e9 3 dias", color: BUSCA_DEADLINE_COLORS.lt3, days };
+  if (days <= 7) return { status: "lt7", label, tag: "em at\u00e9 7 dias", color: BUSCA_DEADLINE_COLORS.lt7, days };
+  if (days <= 15) return { status: "lt15", label, tag: "em at\u00e9 15 dias", color: BUSCA_DEADLINE_COLORS.lt15, days };
+  if (days <= 30) return { status: "lt30", label, tag: "em at\u00e9 30 dias", color: BUSCA_DEADLINE_COLORS.lt30, days };
+  return { status: "gt30", label, tag: "mais de 30 dias", color: BUSCA_DEADLINE_COLORS.gt30, days };
+}
+
 function getDaysUntilClosing(dateLabel) {
-  const parts = String(dateLabel || "").split("/");
-  if (parts.length !== 3) {
-    return null;
-  }
-  const [day, month, year] = parts.map((part) => Number(part));
-  if (!day || !month || !year) {
-    return null;
-  }
-  const target = new Date(year, month - 1, day);
-  if (Number.isNaN(target.getTime())) {
-    return null;
-  }
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-  return Math.round((target.getTime() - now.getTime()) / 86400000);
+  const meta = getBuscaDeadlineMeta(dateLabel);
+  return Number.isFinite(Number(meta.days)) ? Number(meta.days) : null;
 }
 
 function interpolateNumber(start, end, factor) {
@@ -96,14 +141,14 @@ function describeMapMetric(edital, metric) {
 }
 
 const DATE_PIN_SCALE = {
-  na: { fill: "#838383", shadow: "rgba(131,131,131,.18)", core: "#FFFFFF", innerScale: 0.22, ringWidth: 2 },
-  expired: { fill: "#800080", shadow: "rgba(128,0,128,.34)", core: "#FFF2FF", innerScale: 0.18, ringWidth: 3 },
-  today: { fill: "#B30000", shadow: "rgba(179,0,0,.38)", core: "#FFF0F0", innerScale: 0.18, ringWidth: 3 },
-  lt3: { fill: "#FF0000EE", shadow: "rgba(255,0,0,.34)", core: "#FFF0F0", innerScale: 0.18, ringWidth: 3 },
-  lt7: { fill: "#FF6200", shadow: "rgba(255,98,0,.30)", core: "#FFF5EF", innerScale: 0.19, ringWidth: 2 },
-  lt15: { fill: "#FFB200", shadow: "rgba(255,178,0,.26)", core: "#FFF9EE", innerScale: 0.2, ringWidth: 2 },
-  lt30: { fill: "#01B33A", shadow: "rgba(1,179,58,.22)", core: "#F1FFF5", innerScale: 0.22, ringWidth: 2 },
-  gt30: { fill: "#0099FF", shadow: "rgba(0,153,255,.2)", core: "#F2FAFF", innerScale: 0.23, ringWidth: 2 },
+  na: { fill: BUSCA_DEADLINE_COLORS.na, shadow: "rgba(131,131,131,.18)", core: "#FFFFFF", innerScale: 0.22, ringWidth: 2 },
+  expired: { fill: BUSCA_DEADLINE_COLORS.expired, shadow: "rgba(128,0,128,.34)", core: "#FFF2FF", innerScale: 0.18, ringWidth: 3 },
+  today: { fill: BUSCA_DEADLINE_COLORS.today, shadow: "rgba(179,0,0,.38)", core: "#FFF0F0", innerScale: 0.18, ringWidth: 3 },
+  lt3: { fill: BUSCA_DEADLINE_COLORS.lt3, shadow: "rgba(255,0,0,.34)", core: "#FFF0F0", innerScale: 0.18, ringWidth: 3 },
+  lt7: { fill: BUSCA_DEADLINE_COLORS.lt7, shadow: "rgba(255,98,0,.30)", core: "#FFF5EF", innerScale: 0.19, ringWidth: 2 },
+  lt15: { fill: BUSCA_DEADLINE_COLORS.lt15, shadow: "rgba(255,178,0,.26)", core: "#FFF9EE", innerScale: 0.2, ringWidth: 2 },
+  lt30: { fill: BUSCA_DEADLINE_COLORS.lt30, shadow: "rgba(1,179,58,.22)", core: "#F1FFF5", innerScale: 0.22, ringWidth: 2 },
+  gt30: { fill: BUSCA_DEADLINE_COLORS.gt30, shadow: "rgba(0,153,255,.2)", core: "#F2FAFF", innerScale: 0.23, ringWidth: 2 },
 };
 
 function resolveDatePinStatus(daysUntilClosing) {
@@ -218,7 +263,7 @@ function coerceBrazilCoordinatePair(latValue, lonValue) {
   if (isLikelyBrazilCoordinate(lon, lat)) {
     return { lat: lon, lon: lat };
   }
-  return { lat, lon };
+  return { lat: null, lon: null };
 }
 
 function resolveMapCoordinatePair(item) {
@@ -337,8 +382,9 @@ function buildValueTableAppearance(value, minValue, maxValue) {
 }
 
 function buildDateTableAppearance(dateLabel) {
-  const days = getDaysUntilClosing(dateLabel);
-  return buildMapPinAppearance("date", days, 0.5);
+  const meta = getBuscaDeadlineMeta(dateLabel);
+  const pin = buildMapPinAppearance("date", meta.days, 0.5);
+  return { ...pin, ...meta, fill: meta.color };
 }
 
 function SimilarityTableCell({ score }) {
@@ -477,26 +523,34 @@ function createSearchTabState(overrides) {
 }
 
 function createSearchTab(id, overrides) {
+  const source = overrides?.source || "";
   return {
     id,
     title: "Nova busca",
-    icon: React.createElement(Icon.search, { size: 12 }),
-    tone: "orange",
+    icon: source === "favoritos"
+      ? React.createElement(Icon.bookmarkFill || Icon.bookmark, { size: WORKSPACE_TAB_ICON_SIZE })
+      : React.createElement(Icon.search, { size: WORKSPACE_TAB_ICON_SIZE }),
+    tone: source === "favoritos" ? "blue" : "orange",
     count: null,
     kind: "busca",
     closable: true,
+    source,
     ...(overrides || {}),
   };
 }
 
 function createDetailTab(id, overrides) {
+  const source = overrides?.source || "";
   return {
     id,
     title: "Edital",
-    icon: React.createElement(Icon.file, { size: 12 }),
-    tone: "blue",
+    icon: source === "favorito"
+      ? React.createElement(Icon.bookmarkFill || Icon.bookmark, { size: WORKSPACE_TAB_ICON_SIZE })
+      : React.createElement(Icon.file, { size: WORKSPACE_TAB_ICON_SIZE }),
+    tone: source === "favorito" ? "orange" : "blue",
     kind: "edital",
     closable: true,
+    source,
     ...(overrides || {}),
   };
 }
@@ -555,6 +609,76 @@ function buildSearchTabTitle(query, filters) {
 function buildDetailTabTitle(edital) {
   const orgShort = String(edital?.org || "Edital").replace(/^(MUNICIPIO DE |ESTADO DO |EMPRESA |INSTITUTO DE |SEC\. )/, "");
   return `${edital?.uf || "--"} · ${orgShort}`;
+}
+
+function buildFavoriteDetailTabTitle(favorite, edital) {
+  const summary = String(
+    favorite?.summary ||
+    favorite?.objectSummary ||
+    favorite?.rotulo ||
+    edital?.favoriteLabel ||
+    edital?.objeto ||
+    edital?.title ||
+    "Favorito"
+  ).trim();
+  return summary.length > 34 ? `${summary.slice(0, 31).trim()}...` : summary;
+}
+
+function looksLikePncpId(value) {
+  return /^\d{14}-\d-\d{6}\/\d{4}$/.test(String(value || "").trim());
+}
+
+function pickFavoritePncpId(value) {
+  if (!value) return "";
+  if (typeof value === "string" || typeof value === "number") return String(value).trim();
+  const candidates = [
+    value.pncpId,
+    value.numero_controle_pncp,
+    value.numeroControlePncp,
+    value.raw?.details?.numero_controle_pncp,
+    value.raw?.details?.numero_controle,
+    value.details?.numero_controle_pncp,
+    value.details?.numero_controle,
+    value.raw?.numero_controle_pncp,
+    value.raw?.numero_controle,
+    value.raw?.id,
+    value.itemId,
+    value.id,
+  ].map((candidate) => String(candidate || "").trim()).filter(Boolean);
+  return candidates.find(looksLikePncpId) || candidates[0] || "";
+}
+
+function favoriteFallbackEdital(favorite) {
+  const pncpId = pickFavoritePncpId(favorite);
+  const details = {
+    numero_controle_pncp: pncpId,
+    objeto_compra: favorite?.objectFull || favorite?.objeto || favorite?.title || favorite?.summary || "",
+    orgao_entidade_razao_social: favorite?.organization || favorite?.org || "",
+    unidade_orgao_municipio_nome: favorite?.municipality || favorite?.mun || "",
+    unidade_orgao_uf_sigla: favorite?.uf || "",
+    data_encerramento_proposta: favorite?.closingDate || favorite?.date || favorite?.closingDateLabel || "",
+    rotulo: favorite?.summary || favorite?.objectSummary || favorite?.rotulo || "",
+  };
+  return normalizePersistedEditalResult({
+    id: pncpId,
+    itemId: pncpId,
+    rank: null,
+    org: details.orgao_entidade_razao_social || "-",
+    mun: details.unidade_orgao_municipio_nome || "-",
+    uf: details.unidade_orgao_uf_sigla || "-",
+    sim: 0,
+    val: 0,
+    end: favorite?.date || favorite?.closingDateLabel || "-",
+    modal: "-",
+    items: 0,
+    docs: 0,
+    status: "favorito",
+    title: details.objeto_compra,
+    objeto: details.objeto_compra,
+    favoriteLabel: details.rotulo,
+    details,
+    raw: { source: "favorite", details },
+  });
 }
 
 function buildSearchStateDetail(searchState) {
@@ -739,6 +863,7 @@ function readPersistedWorkspace() {
                   tone: tab.tone || "orange",
                   count: typeof tab.count === "number" ? tab.count : null,
                   closable: tab.closable !== false,
+                  source: tab.source || "",
                 })
               : createDetailTab(tab.id, {
                   title: tab.title || "Edital",
@@ -746,6 +871,7 @@ function readPersistedWorkspace() {
                   rank: tab.rank,
                   searchTabId: tab.searchTabId,
                   closable: tab.closable !== false,
+                  source: tab.source || "",
                 })
           ))
       : [];
@@ -766,7 +892,7 @@ function readPersistedWorkspace() {
       const hasResults = Array.isArray(state.results) && state.results.length > 0;
       const hasQuery = Boolean(String(state.query || "").trim());
       const hasFilters = hasActiveSearchFiltersState(filters);
-      const isDraft = !hasResults && !hasQuery && !hasFilters;
+      const isDraft = tab.source !== "favoritos" && !hasResults && !hasQuery && !hasFilters;
       if (isDraft) {
         return false;
       }
@@ -835,6 +961,7 @@ function persistWorkspaceState(state) {
           closable: tab.closable,
           rank: tab.rank,
           searchTabId: tab.searchTabId,
+          source: tab.source || "",
         }))
       : [];
 
@@ -902,6 +1029,7 @@ function normalizePersistedEditalResult(item) {
 
 // ─── Tabela de editais (grid identico ao design) ─────────────────────────────
 function EditaisTable({ editais, onOpen, currentSort, onSort }) {
+  const favoritesState = window.useGovGoFavorites ? window.useGovGoFavorites() : null;
   const valueStats = React.useMemo(() => {
     const values = (Array.isArray(editais) ? editais : [])
       .map((item) => Number(item?.val || 0))
@@ -945,15 +1073,7 @@ function EditaisTable({ editais, onOpen, currentSort, onSort }) {
       </div>
       <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
       {editais.map((e) => {
-        const pastDue = (() => {
-          try {
-            const parts = String(e.end || "").split("/");
-            if (parts.length === 3) {
-              return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`) < new Date("2026-04-25");
-            }
-          } catch (_) {}
-          return false;
-        })();
+        const isFavorite = favoritesState?.isFavorite ? favoritesState.isFavorite(e) : false;
         const valueTone = buildValueTableAppearance(e.val, valueStats.min, valueStats.max);
         const dateTone = buildDateTableAppearance(e.end);
 
@@ -970,7 +1090,34 @@ function EditaisTable({ editais, onOpen, currentSort, onSort }) {
             onMouseEnter={(ev) => { ev.currentTarget.style.background = "var(--surface-sunk)"; }}
             onMouseLeave={(ev) => { ev.currentTarget.style.background = "var(--paper)"; }}
           >
-            <span style={{ color: "var(--ink-3)", display: "inline-flex" }}><Icon.bookmark size={14} /></span>
+            <button
+              type="button"
+              title={isFavorite ? "Remover favorito" : "Salvar favorito"}
+              onClick={async (event) => {
+                event.stopPropagation();
+                if (!favoritesState?.toggleFavorite) return;
+                try {
+                  await favoritesState.toggleFavorite(e);
+                } catch (error) {
+                  console.warn("Falha ao alternar favorito", error);
+                }
+              }}
+              style={{
+                all: "unset",
+                cursor: "pointer",
+                color: isFavorite ? "var(--orange)" : "var(--ink-3)",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 34,
+                height: 34,
+                borderRadius: 8,
+              }}
+            >
+              {isFavorite
+                ? <Icon.bookmarkFill size={22} />
+                : <Icon.bookmark size={22} s={1.8} />}
+            </button>
             <span className="mono" style={{ color: "var(--ink-2)", fontWeight: 500 }}>{String(e.rank).padStart(2, "0")}</span>
             <ObjectCell text={e.objeto || e.title || e.raw?.details?.objeto_compra || e.raw?.objeto_compra} />
             <div style={{ minWidth: 0 }}>
@@ -998,7 +1145,28 @@ function EditaisTable({ editais, onOpen, currentSort, onSort }) {
             <span className="mono" style={{ textAlign: "right", fontWeight: 600, color: e.val === 0 ? "var(--ink-4)" : valueTone.fill }}>
               {e.val === 0 ? "-" : fmtBRL(e.val).replace("R$ ", "R$\u202F")}
             </span>
-            <span className="mono" style={{ textAlign: "right", color: pastDue ? dateTone.fill : dateTone.fill, fontWeight: 600 }}>{e.end}</span>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3, minWidth: 0 }}>
+              <span className="mono" style={{ textAlign: "right", color: dateTone.fill, fontWeight: 700, fontSize: 12.5, lineHeight: 1 }}>
+                {dateTone.label || e.end || "-"}
+              </span>
+              {dateTone.tag && (
+                <span style={{
+                  display: "inline-block",
+                  maxWidth: "100%",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  padding: "2px 6px",
+                  borderRadius: 12,
+                  background: dateTone.fill,
+                  color: "white",
+                  fontFamily: "var(--font-display)",
+                  fontSize: 10,
+                  fontWeight: 600,
+                  lineHeight: 1,
+                }}>{dateTone.tag}</span>
+              )}
+            </div>
           </div>
         );
       })}
@@ -1430,6 +1598,7 @@ function SearchResultsMap({ editais, metric, onOpen }) {
 }
 
 function BuscaWorkspace() {
+  const favoritesState = window.useGovGoFavorites ? window.useGovGoFavorites() : null;
   const emitSearchState = (detail) => {
     if (typeof window !== "undefined" && window.dispatchEvent) {
       window.dispatchEvent(new CustomEvent("govgo:search-state", { detail }));
@@ -1686,6 +1855,108 @@ function BuscaWorkspace() {
     setEditalMap((prev) => ({ ...prev, [detailTabId]: edital }));
     setActiveTab(detailTabId);
   };
+
+  const openFavoriteDetail = (favorite) => {
+    const pncpId = pickFavoritePncpId(favorite);
+    if (!pncpId) {
+      return Promise.resolve({ error: "PNCP do favorito nao encontrado." });
+    }
+
+    const sourceTabId = currentSearchTabId || FAVORITES_SOURCE_TAB_ID;
+    const detailTabId = `detail-${sourceTabId}-fav-${hashString(pncpId)}`;
+    const fallback = favoriteFallbackEdital(favorite);
+
+    if (window.GovGoSearchUiAdapter?.rememberEdital) {
+      window.GovGoSearchUiAdapter.rememberEdital(fallback);
+    }
+
+    setSearchTabs((prev) => ({
+      ...prev,
+      [sourceTabId]: prev[sourceTabId] || createSearchTabState({ query: "", results: null, count: null }),
+    }));
+
+    setTabs((prev) => {
+      const hasSource = prev.some((tab) => tab.id === sourceTabId);
+      const hasDetail = prev.some((tab) => tab.id === detailTabId);
+      const next = hasSource
+        ? [...prev]
+        : [
+            ...prev,
+            createSearchTab(sourceTabId, {
+              title: "Favoritos",
+              tone: "blue",
+              source: "favoritos",
+              count: favoritesState?.favorites?.length ?? null,
+              closable: true,
+            }),
+          ];
+      if (!hasDetail) {
+        next.push(createDetailTab(detailTabId, {
+          title: buildFavoriteDetailTabTitle(favorite, fallback),
+          rank: null,
+          searchTabId: sourceTabId,
+          source: "favorito",
+          closable: true,
+        }));
+      }
+      return next;
+    });
+    setEditalMap((prev) => ({ ...prev, [detailTabId]: fallback }));
+    setActiveTab(detailTabId);
+
+    const loader = favoritesState?.loadFavoriteDetail || window.GovGoUserApi?.loadFavoriteDetail;
+    if (!loader) {
+      return Promise.resolve({ edital: fallback });
+    }
+
+    return loader(pncpId).then((payload) => {
+      const shaped = payload?.edital && window.GovGoSearchUiAdapter?.toEditalShape
+        ? window.GovGoSearchUiAdapter.toEditalShape(payload.edital)
+        : fallback;
+      const favoritePayload = payload?.favorite || favorite || {};
+      const hydrated = normalizePersistedEditalResult({
+        ...shaped,
+        id: pncpId,
+        itemId: pncpId,
+        rank: null,
+        favoriteLabel: favoritePayload.summary || favoritePayload.objectSummary || favoritePayload.rotulo || shaped.favoriteLabel || "",
+        raw: {
+          ...(shaped.raw || {}),
+          source: "favorite",
+          details: shaped.details || shaped.raw?.details || {},
+        },
+      });
+      if (window.GovGoSearchUiAdapter?.rememberEdital) {
+        window.GovGoSearchUiAdapter.rememberEdital(hydrated);
+      }
+      setEditalMap((prev) => ({ ...prev, [detailTabId]: hydrated }));
+      setTabs((prev) => prev.map((tab) => (
+        tab.id === detailTabId
+          ? { ...tab, title: buildFavoriteDetailTabTitle(favoritePayload, hydrated), source: "favorito" }
+          : tab
+      )));
+      return payload;
+    }).catch((error) => {
+      console.warn("Falha ao carregar detalhe do favorito", error);
+      return { edital: fallback, error: String(error) };
+    });
+  };
+
+  uEf(() => {
+    const pendingFavorite = window.GovGoSearchUiAdapter?.consumePendingFavorite
+      ? window.GovGoSearchUiAdapter.consumePendingFavorite()
+      : null;
+    if (pendingFavorite) {
+      openFavoriteDetail(pendingFavorite);
+    }
+  }, []);
+
+  uEf(() => {
+    window._govgoOpenFavorite = (favorite) => openFavoriteDetail(favorite);
+    return () => {
+      window._govgoOpenFavorite = null;
+    };
+  });
 
   const closeTab = (id) => {
     const closingTab = tabs.find((tab) => tab.id === id);

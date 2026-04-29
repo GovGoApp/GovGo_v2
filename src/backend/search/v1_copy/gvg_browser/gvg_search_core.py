@@ -276,7 +276,11 @@ def _sanitize_sql_conditions(sql_conditions, context: str = 'generic'):
 _ALIAS_SPECIAL = {
 	'modo_disputa_id': ['modadisputaid','modaDisputaId'],
 	'modo_disputa_nome': ['modadisputanome','modaDisputaNome'],
+	'processo': ['numero_processo','numeroProcesso'],
+	'numero_compra': ['numerocompra','numeroCompra','numero_edital','numeroEdital'],
+	'sequencial_compra': ['sequencialcompra','sequencialCompra'],
 	'orgao_entidade_razao_social': ['orgaoentidade_razaosocial','nomeorgaoentidade','orgaoEntidade_razaosocial'],
+	'unidade_orgao_codigo_unidade': ['unidadeorgao_codigounidade','unidadeOrgao_codigoUnidade','codigo_unidade','codigoUnidade','uasg'],
 	'unidade_orgao_nome_unidade': ['unidadeorgao_nomeunidade','unidadeOrgao_nomeUnidade'],
 	'unidade_orgao_municipio_nome': ['unidadeorgao_municipionome','unidadeorgao_municipioNome','unidadeOrgao_municipioNome','municipioentidade'],
 	'unidade_orgao_uf_sigla': ['unidadeorgao_ufsigla','unidadeOrgao_ufSigla','uf'],
@@ -944,10 +948,10 @@ def correspondence_search(query_text, top_categories, limit=30, filter_expired=T
 		if not category_codes:
 			return [], 0.0, {'reason': 'empty_codes'}
 		sql = f"""
-		SELECT c.numero_controle_pncp,c.ano_compra,c.objeto_compra,c.valor_total_homologado,c.valor_total_estimado,
+		SELECT c.numero_controle_pncp,c.ano_compra,c.sequencial_compra,c.processo,c.objeto_compra,c.valor_total_homologado,c.valor_total_estimado,
 			   c.data_abertura_proposta,c.data_encerramento_proposta,c.data_inclusao,c.link_sistema_origem,c.modalidade_id,
-			   c.modalidade_nome,c.modo_disputa_id,c.modo_disputa_nome,c.usuario_nome,c.orgao_entidade_poder_id,c.orgao_entidade_esfera_id,
-			   c.unidade_orgao_uf_sigla,c.unidade_orgao_municipio_nome,c.unidade_orgao_nome_unidade,c.orgao_entidade_razao_social,
+			   c.numero_compra,c.modalidade_nome,c.modo_disputa_id,c.modo_disputa_nome,c.usuario_nome,c.orgao_entidade_poder_id,c.orgao_entidade_esfera_id,
+			   c.unidade_orgao_uf_sigla,c.unidade_orgao_municipio_nome,c.unidade_orgao_codigo_unidade,c.unidade_orgao_nome_unidade,c.orgao_entidade_razao_social,
 			   ce.top_categories, ce.top_similarities
 		FROM {CONTRATACAO_TABLE} c
 		JOIN {CONTRATACAO_EMB_TABLE} ce ON c.{PRIMARY_KEY} = ce.{PRIMARY_KEY}

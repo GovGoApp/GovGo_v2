@@ -3,6 +3,61 @@ const { useState: uSod, useEffect: uEod, useRef: uRod } = React;
 const EDITAL_DETAIL_CACHE_PREFIX = "govgo.busca.edital-detail.v1:";
 const EMPTY_DOCUMENT_VIEW = { status: "idle", summary: "", markdown: "", error: "", markdownPath: "", summaryPath: "", updatedAt: "", cached: false };
 const EMPTY_DOCUMENTS_SUMMARY = { status: "idle", summary: "", error: "", updatedAt: "", documentsUsed: 0, cached: false };
+const DETAIL_DEADLINE_COLORS = {
+  na: "#838383",
+  expired: "#800080",
+  today: "#B30000",
+  lt3: "#FF0000EE",
+  lt7: "#FF6200",
+  lt15: "#FFB200",
+  lt30: "#01B33A",
+  gt30: "#0099FF",
+};
+
+function parseDetailDeadlineDate(value) {
+  const text = String(value || "").trim();
+  if (!text) return null;
+  const br = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  const iso = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  const date = br
+    ? new Date(Number(br[3]), Number(br[2]) - 1, Number(br[1]))
+    : iso
+      ? new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]))
+      : new Date(text);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatDetailDeadlineDateLabel(value, date) {
+  const text = String(value || "").trim();
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(text)) return text;
+  if (!date) return text || "\u2014";
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${day}/${month}/${date.getFullYear()}`;
+}
+
+function getDetailDeadlineMeta(value) {
+  const shared = typeof window !== "undefined" ? window.GovGoDeadline : null;
+  if (shared && typeof shared.getMeta === "function") {
+    return shared.getMeta(value);
+  }
+  const date = parseDetailDeadlineDate(value);
+  if (!date) {
+    return { status: "na", label: formatDetailDeadlineDateLabel(value, null), tag: "sem data", color: DETAIL_DEADLINE_COLORS.na, days: null };
+  }
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  date.setHours(0, 0, 0, 0);
+  const days = Math.round((date.getTime() - today.getTime()) / 86400000);
+  const label = formatDetailDeadlineDateLabel(value, date);
+  if (days < 0) return { status: "expired", label, tag: "expirada", color: DETAIL_DEADLINE_COLORS.expired, days };
+  if (days === 0) return { status: "today", label, tag: "\u00e9 hoje!", color: DETAIL_DEADLINE_COLORS.today, days };
+  if (days <= 3) return { status: "lt3", label, tag: "em at\u00e9 3 dias", color: DETAIL_DEADLINE_COLORS.lt3, days };
+  if (days <= 7) return { status: "lt7", label, tag: "em at\u00e9 7 dias", color: DETAIL_DEADLINE_COLORS.lt7, days };
+  if (days <= 15) return { status: "lt15", label, tag: "em at\u00e9 15 dias", color: DETAIL_DEADLINE_COLORS.lt15, days };
+  if (days <= 30) return { status: "lt30", label, tag: "em at\u00e9 30 dias", color: DETAIL_DEADLINE_COLORS.lt30, days };
+  return { status: "gt30", label, tag: "mais de 30 dias", color: DETAIL_DEADLINE_COLORS.gt30, days };
+}
 
 function buildMarkdownDownloadName(name) {
   const raw = String(name || "").trim();
@@ -192,14 +247,28 @@ function EditalDetail({ edital }) {
   const [documentsSummaryState, setDocumentsSummaryState] = uSod(EMPTY_DOCUMENTS_SUMMARY);
   const [selectedDocumentKey, setSelectedDocumentKey] = uSod("");
   const [documentViews, setDocumentViews] = uSod({});
+  const [hydratedHeaderDetails, setHydratedHeaderDetails] = uSod(null);
   const titleRef = uRod(null);
   const itemsCacheRef = uRod({});
   const docsCacheRef = uRod({});
   if (!edital) return null;
 
   const e = edital;
+  const favoritesState = window.useGovGoFavorites ? window.useGovGoFavorites() : null;
+  const isFavorite = favoritesState?.isFavorite ? favoritesState.isFavorite(e) : false;
+  const toggleFavorite = async () => {
+    if (!favoritesState?.toggleFavorite) return;
+    try {
+      await favoritesState.toggleFavorite(e);
+    } catch (error) {
+      console.warn("Falha ao alternar favorito", error);
+    }
+  };
   const raw = e.raw || {};
-  const details = e.details || raw.details || {};
+  const baseDetails = e.details || raw.details || {};
+  const details = hydratedHeaderDetails
+    ? { ...baseDetails, ...hydratedHeaderDetails }
+    : baseDetails;
   const firstFilled = (...values) => {
     for (const value of values) {
       if (value !== null && value !== undefined && value !== "") return value;
@@ -213,21 +282,20 @@ function EditalDetail({ edital }) {
     }
     return "";
   };
-  const rank = Math.max(1, Number(e.rank || 1));
-  const rankIndex = Math.min(9, rank - 1);
-  const today = new Date();
-  const endParts = String(e.end || "").split("/");
-  const endDate = endParts.length === 3 ? new Date(endParts.reverse().join("-")) : new Date(e.end || "");
-  const daysLeft = Number.isNaN(endDate.getTime()) ? 0 : Math.max(0, Math.round((endDate - today) / 86400000));
-  const urgent = daysLeft <= 10;
+  const rankNumber = Number(e.rank);
+  const hasRank = Number.isFinite(rankNumber) && rankNumber > 0;
+  const rankLabel = hasRank ? `#${String(rankNumber).padStart(2, "0")} no rank` : "";
+  const deadlineMeta = getDetailDeadlineMeta(e.end);
+  const daysLeft = Number.isFinite(Number(deadlineMeta.days)) ? Number(deadlineMeta.days) : null;
+  const urgent = deadlineMeta.status !== "na" && deadlineMeta.status !== "gt30";
+  const similarityScore = Number.isFinite(Number(e.sim)) ? Number(e.sim) : 0;
+  const editalValue = Number.isFinite(Number(e.val)) ? Number(e.val) : 0;
+  const prazoLabel = deadlineMeta.tag;
+  const prazoSub = daysLeft === null ? "data nao informada" : prazoLabel;
 
-  // Fake derived data (consistent per rank)
-  const pregoeiro = ["Ana Lúcia Ferreira", "Marco Sobral", "Júlia Cardoso", "Heitor Monteiro", "Paulo R. Lima", "Ivana Barreto", "Teresa C. Alves", "André L. Corrêa", "Fernanda M. Ribeiro", "Lucas F. Nogueira"][e.rank - 1];
-  const fallbackProcesso = `${(2026).toString()}/${String(e.rank * 137).padStart(6, "0")}`;
-  const fallbackEdital = `PE-${String(e.rank * 23).padStart(4, "0")}/2026`;
+  const pregoeiro = pickDetail("usuario_nome", "usuarioNome", "responsavel", "pregoeiro");
   const numProcesso = String(firstFilled(
-    pickDetail("numero_processo", "numeroProcesso", "processo"),
-    fallbackProcesso
+    pickDetail("numero_processo", "numeroProcesso", "processo")
   ));
   const editalNumeroBase = firstFilled(
     pickDetail(
@@ -245,7 +313,7 @@ function EditalDetail({ edital }) {
   const numEdital = String(
     editalNumeroBase
       ? (String(editalNumeroBase).includes("/") || !editalAno ? editalNumeroBase : `${editalNumeroBase}/${editalAno}`)
-      : fallbackEdital
+      : ""
   );
   const pncpId = String(firstFilled(
     pickDetail("numero_controle_pncp", "numeroControlePNCP", "numerocontrolepncp", "numero_controle", "id"),
@@ -254,23 +322,46 @@ function EditalDetail({ edital }) {
   ));
   const persistedDetail = React.useMemo(() => readPersistedEditalDetail(pncpId), [pncpId]);
   const uasg = String(firstFilled(
-    pickDetail("unidade_orgao_codigo_unidade", "codigo_unidade", "uasg"),
-    String(925000 + e.rank * 13)
+    pickDetail("unidade_orgao_codigo_unidade", "codigo_unidade", "uasg")
   ));
-  const esfera = ["Estadual", "Estadual", "Municipal", "Municipal", "Municipal", "Federal", "Municipal", "Federal", "Municipal", "Distrital"][e.rank - 1];
+  const esfera = String(firstFilled(
+    pickDetail("orgao_entidade_esfera_id", "esfera", "orgaoEntidadeEsferaId")
+  ));
   const sourceLink = String(firstFilled(
     pickDetail("link_sistema_origem", "linkSistemaOrigem", "linksistemaorigem", "url_origem", "urlOrigem", "link"),
     raw.links?.origem
   ));
   const fonte = String(firstFilled(
     pickDetail("fonte", "nome_fonte", "source", "origem"),
-    ["PNCP", "ComprasNet", "BLL", "Licitações-e", "PNCP", "ComprasNet", "PNCP", "ComprasNet", "PNCP", "ComprasNet"][e.rank - 1]
+    "PNCP"
   ));
-  const similarityAccent = buildSimilarityAccent(e.sim);
+  const headerNeedsHydration = Boolean(pncpId && (!uasg || !numProcesso || !numEdital));
+  uEod(() => {
+    setHydratedHeaderDetails(null);
+  }, [pncpId]);
+  uEod(() => {
+    if (!headerNeedsHydration || !window.GovGoSearchApi?.loadEditalDetail) {
+      return undefined;
+    }
+    let cancelled = false;
+    window.GovGoSearchApi.loadEditalDetail({ pncpId })
+      .then((payload) => {
+        if (cancelled) return;
+        const nextDetails = payload?.details;
+        if (nextDetails && typeof nextDetails === "object") {
+          setHydratedHeaderDetails(nextDetails);
+        }
+      })
+      .catch((error) => {
+        console.warn("Falha ao hidratar dados do cabecalho do edital", error);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [pncpId, headerNeedsHydration]);
+  const similarityAccent = buildSimilarityAccent(similarityScore);
 
-  const objeto = `Registro de preços para aquisição de gêneros alimentícios destinados ao fornecimento de refeições hospitalares e dietas especiais, conforme especificações constantes no Termo de Referência - Anexo I do edital, com entrega parcelada pelo período de 12 (doze) meses.`;
-
-  const objetoReal = e.objeto || details.objeto_compra || e.title || objeto;
+  const objetoReal = e.objeto || details.objeto_compra || e.title || "Objeto nao informado.";
   const qtyFormatter = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 3 });
   const formatItemQty = (value) => {
     if (value === null || value === undefined || value === "") return "\u2014";
@@ -994,9 +1085,19 @@ function EditalDetail({ edital }) {
                 </h2>
                 <div style={{display: "flex", alignItems: "center", gap: 6, marginBottom: 3, flexWrap: "wrap"}}>
                   <Chip tone="blue">{e.modal}</Chip>
-                  <Chip>{esfera}</Chip>
-                  <Chip tone={urgent ? "orange" : "default"} icon={<Icon.clock size={10}/>}>{urgent ? `${daysLeft} dias` : `vence em ${daysLeft}d`}</Chip>
-                  {e.sim > 0.5 && (
+                  {esfera && <Chip>{esfera}</Chip>}
+                  <span title="Encerramento" style={{
+                    display: "inline-block",
+                    padding: "2px 6px",
+                    borderRadius: 12,
+                    background: deadlineMeta.color,
+                    color: "white",
+                    fontSize: 10,
+                    fontWeight: 600,
+                    lineHeight: 1,
+                    whiteSpace: "nowrap",
+                  }}>{prazoLabel}</span>
+                  {similarityScore > 0.5 && (
                     <Chip tone="green">{"Alta ader\u00eancia"}</Chip>
                   )}
                 </div>
@@ -1006,11 +1107,11 @@ function EditalDetail({ edital }) {
                 </div>
               </div>
               <div style={{width: 270, flexShrink: 0, position: "relative", paddingTop: 0, marginRight: 8}}>
-                <span style={{position: "absolute", top: 0, right: 0, fontSize: 10.5, color: "var(--ink-4)", fontFamily: "var(--font-mono)", fontWeight: 500}}>#{String(e.rank).padStart(2, "0")} no rank</span>
+                {rankLabel && <span style={{position: "absolute", top: 0, right: 0, fontSize: 10.5, color: "var(--ink-4)", fontFamily: "var(--font-mono)", fontWeight: 500}}>{rankLabel}</span>}
                 <div style={{display: "flex", flexDirection: "column", gap: 0, fontSize: 11.75, color: "var(--ink-3)", alignItems: "flex-start", textAlign: "left", paddingRight: 70}}>
-                  <span style={{whiteSpace: "nowrap"}}>UASG <b className="mono" style={{color: "var(--ink-2)", fontWeight: 600}}>{uasg}</b></span>
-                  <span style={{whiteSpace: "nowrap"}}>Processo <b className="mono" style={{color: "var(--ink-2)", fontWeight: 600}}>{numProcesso}</b></span>
-                  <span style={{whiteSpace: "nowrap"}}>Edital <b className="mono" style={{color: "var(--ink-2)", fontWeight: 600}}>{numEdital}</b></span>
+                  <span style={{whiteSpace: "nowrap"}}>UASG <b className="mono" style={{color: "var(--ink-2)", fontWeight: 600}}>{uasg || "\u2014"}</b></span>
+                  <span style={{whiteSpace: "nowrap"}}>Processo <b className="mono" style={{color: "var(--ink-2)", fontWeight: 600}}>{numProcesso || "\u2014"}</b></span>
+                  <span style={{whiteSpace: "nowrap"}}>Edital <b className="mono" style={{color: "var(--ink-2)", fontWeight: 600}}>{numEdital || "\u2014"}</b></span>
                   <span style={{display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap"}}>
                     <span>Fonte <b style={{color: "var(--deep-blue)", fontWeight: 600}}>{fonte}</b></span>
                     {sourceLink && (
@@ -1026,6 +1127,32 @@ function EditalDetail({ edital }) {
                     )}
                   </span>
                 </div>
+                <button
+                  type="button"
+                  title={isFavorite ? "Remover favorito" : "Salvar favorito"}
+                  onClick={toggleFavorite}
+                  style={{
+                    all: "unset",
+                    position: "absolute",
+                    right: 0,
+                    bottom: 0,
+                    width: 36,
+                    height: 36,
+                    borderRadius: 9,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: isFavorite ? "var(--orange)" : "var(--ink-3)",
+                    border: "1px solid var(--hairline)",
+                    background: "var(--paper)",
+                    boxShadow: "var(--shadow-xs)",
+                  }}
+                >
+                  {isFavorite
+                    ? <Icon.bookmarkFill size={23}/>
+                    : <Icon.bookmark size={23} s={1.8}/>}
+                </button>
               </div>
             </div>
           </div>
@@ -1055,11 +1182,22 @@ function EditalDetail({ edital }) {
           background: "var(--paper)", borderBottom: "1px solid var(--hairline)",
         }}>
           {[
-      { lbl: "Valor estimado", val: e.val === 0 ? "—" : fmtBRL(e.val).replace("R$ ", "R$\u202F"), sub: e.val === 0 ? "sigiloso" : "total do lote", mono: true },
-      { lbl: "Encerramento", val: e.end, sub: urgent ? `${daysLeft} dias úteis` : `${daysLeft} dias corridos`, tone: urgent ? "risk" : null, mono: true },
+      { lbl: "Valor estimado", val: editalValue === 0 ? "—" : fmtBRL(editalValue).replace("R$ ", "R$\u202F"), sub: editalValue === 0 ? "sigiloso" : "total do lote", mono: true },
+      { lbl: "Encerramento", val: e.end || "—", sub: prazoSub, tone: urgent ? "risk" : null, mono: true },
             { lbl: "Itens / Lotes", val: itemCount || "\u2014", sub: `${docsCount} documentos anexados` },
-      { lbl: "Similaridade IA", val: e.sim.toFixed(3), sub: "cálculo ponderado", toneColor: similarityAccent, barScore: e.sim, mono: true },
-          ].map((k, i) => (
+      { lbl: "Similaridade IA", val: similarityScore.toFixed(3), sub: "cálculo ponderado", toneColor: similarityAccent, barScore: similarityScore, mono: true },
+          ].map((k, i) => {
+            if (k.lbl === "Encerramento") {
+              k = {
+                ...k,
+                val: deadlineMeta.label || e.end || "\u2014",
+                tone: null,
+                toneColor: deadlineMeta.color,
+                deadlineTag: deadlineMeta.tag,
+                deadlineColor: deadlineMeta.color,
+              };
+            }
+            return (
             <div key={i} style={{
               padding: "9px 18px 8px",
               borderRight: i < 3 ? "1px solid var(--hairline-soft)" : "none",
@@ -1091,6 +1229,27 @@ function EditalDetail({ edital }) {
                     letterSpacing: k.mono ? "-0.01em" : "-0.015em",
                   }}>{k.val}</div>
                 </div>
+              ) : k.deadlineTag ? (
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <div className={k.mono ? "mono" : ""} style={{
+                    fontSize: 14.75, fontWeight: 600,
+                    color: k.toneColor || "var(--ink-1)",
+                    fontFamily: k.mono ? "var(--font-mono)" : "var(--font-display)",
+                    letterSpacing: k.mono ? "-0.01em" : "-0.015em",
+                  }}>{k.val}</div>
+                  <span style={{
+                    display: "inline-block",
+                    padding: "2px 6px",
+                    borderRadius: 12,
+                    background: k.deadlineColor || k.toneColor || "var(--ink-4)",
+                    color: "white",
+                    fontFamily: "var(--font-display)",
+                    fontSize: 10,
+                    fontWeight: 600,
+                    lineHeight: 1,
+                    whiteSpace: "nowrap",
+                  }}>{k.deadlineTag}</span>
+                </div>
               ) : (
                 <div className={k.mono ? "mono" : ""} style={{
                   fontSize: 14.75, fontWeight: 600,
@@ -1100,7 +1259,8 @@ function EditalDetail({ edital }) {
                 }}>{k.val}</div>
               )}
             </div>
-          ))}
+          );
+          })}
         </div>
 
         {/* Tabs */}
@@ -1251,8 +1411,8 @@ function EditalDetail({ edital }) {
                 <SideBlock title="Responsáveis">
                   <div style={{fontSize: 12.5, color: "var(--ink-2)", lineHeight: 1.6}}>
                     <div style={{display: "flex", alignItems: "center", gap: 6, marginBottom: 2}}>
-                      <div style={{width: 22, height: 22, borderRadius: "50%", background: "var(--orange-50)", color: "var(--orange-700)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700}}>{pregoeiro.split(" ").map(n => n[0]).slice(0, 2).join("")}</div>
-                      <span style={{fontWeight: 500}}>{pregoeiro}</span>
+                      <div style={{width: 22, height: 22, borderRadius: "50%", background: "var(--orange-50)", color: "var(--orange-700)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700}}>{(pregoeiro || "-").split(" ").map(n => n[0]).slice(0, 2).join("")}</div>
+                      <span style={{fontWeight: 500}}>{pregoeiro || "\u2014"}</span>
                     </div>
                     <div style={{fontSize: 11.5, color: "var(--ink-3)", marginLeft: 28}}>Pregoeiro - autoridade signatária</div>
                   </div>
@@ -1648,9 +1808,9 @@ function EditalDetail({ edital }) {
                 </div>
               </div>
               <div style={{fontSize: 13.5, color: "var(--ink-2)", lineHeight: 1.65, textWrap: "pretty"}}>
-                Este pregão apresenta <b style={{color: "var(--ink-1)"}}>alta aderência ({(e.sim * 100).toFixed(1)}%)</b> ao seu perfil,
+                Este pregão apresenta <b style={{color: "var(--ink-1)"}}>alta aderência ({(similarityScore * 100).toFixed(1)}%)</b> ao seu perfil,
                 com objeto centrado em dietas hospitalares - categoria na qual sua empresa tem <b style={{color: "var(--ink-1)"}}>62% de taxa de vitória nos últimos 18 meses</b>.
-                O valor estimado ({e.val > 0 ? fmtBRL(e.val).replace("R$ ", "R$\u202F") : "sigiloso"}) coloca a licitação no topo 12% por porte,
+                O valor estimado ({editalValue > 0 ? fmtBRL(editalValue).replace("R$ ", "R$\u202F") : "sigiloso"}) coloca a licitação no topo 12% por porte,
                 e a modalidade Pregão Eletrônico é favorável ao seu histórico operacional.
                 <br/><br/>
                 <b style={{color: "var(--orange-700)"}}>Pontos de atenção:</b> o lote 6 (água estéril) sai fora do seu CNAE principal e
@@ -1674,7 +1834,6 @@ function EditalDetail({ edital }) {
         padding: "12px 20px", background: "var(--paper)",
         borderTop: "1px solid var(--hairline)",
       }}>
-        <Button kind="ghost" size="sm" icon={<Icon.bookmark size={13}/>}>Salvar</Button>
         <Button kind="ghost" size="sm" icon={<Icon.bell size={13}/>}>Acompanhar</Button>
         <Button kind="ghost" size="sm" icon={<Icon.external size={13}/>}>Compartilhar</Button>
         <span style={{flex: 1}}/>

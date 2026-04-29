@@ -713,6 +713,30 @@ class SearchAdapter:
             raw=raw_item,
         )
 
+    def fetch_edital_detail(self, numero_controle_pncp: str) -> tuple[Dict[str, Any] | None, str | None]:
+        self._load_modules()
+
+        pncp = str(numero_controle_pncp or "").strip()
+        if not pncp:
+            return None, "Informe o numero_controle_pncp do edital."
+
+        database_error = self._database_configuration_error()
+        if database_error:
+            return None, database_error
+
+        fetch_detail = getattr(self._core, "fetch_contratacao_by_pncp", None)
+        if not callable(fetch_detail):
+            return None, "O modulo de busca nao expoe fetch_contratacao_by_pncp()."
+
+        try:
+            details = fetch_detail(pncp)
+        except Exception as exc:
+            return None, str(exc)
+
+        if not isinstance(details, dict) or not details:
+            return None, "Edital nao encontrado na base."
+        return details, None
+
     def fetch_edital_items(self, numero_controle_pncp: str, limit: int = 500) -> tuple[List[Dict[str, Any]], str | None]:
         self._load_modules()
 

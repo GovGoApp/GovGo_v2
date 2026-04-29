@@ -164,6 +164,29 @@ def get_edital_items(payload: dict[str, Any] | None) -> dict[str, Any]:
     }
 
 
+def get_edital_detail(payload: dict[str, Any] | None) -> dict[str, Any]:
+    source = payload or {}
+    pncp = str(
+        source.get("pncp_id")
+        or source.get("numero_controle_pncp")
+        or source.get("pncp")
+        or ""
+    ).strip()
+
+    details, error = ADAPTER.fetch_edital_detail(pncp)
+    if error:
+        return {
+            "pncp_id": pncp,
+            "details": {},
+            "error": error,
+        }
+    return {
+        "pncp_id": pncp,
+        "details": details or {},
+        "error": "",
+    }
+
+
 def get_edital_documents(payload: dict[str, Any] | None) -> dict[str, Any]:
     source = payload or {}
     pncp = str(

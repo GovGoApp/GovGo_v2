@@ -1,6 +1,5 @@
 function AppShell({ route, navigate }) {
   const PageComponent = window[route.componentName];
-  const gridTemplateColumns = route.withSearchRail ? "72px 320px 1fr" : "72px 1fr";
   const page = PageComponent
     ? <PageComponent route={route} navigate={navigate} />
     : (
@@ -11,6 +10,12 @@ function AppShell({ route, navigate }) {
         </div>
       </div>
     );
+
+  if (route.withoutShell) {
+    return page;
+  }
+
+  const gridTemplateColumns = route.withSearchRail ? "72px 320px 1fr" : "72px 1fr";
 
   return (
     <div
@@ -23,7 +28,7 @@ function AppShell({ route, navigate }) {
         overflow: "hidden",
       }}
     >
-      <TopBar mode={route.mode} />
+      <TopBar mode={route.mode} navigate={navigate} />
       <div
         style={{
           display: "grid",
@@ -34,7 +39,7 @@ function AppShell({ route, navigate }) {
         }}
       >
         <LeftRail mode={route.mode} onMode={(legacyMode) => navigate(window.legacyModeToRouteKey(legacyMode))} />
-        {route.withSearchRail ? <SearchRail /> : null}
+        {route.withSearchRail ? <SearchRail navigate={navigate} /> : null}
         <main style={{ minWidth: 0, minHeight: 0, overflow: "hidden" }}>{page}</main>
       </div>
     </div>

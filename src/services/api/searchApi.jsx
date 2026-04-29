@@ -136,6 +136,27 @@
     };
   }
 
+  async function loadEditalDetail({ pncpId } = {}) {
+    const response = await fetch("/api/edital-detail", {
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        pncp_id: pncpId || "",
+      }),
+    });
+
+    const payload = await parseJsonResponse(response, "A API de detalhe retornou um JSON invalido.");
+
+    if (!response.ok || payload.error) {
+      throw new Error(payload.error || `Falha HTTP ${response.status} ao carregar o detalhe do edital.`);
+    }
+
+    return payload;
+  }
+
   async function loadEditalDocuments({ pncpId, limit = 200 } = {}) {
     const response = await fetch("/api/edital-documentos", {
       method: "POST",
@@ -215,6 +236,7 @@
     saveSearchConfig,
     loadSearchFilters,
     saveSearchFilters,
+    loadEditalDetail,
     loadEditalItems,
     loadEditalDocuments,
     loadEditalDocumentView,

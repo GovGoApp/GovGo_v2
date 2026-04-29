@@ -1,5 +1,6 @@
 // Mode: Busca — editais search with workspace tabs
 const { useState: uSo, useMemo: uMo } = React;
+const MODE_BUSCA_TAB_ICON_SIZE = 16;
 
 function WorkspaceTabs({tabs, active, onActivate, onClose, onNew}) {
   const scrollRef = React.useRef(null);
@@ -69,6 +70,11 @@ function WorkspaceTabs({tabs, active, onActivate, onClose, onNew}) {
                 : "var(--ink-3)",
               opacity: isActive ? 1 : 0.84,
               display: "inline-flex",
+              width: 18,
+              height: 18,
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
             }}>
               {React.isValidElement(t.icon) ? t.icon : null}
             </span>
@@ -78,7 +84,7 @@ function WorkspaceTabs({tabs, active, onActivate, onClose, onNew}) {
               <button onClick={e => { e.stopPropagation(); onClose(t.id); }} style={{
                 all: "unset", cursor: "pointer", padding: 2, borderRadius: 3,
                 display: "inline-flex", color: isActive ? "var(--orange-700)" : "var(--ink-2)", marginLeft: 2,
-              }}><Icon.close size={11}/></button>
+              }}><Icon.close size={12}/></button>
             )}
           </div>
         );
@@ -96,10 +102,10 @@ function WorkspaceTabs({tabs, active, onActivate, onClose, onNew}) {
 }
 
 const DEFAULT_TABS = [
-  { id: "t1", title: "alimentação hospitalar", icon: <Icon.search size={12}/>, tone: "orange", count: 214, kind: "busca" },
-  { id: "t2", title: "Compra de produtos de padaria",  icon: <Icon.starFill size={12}/>, tone: "orange", kind: "favorito" },
-  { id: "t3", title: "Alimentação escolar integral",   icon: <Icon.starFill size={12}/>, tone: "blue", kind: "favorito" },
-  { id: "t4", title: "Boletim diário — Saúde/SP",      icon: <Icon.brief size={12}/>, tone: "blue", kind: "boletim" },
+  { id: "t1", title: "alimentação hospitalar", icon: <Icon.search size={MODE_BUSCA_TAB_ICON_SIZE}/>, tone: "orange", count: 214, kind: "busca" },
+  { id: "t2", title: "Compra de produtos de padaria",  icon: <Icon.starFill size={MODE_BUSCA_TAB_ICON_SIZE}/>, tone: "orange", kind: "favorito" },
+  { id: "t3", title: "Alimentação escolar integral",   icon: <Icon.starFill size={MODE_BUSCA_TAB_ICON_SIZE}/>, tone: "blue", kind: "favorito" },
+  { id: "t4", title: "Boletim diário — Saúde/SP",      icon: <Icon.brief size={MODE_BUSCA_TAB_ICON_SIZE}/>, tone: "blue", kind: "boletim" },
 ];
 
 function ModeBusca() {
@@ -115,14 +121,14 @@ function ModeBusca() {
   };
   const addNew = () => {
     const id = "t" + (Date.now() % 100000);
-    setTabs([...tabs, { id, title: "Nova busca", icon: <Icon.search size={12}/>, tone: "default", kind: "busca" }]);
+    setTabs([...tabs, { id, title: "Nova busca", icon: <Icon.search size={MODE_BUSCA_TAB_ICON_SIZE}/>, tone: "default", kind: "busca" }]);
     setActiveTab(id);
   };
   const openEdital = (e) => {
     const id = "ed-" + e.rank;
     if (tabs.find(t => t.id === id)) { setActiveTab(id); return; }
     const title = `${e.uf} · ${e.org.replace(/^(MUNICÍPIO DE |ESTADO DO |EMPRESA |INSTITUTO DE |SEC\. )/, "")}`;
-    setTabs([...tabs, { id, title, icon: <Icon.file size={12}/>, tone: "blue", kind: "edital", rank: e.rank }]);
+    setTabs([...tabs, { id, title, icon: <Icon.file size={MODE_BUSCA_TAB_ICON_SIZE}/>, tone: "blue", kind: "edital", rank: e.rank }]);
     setActiveTab(id);
   };
 

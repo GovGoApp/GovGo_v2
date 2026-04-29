@@ -57,6 +57,8 @@ class FieldMeta:
 CONTRATACAO_FIELDS: Dict[str, FieldMeta] = {
     'numero_controle_pncp': FieldMeta('numero_controle_pncp', 'numero_controle_pncp', 'text', 'Identificador único do processo', ['pk','search','export']),
     'ano_compra': FieldMeta('ano_compra', 'ano_compra', 'text', 'Ano da compra', ['search']),
+    'sequencial_compra': FieldMeta('sequencial_compra', 'sequencial_compra', 'text', 'Sequencial da compra', ['search','export']),
+    'processo': FieldMeta('processo', 'processo', 'text', 'Numero do processo', ['search','export']),
     'objeto_compra': FieldMeta('objeto_compra', 'objeto_compra', 'text', 'Objeto principal da contratação (fonte FTS)', ['search','export','fts']),
     'valor_total_homologado': FieldMeta('valor_total_homologado', 'valor_total_homologado', 'numeric', 'Valor total homologado', ['search','export']),
     'valor_total_estimado': FieldMeta('valor_total_estimado', 'valor_total_estimado', 'numeric_text', 'Valor total estimado (text → numeric)', ['search','export']),
@@ -65,6 +67,7 @@ CONTRATACAO_FIELDS: Dict[str, FieldMeta] = {
     'data_inclusao': FieldMeta('data_inclusao', 'data_inclusao', 'date_text', 'Data de inclusão', ['search']),
     'link_sistema_origem': FieldMeta('link_sistema_origem', 'link_sistema_origem', 'text', 'Link do sistema de origem', ['export']),
     'modalidade_id': FieldMeta('modalidade_id', 'modalidade_id', 'text', 'Código modalidade', ['search']),
+    'numero_compra': FieldMeta('numero_compra', 'numero_compra', 'text', 'Numero da compra/edital', ['search','export']),
     'modalidade_nome': FieldMeta('modalidade_nome', 'modalidade_nome', 'text', 'Nome modalidade', ['search','export']),
     'modo_disputa_id': FieldMeta('modo_disputa_id', 'modo_disputa_id', 'text', 'Código modo disputa', ['search']),
     'modo_disputa_nome': FieldMeta('modo_disputa_nome', 'modo_disputa_nome', 'text', 'Nome modo disputa', ['search','export']),
@@ -73,6 +76,7 @@ CONTRATACAO_FIELDS: Dict[str, FieldMeta] = {
     'orgao_entidade_esfera_id': FieldMeta('orgao_entidade_esfera_id', 'orgao_entidade_esfera_id', 'text', 'Esfera do órgão', ['search','export']),
     'unidade_orgao_uf_sigla': FieldMeta('unidade_orgao_uf_sigla', 'unidade_orgao_uf_sigla', 'text', 'UF da unidade', ['search','export']),
     'unidade_orgao_municipio_nome': FieldMeta('unidade_orgao_municipio_nome', 'unidade_orgao_municipio_nome', 'text', 'Município da unidade', ['search','export']),
+    'unidade_orgao_codigo_unidade': FieldMeta('unidade_orgao_codigo_unidade', 'unidade_orgao_codigo_unidade', 'text', 'Codigo UASG/unidade do orgao', ['search','export']),
     'unidade_orgao_nome_unidade': FieldMeta('unidade_orgao_nome_unidade', 'unidade_orgao_nome_unidade', 'text', 'Nome da unidade', ['search','export']),
     'orgao_entidade_razao_social': FieldMeta('orgao_entidade_razao_social', 'orgao_entidade_razao_social', 'text', 'Razão social do órgão', ['search','export']),
 }
@@ -122,11 +126,11 @@ FTS_SOURCE_FIELD = 'objeto_compra'
 
 # Grupo mínimo de colunas para SELECT em buscas (ordem importante para zips atuais)
 CONTRATACAO_CORE_ORDER: List[str] = [
-    'numero_controle_pncp', 'ano_compra', 'objeto_compra', 'valor_total_homologado', 'valor_total_estimado',
+    'numero_controle_pncp', 'ano_compra', 'sequencial_compra', 'processo', 'objeto_compra', 'valor_total_homologado', 'valor_total_estimado',
     'data_abertura_proposta', 'data_encerramento_proposta', 'data_inclusao', 'link_sistema_origem',
-    'modalidade_id', 'modalidade_nome', 'modo_disputa_id', 'modo_disputa_nome', 'usuario_nome',
+    'modalidade_id', 'numero_compra', 'modalidade_nome', 'modo_disputa_id', 'modo_disputa_nome', 'usuario_nome',
     'orgao_entidade_poder_id', 'orgao_entidade_esfera_id', 'unidade_orgao_uf_sigla', 'unidade_orgao_municipio_nome',
-    'unidade_orgao_nome_unidade', 'orgao_entidade_razao_social'
+    'unidade_orgao_codigo_unidade', 'unidade_orgao_nome_unidade', 'orgao_entidade_razao_social'
 ]
 
 def get_contratacao_core_columns(alias: str = 'c') -> List[str]:

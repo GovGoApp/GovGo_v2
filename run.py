@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import datetime as _dt
 import json
 import os
 import socket
@@ -10,10 +11,12 @@ import threading
 import time
 import urllib.error
 import urllib.request
+from decimal import Decimal
 from functools import partial
+from http.cookies import SimpleCookie
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, unquote, urlsplit
 
 
 HOST = "127.0.0.1"
@@ -22,6 +25,27 @@ ROUTE = "/src/app/boot/index.html#/inicio"
 PROJECT_ROOT = Path(__file__).resolve().parent
 ENTRY_FILE = PROJECT_ROOT / "src" / "app" / "boot" / "index.html"
 URL = f"http://{HOST}:{PORT}{ROUTE}"
+
+AUTH_GET_ROUTES = {"/api/auth/me"}
+AUTH_POST_ROUTES = {
+    "/api/auth/login",
+    "/api/auth/signup",
+    "/api/auth/confirm",
+    "/api/auth/forgot",
+    "/api/auth/reset",
+    "/api/auth/logout",
+}
+USER_GET_ROUTES = {"/api/user/favorites", "/api/user/favorite-detail"}
+USER_POST_ROUTES = {"/api/user/favorites"}
+USER_DELETE_PREFIXES = ("/api/user/favorites/",)
+
+
+def _json_default(value):
+    if isinstance(value, Decimal):
+        return int(value) if value == value.to_integral_value() else float(value)
+    if isinstance(value, (_dt.datetime, _dt.date)):
+        return value.isoformat()
+    return str(value)
 
 
 class QuietStaticHandler(SimpleHTTPRequestHandler):
@@ -34,13 +58,26 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
     def log_message(self, format: str, *args) -> None:
         return
 
-    def _write_json(self, status_code: int, payload: dict) -> None:
-        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    def _write_json(self, status_code: int, payload: dict, headers: list[tuple[str, str]] | None = None) -> None:
+        body = json.dumps(payload, ensure_ascii=False, default=_json_default).encode("utf-8")
         self.send_response(status_code)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
+        for name, value in headers or []:
+            self.send_header(name, value)
         self.end_headers()
         self.wfile.write(body)
+
+    def _read_cookies(self) -> dict[str, str]:
+        raw_cookie = self.headers.get("Cookie", "")
+        if not raw_cookie:
+            return {}
+        cookie = SimpleCookie()
+        try:
+            cookie.load(raw_cookie)
+        except Exception:
+            return {}
+        return {name: morsel.value for name, morsel in cookie.items()}
 
     def _read_json(self) -> dict:
         content_length = self.headers.get("Content-Length", "0")
@@ -62,26 +99,71 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
             raise ValueError("O corpo JSON deve ser um objeto.")
         return payload
 
+    def _read_query_params(self) -> dict:
+        parsed = urlsplit(self.path)
+        params = parse_qs(parsed.query or "", keep_blank_values=True)
+        return {key: values[-1] if values else "" for key, values in params.items()}
+
     def do_OPTIONS(self) -> None:
         route = urlsplit(self.path).path
-        if route not in {
+        if route not in (AUTH_GET_ROUTES | AUTH_POST_ROUTES | USER_GET_ROUTES | USER_POST_ROUTES | {
             "/api/search",
             "/api/search-config",
             "/api/search-filters",
+            "/api/edital-detail",
             "/api/edital-items",
             "/api/edital-documentos",
             "/api/edital-document-view",
             "/api/edital-documents-summary",
-        }:
+        }) and not any(route.startswith(prefix) for prefix in USER_DELETE_PREFIXES):
             self.send_error(404, "Endpoint nao encontrado.")
             return
 
         self.send_response(204)
-        self.send_header("Allow", "OPTIONS, GET, POST")
+        self.send_header("Allow", "OPTIONS, GET, POST, DELETE")
         self.end_headers()
 
     def do_GET(self) -> None:
         route = urlsplit(self.path).path
+        if route in AUTH_GET_ROUTES:
+            try:
+                from src.backend.user.api.service import AuthApiError, handle_auth_route
+
+                status_code, response, headers = handle_auth_route(
+                    route,
+                    "GET",
+                    cookies=self._read_cookies(),
+                )
+            except AuthApiError as exc:
+                self._write_json(exc.status_code, {"ok": False, "error": exc.message})
+                return
+            except Exception as exc:
+                self._write_json(500, {"ok": False, "error": str(exc)})
+                return
+
+            self._write_json(status_code, response, headers)
+            return
+
+        if route in USER_GET_ROUTES:
+            try:
+                from src.backend.user.api.service import AuthApiError, handle_user_route
+
+                status_code, response, headers = handle_user_route(
+                    route,
+                    "GET",
+                    payload=self._read_query_params(),
+                    cookies=self._read_cookies(),
+                )
+            except AuthApiError as exc:
+                self._write_json(exc.status_code, {"ok": False, "error": exc.message})
+                return
+            except Exception as exc:
+                self._write_json(500, {"ok": False, "error": str(exc)})
+                return
+
+            self._write_json(status_code, response, headers)
+            return
+
         if route not in {"/api/search-config", "/api/search-filters"}:
             super().do_GET()
             return
@@ -101,15 +183,16 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
 
     def do_POST(self) -> None:
         route = urlsplit(self.path).path
-        if route not in {
+        if route not in (AUTH_POST_ROUTES | USER_POST_ROUTES | {
             "/api/search",
             "/api/search-config",
             "/api/search-filters",
+            "/api/edital-detail",
             "/api/edital-items",
             "/api/edital-documentos",
             "/api/edital-document-view",
             "/api/edital-documents-summary",
-        }:
+        }):
             self.send_error(404, "Endpoint nao encontrado.")
             return
 
@@ -119,11 +202,52 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
             self._write_json(400, {"error": str(exc)})
             return
 
+        if route in AUTH_POST_ROUTES:
+            try:
+                from src.backend.user.api.service import AuthApiError, handle_auth_route
+
+                status_code, response, headers = handle_auth_route(
+                    route,
+                    "POST",
+                    payload=payload,
+                    cookies=self._read_cookies(),
+                )
+            except AuthApiError as exc:
+                self._write_json(exc.status_code, {"ok": False, "error": exc.message})
+                return
+            except Exception as exc:
+                self._write_json(500, {"ok": False, "error": str(exc)})
+                return
+
+            self._write_json(status_code, response, headers)
+            return
+
+        if route in USER_POST_ROUTES:
+            try:
+                from src.backend.user.api.service import AuthApiError, handle_user_route
+
+                status_code, response, headers = handle_user_route(
+                    route,
+                    "POST",
+                    payload=payload,
+                    cookies=self._read_cookies(),
+                )
+            except AuthApiError as exc:
+                self._write_json(exc.status_code, {"ok": False, "error": exc.message})
+                return
+            except Exception as exc:
+                self._write_json(500, {"ok": False, "error": str(exc)})
+                return
+
+            self._write_json(status_code, response, headers)
+            return
+
         try:
             from src.backend.search.api.service import (
                 get_edital_documents,
                 get_edital_document_view,
                 get_edital_documents_summary,
+                get_edital_detail,
                 get_edital_items,
                 run_search,
                 update_search_config,
@@ -134,6 +258,8 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
                 response = {"config": update_search_config(payload)}
             elif route == "/api/search-filters":
                 response = {"filters": update_search_filters(payload)}
+            elif route == "/api/edital-detail":
+                response = get_edital_detail(payload)
             elif route == "/api/edital-items":
                 response = get_edital_items(payload)
             elif route == "/api/edital-documentos":
@@ -153,12 +279,42 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
             status_code = 400
         elif route in {
             "/api/edital-items",
+            "/api/edital-detail",
             "/api/edital-documentos",
             "/api/edital-document-view",
             "/api/edital-documents-summary",
         } and response.get("error"):
             status_code = 400
         self._write_json(status_code, response)
+
+    def do_DELETE(self) -> None:
+        route = urlsplit(self.path).path
+        if not any(route.startswith(prefix) for prefix in USER_DELETE_PREFIXES):
+            self.send_error(404, "Endpoint nao encontrado.")
+            return
+
+        try:
+            from src.backend.user.api.service import AuthApiError, handle_user_route
+
+            path_value = ""
+            for prefix in USER_DELETE_PREFIXES:
+                if route.startswith(prefix):
+                    path_value = unquote(route[len(prefix):])
+                    break
+            status_code, response, headers = handle_user_route(
+                route,
+                "DELETE",
+                cookies=self._read_cookies(),
+                path_value=path_value,
+            )
+        except AuthApiError as exc:
+            self._write_json(exc.status_code, {"ok": False, "error": exc.message})
+            return
+        except Exception as exc:
+            self._write_json(500, {"ok": False, "error": str(exc)})
+            return
+
+        self._write_json(status_code, response, headers)
 
 
 def _find_chrome() -> str | None:
@@ -219,12 +375,32 @@ def _post_json_works(url: str, body: dict | None = None, timeout_seconds: float 
         return False
 
 
+def _get_status(url: str, timeout_seconds: float = 1.0) -> int | None:
+    try:
+        with contextlib.closing(urllib.request.urlopen(url, timeout=timeout_seconds)) as response:
+            return response.status
+    except urllib.error.HTTPError as exc:
+        return exc.code
+    except (urllib.error.URLError, TimeoutError, OSError):
+        return None
+
+
 def _existing_server_matches_current_api() -> bool:
     required_get_urls = [
         f"http://{HOST}:{PORT}/api/search-config",
         f"http://{HOST}:{PORT}/api/search-filters",
     ]
     if not all(_wait_until_reachable(endpoint, timeout_seconds=1.0) for endpoint in required_get_urls):
+        return False
+
+    auth_status = _get_status(f"http://{HOST}:{PORT}/api/auth/me")
+    if auth_status not in {200, 401}:
+        return False
+    favorites_status = _get_status(f"http://{HOST}:{PORT}/api/user/favorites")
+    if favorites_status not in {200, 401}:
+        return False
+    favorite_detail_status = _get_status(f"http://{HOST}:{PORT}/api/user/favorite-detail?pncp_id=healthcheck")
+    if favorite_detail_status not in {200, 401, 404}:
         return False
 
     required_post_urls = [

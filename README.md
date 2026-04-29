@@ -106,15 +106,17 @@ No momento desta versao do README, o quadro e:
 
 - a aplicacao local principal roda em `http://127.0.0.1:8765/src/app/boot/index.html#/inicio`;
 - `run.py` serve os arquivos estaticos e os endpoints locais da aplicacao;
-- a tela `Busca` esta funcional com busca real, configuracao real, filtros reais e persistencia local;
+- a tela `Busca` esta funcional com busca real, configuracao real, filtros reais, persistencia local e dois modos de visualizacao dos resultados (`Tabela` e `Mapa`);
 - o detalhe do edital esta funcional com:
   - cabecalho real;
   - itens reais;
   - documentos reais;
   - markdown de documento;
   - resumo consolidado dos documentos;
+- o modo visual derivado de `design/` hoje esta nomeado como `mode_busca` / `mode_busca_detail`, substituindo o nome antigo `mode_oportunidades` e mantendo compatibilidade de runtime durante a transicao;
 - `Empresas`, `Radar`, `Relatorios` e `Design System` ainda estao majoritariamente em modo wrapper sobre componentes vindos de `design/`;
 - parte da UI ainda e carregada diretamente de `design/govgo/*.jsx`;
+- a plataforma de usuario do v1 (auth, favoritos, historico, boletins, billing e artefatos pessoais) ainda nao foi trazida de forma real para o v2; hoje ela aparece majoritariamente como placeholder visual no shell;
 - a migracao completa dessas partes para `src/` continua sendo uma prioridade estrutural.
 
 ---
@@ -220,6 +222,8 @@ Ele organiza:
 Hoje `TopBar`, `LeftRail` e `SearchRail` ainda sao definidos majoritariamente em:
 
 - [design/govgo/shell.jsx](design/govgo/shell.jsx)
+- [design/govgo/mode_busca.jsx](design/govgo/mode_busca.jsx)
+- [design/govgo/mode_busca_detail.jsx](design/govgo/mode_busca_detail.jsx)
 
 Ou seja: o shell visual ainda vem de `design/`, mas ja conversa com servicos reais do `src/`.
 
@@ -756,6 +760,8 @@ Se alguem chegar do zero no projeto, a ordem recomendada e:
 11. [docs/ANALISE_BASE_SUPABASE.md](docs/ANALISE_BASE_SUPABASE.md)
 12. [docs/ANALISE_PIPELINE_BOLETIM_V1.md](docs/ANALISE_PIPELINE_BOLETIM_V1.md)
 13. [docs/ANALISE_CAMPOS_BOLETIM_V1.md](docs/ANALISE_CAMPOS_BOLETIM_V1.md)
+14. [docs/MATRIZ_SIMILARIDADE_V1_V2.md](docs/MATRIZ_SIMILARIDADE_V1_V2.md)
+15. [docs/ESTUDO_PLATAFORMA_USUARIO_V1_V2.md](docs/ESTUDO_PLATAFORMA_USUARIO_V1_V2.md)
 
 ### 16.2 O que cada documento cobre
 
@@ -777,6 +783,8 @@ Se alguem chegar do zero no projeto, a ordem recomendada e:
 | `ANALISE_BASE_SUPABASE.md` | leitura arquitetural da base atual |
 | `ANALISE_PIPELINE_BOLETIM_V1.md` | entendimento do pipeline de boletins do v1 |
 | `ANALISE_CAMPOS_BOLETIM_V1.md` | analise campo a campo de `user_schedule` e `user_boletim` |
+| `MATRIZ_SIMILARIDADE_V1_V2.md` | matriz tecnica dos calculos, ranges e exibicao da similaridade |
+| `ESTUDO_PLATAFORMA_USUARIO_V1_V2.md` | estudo completo de auth, historico, favoritos, boletins, billing e artefatos de usuario do v1 e como trazelos ao v2 |
 
 ---
 
@@ -795,6 +803,8 @@ Isso acelera a evolucao, mas aumenta fragilidade de runtime, cache e depuracao.
 
 Ja houve varios incidentes de encoding em arquivos JSX de `design/`.
 Ao editar esses arquivos, cuidado redobrado com charset e ferramentas usadas.
+
+O repositorio agora possui [`.editorconfig`](.editorconfig) forçando `utf-8`, e essa configuracao deve ser tratada como baseline para qualquer edicao em UI e docs.
 
 ### 17.3 Persistencia local espalhada
 
@@ -869,6 +879,7 @@ Se voce vai mexer no projeto pela primeira vez:
 - [src/app/router/routes.jsx](src/app/router/routes.jsx)
 - [src/app/shell/AppShell.jsx](src/app/shell/AppShell.jsx)
 - [design/govgo/shell.jsx](design/govgo/shell.jsx)
+- [design/govgo/mode_busca.jsx](design/govgo/mode_busca.jsx)
 - [src/features/busca/BuscaWorkspace.jsx](src/features/busca/BuscaWorkspace.jsx)
 - [design/govgo/mode_busca_detail.jsx](design/govgo/mode_busca_detail.jsx)
 - [src/backend/search/api/service.py](src/backend/search/api/service.py)
@@ -881,6 +892,7 @@ Se voce vai mexer no projeto pela primeira vez:
 - [docs/MATRIZ_V1_V2.md](docs/MATRIZ_V1_V2.md)
 - [docs/ESTRATEGIA_V1_NO_V2.md](docs/ESTRATEGIA_V1_NO_V2.md)
 - [docs/ANALISE_BASE_SUPABASE.md](docs/ANALISE_BASE_SUPABASE.md)
+- [docs/MATRIZ_SIMILARIDADE_V1_V2.md](docs/MATRIZ_SIMILARIDADE_V1_V2.md)
 - [db/BDS1_v7.txt](db/BDS1_v7.txt)
 
 ---

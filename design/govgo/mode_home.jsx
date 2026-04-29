@@ -1,6 +1,24 @@
 // Mode: Home / Dashboard — landing page with paths to all modes
 function ModeHome({onMode}) {
   const go = (m) => onMode && onMode(m);
+  const auth = window.useGovGoAuth ? window.useGovGoAuth() : null;
+  const favoritesState = window.useGovGoFavorites ? window.useGovGoFavorites() : null;
+  const favoritos = favoritesState?.favorites || [];
+  const favoriteCountLabel = favoritesState?.status === "loading" ? "..." : String(favoritos.length);
+  const favoriteDelta = favoritesState?.status === "loading" ? "carregando" : "ativos";
+
+  const favoritePlace = (favorite) => {
+    const cityUf = [favorite.municipality || favorite.mun, favorite.uf].filter(Boolean).join("/");
+    return [favorite.organization || favorite.org, cityUf].filter(Boolean).join(" - ") || "-";
+  };
+
+  const openFavorite = (favorite) => {
+    if (typeof openFavoriteInBusca === "function") {
+      openFavoriteInBusca(favorite, (routeKey) => go(routeKey));
+      return;
+    }
+    go("busca");
+  };
 
   const modeCards = [
     {
@@ -36,12 +54,11 @@ function ModeHome({onMode}) {
   const kpis = [
     { label: "Editais aderentes abertos", value: "214", delta: "+12 hoje", tone: "orange", icon: <Icon.search size={14}/> },
     { label: "Vence em 7 dias",            value: "18",  delta: "atenção",  tone: "risk",   icon: <Icon.alert size={14}/> },
-    { label: "Favoritos acompanhados",     value: "42",  delta: "+4 semana", tone: "blue", icon: <Icon.bookmark size={14}/> },
+    { label: "Favoritos acompanhados",     value: favoriteCountLabel,  delta: favoriteDelta, tone: "blue", icon: <Icon.bookmark size={14}/> },
     { label: "Valor pipeline estimado",    value: "R$ 86,4 mi", delta: "+8,2%", tone: "green", icon: <Icon.trend size={14}/> },
   ];
 
   const recentSearches = DATA.historico || [];
-  const favoritos = DATA.favoritos || [];
   const recentes = DATA.relatorios || [];
 
   const accentBg = (a) => a === "orange" ? "var(--orange)" : a === "blue" ? "var(--deep-blue)" : a === "green" ? "var(--green)" : "var(--ink-2)";
@@ -212,23 +229,38 @@ function ModeHome({onMode}) {
             }}>Ver todos <Icon.chevRight size={12}/></button>
           </div>
           <div>
-            {favoritos.map((f, i) => (
-              <button key={f.id} onClick={() => go("busca")} style={{
+            {auth?.status !== "authenticated" && (
+              <div style={{padding: "18px", fontSize: 13, color: "var(--ink-3)", lineHeight: 1.45}}>
+                Entre para carregar seus editais favoritos.
+              </div>
+            )}
+            {auth?.status === "authenticated" && favoritesState?.status === "loading" && (
+              <div style={{padding: "18px", fontSize: 13, color: "var(--ink-3)"}}>
+                Carregando favoritos...
+              </div>
+            )}
+            {auth?.status === "authenticated" && favoritesState?.status !== "loading" && favoritos.length === 0 && (
+              <div style={{padding: "18px", fontSize: 13, color: "var(--ink-3)", lineHeight: 1.45}}>
+                Nenhum edital favorito ainda.
+              </div>
+            )}
+            {favoritos.slice(0, 5).map((f, i) => (
+              <button key={f.pncpId || f.id} onClick={() => openFavorite(f)} style={{
                 all: "unset", cursor: "pointer", display: "grid",
                 gridTemplateColumns: "1fr 140px 130px",
                 padding: "13px 18px", gap: 12, width: "100%", boxSizing: "border-box",
-                borderBottom: i < favoritos.length - 1 ? "1px solid var(--hairline-soft)" : "none",
+                borderBottom: i < Math.min(favoritos.length, 5) - 1 ? "1px solid var(--hairline-soft)" : "none",
                 alignItems: "center",
               }}
               onMouseEnter={e => e.currentTarget.style.background = "var(--rail)"}
               onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                 <div style={{minWidth: 0}}>
                   <div style={{fontSize: 13.5, fontWeight: 600, color: "var(--ink-1)", lineHeight: 1.3, marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>{f.title}</div>
-                  <div style={{fontSize: 11.5, color: "var(--ink-3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>{f.org}</div>
+                  <div style={{fontSize: 11.5, color: "var(--ink-3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>{favoritePlace(f)}</div>
                 </div>
-                <div style={{fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--ink-2)"}}>{f.date}</div>
+                <div style={{fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--ink-2)"}}>{f.date || f.closingDateLabel || "-"}</div>
                 <div style={{textAlign: "right"}}>
-                  <Chip tone={f.tone === "orange" ? "orange" : "blue"}>vence em {f.status}</Chip>
+                  <Chip tone="blue">{f.uf || "PNCP"}</Chip>
                 </div>
               </button>
             ))}

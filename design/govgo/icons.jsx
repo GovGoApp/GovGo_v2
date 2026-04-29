@@ -24,6 +24,7 @@ const Icon = {
   brief:       (p) => <I {...p}><rect x="3" y="6" width="14" height="10" rx="1.5"/><path d="M7 6V4.5A1.5 1.5 0 0 1 8.5 3h3A1.5 1.5 0 0 1 13 4.5V6"/></I>,
   terminal:    (p) => <I {...p}><rect x="3" y="4" width="14" height="12" rx="1.5"/><path d="m6 9 2 2-2 2M11 13h3"/></I>,
   bookmark:    (p) => <I {...p}><path d="M6 3h8v14l-4-2.5L6 17z"/></I>,
+  bookmarkFill:(p) => <I {...p} s={0}><path fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" d="M6 3h8v14l-4-2.5L6 17z"/></I>,
   history:     (p) => <I {...p}><path d="M4.5 10a5.5 5.5 0 1 0 1.6-3.9"/><path d="M4.5 5v3h3M10 7v3l2 1.5"/></I>,
   upload:      (p) => <I {...p}><path d="M10 13V4M6.5 7.5 10 4l3.5 3.5M4 15.5h12"/></I>,
   download:    (p) => <I {...p}><path d="M10 4v9M6.5 9.5 10 13l3.5-3.5M4 15.5h12"/></I>,

@@ -7,6 +7,15 @@
       componentName: "InicioPage",
       withSearchRail: false,
     },
+    login: {
+      key: "login",
+      title: "Entrar",
+      mode: "auth",
+      componentName: "AuthPage",
+      withSearchRail: false,
+      withoutShell: true,
+      requiresAuth: false,
+    },
     busca: {
       key: "busca",
       title: "Busca",
@@ -59,6 +68,20 @@
     }
   }
 
+  function parseQueryString(value) {
+    const params = {};
+    if (!value) {
+      return params;
+    }
+    try {
+      const parsed = new URLSearchParams(value);
+      for (const [key, paramValue] of parsed.entries()) {
+        params[key] = paramValue;
+      }
+    } catch (error) {}
+    return params;
+  }
+
   const legacyModeToRoute = {
     home: "inicio",
     busca: "busca",
@@ -81,7 +104,24 @@
       return { key: "inicio", params: {} };
     }
 
-    const parts = normalized.split("/").filter(Boolean);
+    if (/^(access_token|refresh_token|type|code)=/.test(normalized)) {
+      const params = parseQueryString(normalized);
+      return { key: "login", params: { ...params, mode: params.type === "recovery" ? "reset" : "signin" } };
+    }
+
+    const queryStart = normalized.indexOf("?");
+    const pathPart = queryStart >= 0 ? normalized.slice(0, queryStart) : normalized;
+    const queryParams = queryStart >= 0 ? parseQueryString(normalized.slice(queryStart + 1)) : {};
+    const parts = pathPart.split("/").filter(Boolean);
+    if (parts[0] === "login") {
+      return { key: "login", params: { mode: queryParams.mode || "signin", ...queryParams } };
+    }
+    if (parts[0] === "cadastro" || parts[0] === "signup") {
+      return { key: "login", params: { mode: "signup", ...queryParams } };
+    }
+    if (parts[0] === "reset") {
+      return { key: "login", params: { mode: "reset", ...queryParams } };
+    }
     if (parts[0] === "busca" && parts[1] === "detalhe") {
       return { key: "busca-detalhe", params: { rank: decodeRouteSegment(parts[2] || "1") } };
     }
@@ -95,6 +135,17 @@
   }
 
   function buildHash(routeKey, params = {}) {
+    if (routeKey === "login") {
+      const query = new URLSearchParams();
+      if (params.mode && params.mode !== "signin") {
+        query.set("mode", params.mode);
+      }
+      if (params.next) {
+        query.set("next", params.next);
+      }
+      const queryString = query.toString();
+      return queryString ? `#/login?${queryString}` : "#/login";
+    }
     if (routeKey === "busca-detalhe") {
       const key = params.id || params.rank || 1;
       return `#/busca/detalhe/${encodeURIComponent(String(key))}`;
@@ -112,6 +163,8 @@
       ...config,
       params: parsed.params,
       hash: buildHash(config.key, parsed.params),
+      requiresAuth: config.requiresAuth !== false,
+      withoutShell: !!config.withoutShell,
     };
   }
 
