@@ -35,9 +35,14 @@ AUTH_POST_ROUTES = {
     "/api/auth/reset",
     "/api/auth/logout",
 }
-USER_GET_ROUTES = {"/api/user/favorites", "/api/user/favorite-detail"}
-USER_POST_ROUTES = {"/api/user/favorites"}
-USER_DELETE_PREFIXES = ("/api/user/favorites/",)
+USER_GET_ROUTES = {
+    "/api/user/favorites",
+    "/api/user/favorite-detail",
+    "/api/user/history",
+    "/api/user/history-detail",
+}
+USER_POST_ROUTES = {"/api/user/favorites", "/api/user/history"}
+USER_DELETE_PREFIXES = ("/api/user/favorites/", "/api/user/history/")
 
 
 def _json_default(value):

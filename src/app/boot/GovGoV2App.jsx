@@ -65,7 +65,9 @@ function GovGoV2App() {
 ReactDOM.createRoot(document.getElementById("root")).render(
   <GovGoAuthProvider>
     <GovGoFavoritesProvider>
-      <GovGoV2App />
+      <GovGoHistoryProvider>
+        <GovGoV2App />
+      </GovGoHistoryProvider>
     </GovGoFavoritesProvider>
   </GovGoAuthProvider>
 );

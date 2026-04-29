@@ -96,6 +96,27 @@
     return request(`/api/user/favorite-detail?pncp_id=${encodeURIComponent(String(pncpId || ""))}`);
   }
 
+  function loadHistory(limit = 50) {
+    return request(`/api/user/history?limit=${encodeURIComponent(String(limit || 50))}`);
+  }
+
+  function saveHistory(payload) {
+    return request("/api/user/history", {
+      method: "POST",
+      body: payload || {},
+    });
+  }
+
+  function loadHistoryDetail(promptId, limit = 500) {
+    return request(`/api/user/history-detail?prompt_id=${encodeURIComponent(String(promptId || ""))}&limit=${encodeURIComponent(String(limit || 500))}`);
+  }
+
+  function deleteHistory(promptId) {
+    return request(`/api/user/history/${encodeURIComponent(String(promptId || ""))}`, {
+      method: "DELETE",
+    });
+  }
+
   window.GovGoUserApi = {
     me,
     login,
@@ -108,5 +129,9 @@
     addFavorite,
     removeFavorite,
     loadFavoriteDetail,
+    loadHistory,
+    saveHistory,
+    loadHistoryDetail,
+    deleteHistory,
   };
 })();

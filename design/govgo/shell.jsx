@@ -24,6 +24,27 @@ function openFavoriteInBusca(favorite, navigate) {
   window.location.hash = "#/busca";
 }
 
+function getHistoryPromptId(historyItem) {
+  return String(historyItem?.promptId || historyItem?.prompt_id || historyItem?.id || "").trim();
+}
+
+function openHistoryInBusca(historyItem, navigate) {
+  const promptId = getHistoryPromptId(historyItem);
+  if (!promptId) return;
+  if (window._govgoOpenHistory) {
+    window._govgoOpenHistory(historyItem);
+    return;
+  }
+  if (window.GovGoSearchUiAdapter?.setPendingHistory) {
+    window.GovGoSearchUiAdapter.setPendingHistory(historyItem);
+  }
+  if (navigate) {
+    navigate("busca");
+    return;
+  }
+  window.location.hash = "#/busca";
+}
+
 const GOVGO_DEADLINE_COLORS = {
   na: "#838383",
   expired: "#800080",
@@ -162,6 +183,102 @@ function FavoriteCard({favorite, onOpen, onRemove}) {
         </button>
       </div>
     </div>
+  );
+}
+
+function HistoryCard({historyItem, onOpen, onRemove, hoverBg = "var(--paper)"}) {
+  const title = historyItem?.title || historyItem?.query || historyItem?.text || "Busca por filtros";
+  const resultCount = historyItem?.resultCount ?? historyItem?.hits ?? 0;
+  const when = historyItem?.when || historyItem?.createdAtLabel || "";
+  return (
+    <button onClick={() => onOpen?.(historyItem)} style={{
+      all: "unset",
+      cursor: "pointer",
+      padding: "8px 10px",
+      borderRadius: 6,
+      display: "flex",
+      alignItems: "center",
+      gap: 8,
+      minWidth: 0,
+    }}
+    onMouseEnter={e => e.currentTarget.style.background = hoverBg}
+    onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+      <Icon.clock size={13}/>
+      <div style={{flex: 1, minWidth: 0, overflow: "hidden", textAlign: "left"}}>
+        <div title={title} style={{fontSize: 12.5, color: "var(--ink-1)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"}}>{title}</div>
+        <div style={{fontSize: 11, color: "var(--ink-3)"}}>{when || "-"} · {resultCount} resultados</div>
+      </div>
+      {onRemove && (
+        <span onClick={(event) => onRemove(event, historyItem)} title="Remover do historico" style={{
+          display: "inline-flex", width: 24, height: 24, borderRadius: 6,
+          alignItems: "center", justifyContent: "center", color: "var(--ink-3)", flexShrink: 0,
+        }}>
+          <Icon.close size={12}/>
+        </span>
+      )}
+    </button>
+  );
+}
+
+function HistoryList({auth, historyState, historyItems, onOpen, onRemove, hoverBg = "var(--paper)"}) {
+  const items = historyItems || [];
+  if (auth?.status !== "authenticated") {
+    return (
+      <div style={{
+        background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 8,
+        padding: "10px 11px", color: "var(--ink-3)", fontSize: 12.5, lineHeight: 1.35,
+      }}>
+        Entre para carregar seu historico.
+      </div>
+    );
+  }
+  if (historyState?.status === "loading") {
+    return (
+      <div style={{
+        background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 8,
+        padding: "10px 11px", color: "var(--ink-3)", fontSize: 12.5,
+      }}>
+        Carregando historico...
+      </div>
+    );
+  }
+  if (historyState?.status === "error" && historyState?.error) {
+    return (
+      <div style={{
+        background: "color-mix(in oklab, var(--risk) 9%, var(--paper))",
+        border: "1px solid color-mix(in oklab, var(--risk) 24%, var(--hairline))",
+        borderRadius: 8,
+        padding: "10px 11px",
+        color: "var(--risk)",
+        fontSize: 12.5,
+        lineHeight: 1.35,
+      }}>
+        {historyState.error}
+      </div>
+    );
+  }
+  if (!items.length) {
+    return (
+      <div style={{
+        background: "var(--paper)", border: "1px solid var(--hairline)", borderRadius: 8,
+        padding: "10px 11px", color: "var(--ink-3)", fontSize: 12.5, lineHeight: 1.35,
+      }}>
+        Nenhuma busca recente ainda.
+      </div>
+    );
+  }
+  return (
+    <>
+      {items.map((historyItem) => (
+        <HistoryCard
+          key={getHistoryPromptId(historyItem)}
+          historyItem={historyItem}
+          onOpen={onOpen}
+          onRemove={onRemove}
+          hoverBg={hoverBg}
+        />
+      ))}
+    </>
   );
 }
 
@@ -604,8 +721,11 @@ function SearchRail({navigate}) {
   const isCategoryMode = searchConfig.searchApproach !== "direct";
   const auth = window.useGovGoAuth ? window.useGovGoAuth() : null;
   const favoritesState = window.useGovGoFavorites ? window.useGovGoFavorites() : null;
+  const historyState = window.useGovGoHistory ? window.useGovGoHistory() : null;
   const favorites = favoritesState?.favorites || [];
   const favoriteCount = favorites.length;
+  const historyItems = historyState?.history || [];
+  const historyCount = historyItems.length;
 
   const openFavorite = (favorite) => {
     openFavoriteInBusca(favorite, navigate);
@@ -618,6 +738,20 @@ function SearchRail({navigate}) {
       await favoritesState.removeFavorite(favorite);
     } catch (error) {
       console.warn("Falha ao remover favorito", error);
+    }
+  };
+
+  const openHistory = (historyItem) => {
+    openHistoryInBusca(historyItem, navigate);
+  };
+
+  const removeHistoryFromRail = async (event, historyItem) => {
+    event.stopPropagation();
+    if (!historyState?.removeHistory) return;
+    try {
+      await historyState.removeHistory(historyItem);
+    } catch (error) {
+      console.warn("Falha ao remover historico", error);
     }
   };
 
@@ -1251,9 +1385,18 @@ function SearchRail({navigate}) {
           </div>
         </Collapsible>
 
-        <Collapsible title="Histórico" icon={<Icon.history size={13}/>}>
+        <Collapsible title="Histórico" icon={<Icon.history size={13}/>} extra={<span style={{fontSize: 11, color: "var(--ink-3)"}}>{historyCount}</span>}>
           <div style={{display: "flex", flexDirection: "column", gap: 2}}>
-            {DATA.historico.map((h, i) => (
+            {historyState ? (
+              <HistoryList
+                auth={auth}
+                historyState={historyState}
+                historyItems={historyItems}
+                onOpen={openHistory}
+                onRemove={removeHistoryFromRail}
+                hoverBg="var(--paper)"
+              />
+            ) : DATA.historico.map((h, i) => (
               <button key={i} style={{
                 all: "unset", cursor: "pointer",
                 padding: "8px 10px", borderRadius: 6,
@@ -1308,8 +1451,10 @@ function SearchRail({navigate}) {
 function ActivityRail({open, onToggle}) {
   const auth = window.useGovGoAuth ? window.useGovGoAuth() : null;
   const favoritesState = window.useGovGoFavorites ? window.useGovGoFavorites() : null;
+  const historyState = window.useGovGoHistory ? window.useGovGoHistory() : null;
   const favorites = favoritesState?.favorites || [];
   const favoriteCount = favorites.length;
+  const historyItems = historyState?.history || [];
 
   const openFavorite = (favorite) => {
     openFavoriteInBusca(favorite, null);
@@ -1322,6 +1467,20 @@ function ActivityRail({open, onToggle}) {
       await favoritesState.removeFavorite(favorite);
     } catch (error) {
       console.warn("Falha ao remover favorito", error);
+    }
+  };
+
+  const openHistory = (historyItem) => {
+    openHistoryInBusca(historyItem, null);
+  };
+
+  const removeHistoryFromActivity = async (event, historyItem) => {
+    event.stopPropagation();
+    if (!historyState?.removeHistory) return;
+    try {
+      await historyState.removeHistory(historyItem);
+    } catch (error) {
+      console.warn("Falha ao remover historico", error);
     }
   };
 
@@ -1418,9 +1577,18 @@ function ActivityRail({open, onToggle}) {
           </div>
         </Collapsible>
 
-        <Collapsible title="Histórico" icon={<Icon.history size={13}/>}>
+        <Collapsible title="Histórico" icon={<Icon.history size={13}/>} extra={<span style={{fontSize: 11, color: "var(--ink-3)"}}>{historyCount}</span>}>
           <div style={{display: "flex", flexDirection: "column", gap: 2}}>
-            {DATA.historico.map((h, i) => (
+            {historyState ? (
+              <HistoryList
+                auth={auth}
+                historyState={historyState}
+                historyItems={historyItems}
+                onOpen={openHistory}
+                onRemove={removeHistoryFromActivity}
+                hoverBg="var(--rail)"
+              />
+            ) : DATA.historico.map((h, i) => (
               <button key={i} style={{
                 all: "unset", cursor: "pointer",
                 padding: "8px 10px", borderRadius: 6,

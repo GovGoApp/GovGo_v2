@@ -524,13 +524,16 @@ function createSearchTabState(overrides) {
 
 function createSearchTab(id, overrides) {
   const source = overrides?.source || "";
+  const icon = source === "favoritos"
+    ? React.createElement(Icon.bookmarkFill || Icon.bookmark, { size: WORKSPACE_TAB_ICON_SIZE })
+    : source === "historico"
+      ? React.createElement(Icon.history, { size: WORKSPACE_TAB_ICON_SIZE })
+      : React.createElement(Icon.search, { size: WORKSPACE_TAB_ICON_SIZE });
   return {
     id,
     title: "Nova busca",
-    icon: source === "favoritos"
-      ? React.createElement(Icon.bookmarkFill || Icon.bookmark, { size: WORKSPACE_TAB_ICON_SIZE })
-      : React.createElement(Icon.search, { size: WORKSPACE_TAB_ICON_SIZE }),
-    tone: source === "favoritos" ? "blue" : "orange",
+    icon,
+    tone: source === "favoritos" || source === "historico" ? "blue" : "orange",
     count: null,
     kind: "busca",
     closable: true,
@@ -1599,6 +1602,7 @@ function SearchResultsMap({ editais, metric, onOpen }) {
 
 function BuscaWorkspace() {
   const favoritesState = window.useGovGoFavorites ? window.useGovGoFavorites() : null;
+  const historyState = window.useGovGoHistory ? window.useGovGoHistory() : null;
   const emitSearchState = (detail) => {
     if (typeof window !== "undefined" && window.dispatchEvent) {
       window.dispatchEvent(new CustomEvent("govgo:search-state", { detail }));
@@ -1746,6 +1750,17 @@ function BuscaWorkspace() {
           ? { ...tab, count, title: tabTitle }
           : tab
       )));
+      if (historyState?.saveHistory) {
+        historyState.saveHistory({
+          title: tabTitle,
+          query: q,
+          config: form,
+          filters: normalizedFilters,
+          request: normalized.request || response.request || {},
+          preprocessing: normalized.preprocessing || response.preprocessing || {},
+          results: response.results || [],
+        });
+      }
       return normalized;
     }).catch((error) => {
       const message = String(error);
@@ -1942,6 +1957,111 @@ function BuscaWorkspace() {
     });
   };
 
+  const openHistoryDetail = (historyItem) => {
+    const promptId = historyItem?.promptId || historyItem?.id;
+    if (!promptId) {
+      return Promise.resolve({ error: "Item do historico nao encontrado." });
+    }
+
+    const sourceTabId = `history-${hashString(promptId)}`;
+    const title = historyItem?.title || historyItem?.query || "Historico";
+
+    setTabs((prev) => {
+      const hasSource = prev.some((tab) => tab.id === sourceTabId);
+      return hasSource
+        ? prev.map((tab) => (
+            tab.id === sourceTabId
+              ? { ...tab, title, count: historyItem?.resultCount ?? historyItem?.hits ?? tab.count }
+              : tab
+          ))
+        : [
+            ...prev,
+            createSearchTab(sourceTabId, {
+              title,
+              tone: "blue",
+              source: "historico",
+              count: historyItem?.resultCount ?? historyItem?.hits ?? null,
+              closable: true,
+            }),
+          ];
+    });
+    setSearchTabs((prev) => ({
+      ...prev,
+      [sourceTabId]: createSearchTabState({
+        query: historyItem?.query || historyItem?.text || "",
+        loading: true,
+        error: "",
+        count: null,
+        results: null,
+        localSort: null,
+        viewMode: "table",
+        mapMetric: "similarity",
+        config: normalizeSearchFormState(historyItem?.config || { query: historyItem?.query || "" }),
+        filters: normalizeSearchFiltersState(historyItem?.filters || historyItem?.config?.uiFilters || {}),
+      }),
+    }));
+    setActiveTab(sourceTabId);
+
+    const loader = historyState?.loadHistoryDetail || window.GovGoUserApi?.loadHistoryDetail;
+    if (!loader) {
+      setSearchTabs((prev) => ({
+        ...prev,
+        [sourceTabId]: {
+          ...(prev[sourceTabId] || createSearchTabState()),
+          loading: false,
+          error: "API de historico indisponivel.",
+          results: [],
+          count: 0,
+        },
+      }));
+      return Promise.resolve({ error: "API de historico indisponivel." });
+    }
+
+    return loader(promptId).then((payload) => {
+      const response = payload?.response || { results: payload?.results || [], result_count: (payload?.results || []).length };
+      const normalized = window.GovGoSearchUiAdapter
+        ? window.GovGoSearchUiAdapter.normalizeResponse(response)
+        : { results: response.results || [], error: response.error };
+      const editais = toEditaisShape(normalized.results || []);
+      const count = editais.length;
+      setSearchTabs((prev) => ({
+        ...prev,
+        [sourceTabId]: {
+          ...(prev[sourceTabId] || createSearchTabState()),
+          query: payload?.history?.query || historyItem?.query || historyItem?.text || "",
+          loading: false,
+          error: normalized.error || "",
+          results: editais.map(normalizePersistedEditalResult),
+          count,
+          localSort: null,
+          viewMode: "table",
+          mapMetric: "similarity",
+          config: normalizeSearchFormState(payload?.history?.config || historyItem?.config || {}),
+          filters: normalizeSearchFiltersState(payload?.history?.filters || historyItem?.filters || historyItem?.config?.uiFilters || {}),
+        },
+      }));
+      setTabs((prev) => prev.map((tab) => (
+        tab.id === sourceTabId
+          ? { ...tab, count, title: payload?.history?.title || title }
+          : tab
+      )));
+      return payload;
+    }).catch((error) => {
+      const message = error.message || String(error);
+      setSearchTabs((prev) => ({
+        ...prev,
+        [sourceTabId]: {
+          ...(prev[sourceTabId] || createSearchTabState()),
+          loading: false,
+          error: message,
+          results: [],
+          count: 0,
+        },
+      }));
+      return { error: message };
+    });
+  };
+
   uEf(() => {
     const pendingFavorite = window.GovGoSearchUiAdapter?.consumePendingFavorite
       ? window.GovGoSearchUiAdapter.consumePendingFavorite()
@@ -1955,6 +2075,22 @@ function BuscaWorkspace() {
     window._govgoOpenFavorite = (favorite) => openFavoriteDetail(favorite);
     return () => {
       window._govgoOpenFavorite = null;
+    };
+  });
+
+  uEf(() => {
+    const pendingHistory = window.GovGoSearchUiAdapter?.consumePendingHistory
+      ? window.GovGoSearchUiAdapter.consumePendingHistory()
+      : null;
+    if (pendingHistory) {
+      openHistoryDetail(pendingHistory);
+    }
+  }, []);
+
+  uEf(() => {
+    window._govgoOpenHistory = (historyItem) => openHistoryDetail(historyItem);
+    return () => {
+      window._govgoOpenHistory = null;
     };
   });
 

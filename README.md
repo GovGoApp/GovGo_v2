@@ -27,7 +27,7 @@ Na pratica, o projeto esta organizado em quatro camadas:
 1. `design/`: fonte canonica de linguagem visual, layout, tokens e componentes-base;
 2. `src/`: aplicacao real do v2, incluindo shell, router, pages, services e backend local;
 3. `homologation/`: laboratorios para validar modulos reaproveitados antes de acopla-los de vez a UI;
-4. `v1` externo ao repositorio: base legada que continua sendo referencia de pipelines, busca, documentos, jobs e schema historico.
+4. `v1` externo ao repositorio: base legada que continua sendo referencia de pipelines, busca, documentos, jobs, schema historico, Modo Empresa (`gvg_select`) e Modo Relatorio (`gvg_report`).
 
 O estado atual e hibrido de forma intencional:
 
@@ -75,6 +75,7 @@ A estrategia oficial nao e migrar a interface Dash do v1. A estrategia e reaprov
 
 Documentos principais:
 
+- [docs/ROADMAP_COMPLETO_V2_POS_DESIGN_E_V1.md](docs/ROADMAP_COMPLETO_V2_POS_DESIGN_E_V1.md)
 - [docs/ESTRATEGIA_V1_NO_V2.md](docs/ESTRATEGIA_V1_NO_V2.md)
 - [docs/PLANO_MESTRE_V1_V2.md](docs/PLANO_MESTRE_V1_V2.md)
 - [docs/MATRIZ_V1_V2.md](docs/MATRIZ_V1_V2.md)
@@ -107,6 +108,8 @@ No momento desta versao do README, o quadro e:
 - a aplicacao local principal roda em `http://127.0.0.1:8765/src/app/boot/index.html#/inicio`;
 - `run.py` serve os arquivos estaticos e os endpoints locais da aplicacao;
 - a tela `Busca` esta funcional com busca real, configuracao real, filtros reais, persistencia local e dois modos de visualizacao dos resultados (`Tabela` e `Mapa`);
+- a camada real de usuario ja foi iniciada: auth/login/signup, sessao via cookies HttpOnly e favoritos reais em `public.user_bookmarks` ja foram ligados ao Supabase;
+- favoritos reais ja aparecem na rail, na Home e no workspace de Busca, com bookmark vazio/preenchido, abertura em aba e detalhe hidratado por PNCP;
 - o detalhe do edital esta funcional com:
   - cabecalho real;
   - itens reais;
@@ -114,10 +117,12 @@ No momento desta versao do README, o quadro e:
   - markdown de documento;
   - resumo consolidado dos documentos;
 - o modo visual derivado de `design/` hoje esta nomeado como `mode_busca` / `mode_busca_detail`, substituindo o nome antigo `mode_oportunidades` e mantendo compatibilidade de runtime durante a transicao;
-- `Empresas`, `Radar`, `Relatorios` e `Design System` ainda estao majoritariamente em modo wrapper sobre componentes vindos de `design/`;
+- o nome oficial do antigo bloco de empresas e **Modo Empresa**, no singular, e sua base real no v1 e `v1/search/gvg_select`;
+- o nome oficial do antigo bloco de relatorios e **Modo Relatorio**, no singular, e sua base real no v1 e `v1/db/reports/GvG_SU_Report_v3.py`;
+- Modo Empresa, Radar, Modo Relatorio e Design System ainda estao majoritariamente em modo wrapper sobre componentes vindos de `design/`;
 - parte da UI ainda e carregada diretamente de `design/govgo/*.jsx`;
-- a plataforma de usuario do v1 (auth, favoritos, historico, boletins, billing e artefatos pessoais) ainda nao foi trazida de forma real para o v2; hoje ela aparece majoritariamente como placeholder visual no shell;
-- a migracao completa dessas partes para `src/` continua sendo uma prioridade estrutural.
+- historico, boletins, billing/limites e artefatos pessoais ainda precisam ser trazidos de forma real do v1 para o v2;
+- o roadmap operacional atualizado esta em [docs/ROADMAP_COMPLETO_V2_POS_DESIGN_E_V1.md](docs/ROADMAP_COMPLETO_V2_POS_DESIGN_E_V1.md).
 
 ---
 
@@ -176,9 +181,9 @@ As rotas estao definidas em [src/app/router/routes.jsx](src/app/router/routes.js
 | `#/inicio` | Inicio | wrapper real sobre `ModeHome` vindo de `design/` |
 | `#/busca` | Busca | tela mais madura do v2; workspace real |
 | `#/busca/detalhe/:id` | Detalhe do edital | fluxo real/hibrido com dados reais |
-| `#/empresas` | Empresas | wrapper sobre `ModeFornecedores` |
+| `#/empresas` | Modo Empresa | wrapper sobre `ModeFornecedores`; destino real e `gvg_select` |
 | `#/radar` | Radar | wrapper sobre `ModeMercado` |
-| `#/relatorios` | Relatorios | wrapper sobre `ModeRelatorios` |
+| `#/relatorios` | Modo Relatorio | wrapper sobre `ModeRelatorios`; destino real e `gvg_report` |
 | `#/design-system` | Design System | wrapper sobre `ModeDesignSystem` |
 
 ### 5.2 Mapeamento com modos legados
@@ -748,26 +753,28 @@ As funcionalidades de documento atualmente integradas no detalhe do edital reapr
 Se alguem chegar do zero no projeto, a ordem recomendada e:
 
 1. [docs/DIARIO_DE_BORDO.md](docs/DIARIO_DE_BORDO.md)
-2. [docs/PLANO_MESTRE_V1_V2.md](docs/PLANO_MESTRE_V1_V2.md)
-3. [docs/MATRIZ_V1_V2.md](docs/MATRIZ_V1_V2.md)
-4. [docs/ESTRATEGIA_V1_NO_V2.md](docs/ESTRATEGIA_V1_NO_V2.md)
-5. [docs/CONVENCAO_ARQUITETURA_FRONTEND.md](docs/CONVENCAO_ARQUITETURA_FRONTEND.md)
-6. [docs/ESTRUTURA_FRONTEND_V2.md](docs/ESTRUTURA_FRONTEND_V2.md)
-7. [docs/MAPA_TOKENS_RECIPES_V2.md](docs/MAPA_TOKENS_RECIPES_V2.md)
-8. [docs/CHECKLIST_IMPLEMENTACAO_FRONTEND.md](docs/CHECKLIST_IMPLEMENTACAO_FRONTEND.md)
-9. [docs/CRITERIOS_REVISAO_VISUAL.md](docs/CRITERIOS_REVISAO_VISUAL.md)
-10. [docs/DEFINICAO_DE_PRONTO_POR_TELA.md](docs/DEFINICAO_DE_PRONTO_POR_TELA.md)
-11. [docs/ANALISE_BASE_SUPABASE.md](docs/ANALISE_BASE_SUPABASE.md)
-12. [docs/ANALISE_PIPELINE_BOLETIM_V1.md](docs/ANALISE_PIPELINE_BOLETIM_V1.md)
-13. [docs/ANALISE_CAMPOS_BOLETIM_V1.md](docs/ANALISE_CAMPOS_BOLETIM_V1.md)
-14. [docs/MATRIZ_SIMILARIDADE_V1_V2.md](docs/MATRIZ_SIMILARIDADE_V1_V2.md)
-15. [docs/ESTUDO_PLATAFORMA_USUARIO_V1_V2.md](docs/ESTUDO_PLATAFORMA_USUARIO_V1_V2.md)
+2. [docs/ROADMAP_COMPLETO_V2_POS_DESIGN_E_V1.md](docs/ROADMAP_COMPLETO_V2_POS_DESIGN_E_V1.md)
+3. [docs/PLANO_MESTRE_V1_V2.md](docs/PLANO_MESTRE_V1_V2.md)
+4. [docs/MATRIZ_V1_V2.md](docs/MATRIZ_V1_V2.md)
+5. [docs/ESTRATEGIA_V1_NO_V2.md](docs/ESTRATEGIA_V1_NO_V2.md)
+6. [docs/CONVENCAO_ARQUITETURA_FRONTEND.md](docs/CONVENCAO_ARQUITETURA_FRONTEND.md)
+7. [docs/ESTRUTURA_FRONTEND_V2.md](docs/ESTRUTURA_FRONTEND_V2.md)
+8. [docs/MAPA_TOKENS_RECIPES_V2.md](docs/MAPA_TOKENS_RECIPES_V2.md)
+9. [docs/CHECKLIST_IMPLEMENTACAO_FRONTEND.md](docs/CHECKLIST_IMPLEMENTACAO_FRONTEND.md)
+10. [docs/CRITERIOS_REVISAO_VISUAL.md](docs/CRITERIOS_REVISAO_VISUAL.md)
+11. [docs/DEFINICAO_DE_PRONTO_POR_TELA.md](docs/DEFINICAO_DE_PRONTO_POR_TELA.md)
+12. [docs/ANALISE_BASE_SUPABASE.md](docs/ANALISE_BASE_SUPABASE.md)
+13. [docs/ANALISE_PIPELINE_BOLETIM_V1.md](docs/ANALISE_PIPELINE_BOLETIM_V1.md)
+14. [docs/ANALISE_CAMPOS_BOLETIM_V1.md](docs/ANALISE_CAMPOS_BOLETIM_V1.md)
+15. [docs/MATRIZ_SIMILARIDADE_V1_V2.md](docs/MATRIZ_SIMILARIDADE_V1_V2.md)
+16. [docs/ESTUDO_PLATAFORMA_USUARIO_V1_V2.md](docs/ESTUDO_PLATAFORMA_USUARIO_V1_V2.md)
 
 ### 16.2 O que cada documento cobre
 
 | Documento | Papel |
 | --- | --- |
 | `DIARIO_DE_BORDO.md` | estado vivo do projeto e proximo passo oficial |
+| `ROADMAP_COMPLETO_V2_POS_DESIGN_E_V1.md` | roadmap atualizado pos-design: Modo Empresa via `gvg_select`, Modo Relatorio via `gvg_report`, Inicio e Radar |
 | `PLANO_MESTRE_V1_V2.md` | estrategia global de transicao v1 -> v2 |
 | `MATRIZ_V1_V2.md` | mapa funcional entre o que existe no v1 e o que deve existir no v2 |
 | `ESTRATEGIA_V1_NO_V2.md` | como tratar o v1 como backend/servico e nao como UI |
@@ -833,14 +840,24 @@ Isso impacta filtros, ordenacoes, casting e manutencao.
 
 ## 18. Roadmap tecnico imediato
 
-As prioridades tecnicas mais naturais hoje sao:
+O roadmap operacional atualizado esta em [docs/ROADMAP_COMPLETO_V2_POS_DESIGN_E_V1.md](docs/ROADMAP_COMPLETO_V2_POS_DESIGN_E_V1.md).
 
-1. estabilizar a UX da aba `Documentos` no detalhe do edital;
-2. reduzir dependencia de `design/govgo/*.jsx` em runtime;
-3. corrigir os ultimos pontos de encoding em componentes ainda herdados;
-4. fortalecer logs e estados de erro;
-5. consolidar a internalizacao progressiva da UI de busca e detalhe em `src/`;
-6. continuar a documentacao tecnica da base, pipelines e fluxos reais.
+A ordem pratica atual e:
+
+1. terminar a Plataforma de usuario: historico, boletins e artefatos por usuario;
+2. estabilizar Busca como dependencia central, mantendo mapa, tabela, favoritos e detalhe sem regressao;
+3. implantar o **Modo Empresa** a partir de `v1/search/gvg_select`;
+4. implantar o **Modo Relatorio** a partir de `v1/db/reports/GvG_SU_Report_v3.py`, com validador SQL read-only;
+5. transformar Inicio em painel real, consumindo favoritos, historico, boletins, relatorios e empresas recentes;
+6. construir Radar como expansao v2 sustentada pelos dados do v1;
+7. endurecer producao com observabilidade, limites, cache, runbooks e testes e2e.
+
+Ainda permanecem como debitos tecnicos transversais:
+
+- reduzir dependencia de `design/govgo/*.jsx` em runtime;
+- corrigir qualquer ponto residual de encoding;
+- fortalecer logs e estados de erro;
+- consolidar a internalizacao progressiva da UI em `src/`.
 
 Consulte sempre o [docs/DIARIO_DE_BORDO.md](docs/DIARIO_DE_BORDO.md) para o estado mais atual.
 
@@ -851,10 +868,11 @@ Consulte sempre o [docs/DIARIO_DE_BORDO.md](docs/DIARIO_DE_BORDO.md) para o esta
 Se voce vai mexer no projeto pela primeira vez:
 
 1. leia [docs/DIARIO_DE_BORDO.md](docs/DIARIO_DE_BORDO.md);
-2. leia [docs/PLANO_MESTRE_V1_V2.md](docs/PLANO_MESTRE_V1_V2.md);
-3. rode `python .\run.py`;
-4. navegue em `#/busca` e `#/busca/detalhe/:id`;
-5. leia:
+2. leia [docs/ROADMAP_COMPLETO_V2_POS_DESIGN_E_V1.md](docs/ROADMAP_COMPLETO_V2_POS_DESIGN_E_V1.md);
+3. leia [docs/PLANO_MESTRE_V1_V2.md](docs/PLANO_MESTRE_V1_V2.md);
+4. rode `python .\run.py`;
+5. navegue em `#/busca` e `#/busca/detalhe/:id`;
+6. leia:
    - [src/app/boot/index.html](src/app/boot/index.html)
    - [src/app/router/routes.jsx](src/app/router/routes.jsx)
    - [src/app/shell/AppShell.jsx](src/app/shell/AppShell.jsx)
@@ -862,8 +880,8 @@ Se voce vai mexer no projeto pela primeira vez:
    - [src/services/api/searchApi.jsx](src/services/api/searchApi.jsx)
    - [src/backend/search/api/service.py](src/backend/search/api/service.py)
    - [src/backend/search/core/adapter.py](src/backend/search/core/adapter.py)
-6. depois leia [docs/ANALISE_BASE_SUPABASE.md](docs/ANALISE_BASE_SUPABASE.md);
-7. se o assunto envolver boletins, leia tambem:
+7. depois leia [docs/ANALISE_BASE_SUPABASE.md](docs/ANALISE_BASE_SUPABASE.md);
+8. se o assunto envolver boletins, leia tambem:
    - [docs/ANALISE_PIPELINE_BOLETIM_V1.md](docs/ANALISE_PIPELINE_BOLETIM_V1.md)
    - [docs/ANALISE_CAMPOS_BOLETIM_V1.md](docs/ANALISE_CAMPOS_BOLETIM_V1.md)
 
@@ -888,6 +906,7 @@ Se voce vai mexer no projeto pela primeira vez:
 ### Documentos estruturais mais importantes
 
 - [docs/DIARIO_DE_BORDO.md](docs/DIARIO_DE_BORDO.md)
+- [docs/ROADMAP_COMPLETO_V2_POS_DESIGN_E_V1.md](docs/ROADMAP_COMPLETO_V2_POS_DESIGN_E_V1.md)
 - [docs/PLANO_MESTRE_V1_V2.md](docs/PLANO_MESTRE_V1_V2.md)
 - [docs/MATRIZ_V1_V2.md](docs/MATRIZ_V1_V2.md)
 - [docs/ESTRATEGIA_V1_NO_V2.md](docs/ESTRATEGIA_V1_NO_V2.md)
@@ -906,6 +925,10 @@ Se voce leu ate aqui, a ideia central do projeto e:
 - `run.py` e o entrypoint local;
 - `Busca` e o fluxo mais avancado do v2 hoje;
 - `Detalhe do edital` ja trabalha com itens, documentos, markdown e resumo real;
+- auth e favoritos reais ja estao em implantacao no v2;
+- Modo Empresa vem do `gvg_select`;
+- Modo Relatorio vem do `gvg_report`;
+- Radar e expansao v2 sobre dados do v1, nao migracao direta;
 - o legado do v1 continua essencial, mas como backend, pipeline e runtime, nao como UI final;
 - `/docs` e parte do produto de engenharia, nao acessorio.
 
@@ -913,5 +936,6 @@ Este README deve ser tratado como guia principal de onboarding tecnico do GovGo 
 Quando houver conflito entre este arquivo e o estado vivo do projeto, a prioridade de consulta deve ser:
 
 1. [docs/DIARIO_DE_BORDO.md](docs/DIARIO_DE_BORDO.md)
-2. o codigo em `src/`, `design/`, `run.py` e `src/backend/search/`
-3. os documentos de estrategia e analise em `/docs`
+2. [docs/ROADMAP_COMPLETO_V2_POS_DESIGN_E_V1.md](docs/ROADMAP_COMPLETO_V2_POS_DESIGN_E_V1.md)
+3. o codigo em `src/`, `design/`, `run.py` e `src/backend/search/`
+4. os documentos de estrategia e analise em `/docs`

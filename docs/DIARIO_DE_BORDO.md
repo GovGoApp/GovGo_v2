@@ -37,7 +37,7 @@ Este documento deve ser atualizado sempre que houver novidade relevante, especia
 
 ### Data da ultima consolidacao
 
-2026-04-24
+2026-04-29
 
 ### Documento principal do projeto
 
@@ -510,3 +510,23 @@ A partir de 2026-04-24, o registro do diario deve ser separado por data dentro d
 - foi criado `docs/ROADMAP_COMPLETO_V2_POS_DESIGN_E_V1.md`, consolidando o roadmap atualizado que separa migracao fiel do v1, traducao visual do design e expansoes reais da v2.
 - os documentos `docs/MATRIZ_V1_V2.md`, `docs/ESTRATEGIA_V1_NO_V2.md` e `docs/PLANO_MESTRE_V1_V2.md` foram ajustados para trocar a origem generica de empresas por `gvg_select` e para registrar a nomenclatura oficial Modo Empresa e Modo Relatorio.
 - ficou registrado como risco especifico do Modo Empresa a divergencia entre `public.so_prompt` no schema exportado e `sommelier.prompt` citado pelo README/codigo recente do `gvg_select`, exigindo confirmacao no banco ativo antes da implantacao.
+- o `README.md` foi atualizado para refletir as decisoes do dia: roadmap novo como documento estrutural, Modo Empresa vindo de `gvg_select`, Modo Relatorio vindo de `gvg_report`, auth/favoritos ja implantados parcialmente e nova ordem pratica de proximos passos.
+- as telas de login/criar conta foram realinhadas ao design system v2: `AuthPage` passou a usar `gg-card`, `gg-input`, `gg-btn` e `gg-iconbtn`, ganhou controle segmentado `Entrar/Criar conta` e manteve intactos o fluxo Supabase e os logos diurno/noturno.
+- a janela de login/criar conta foi simplificada conforme o mock enviado: logo GovGo grande e central, seletor `Entrar/Criar conta`, campos diretos, botao principal unico, sem rodape de status e sem cabecalho textual nos dois modos principais.
+- a autenticacao passou a usar uma unica moldura visual para `Entrar` e `Criar conta`: foram removidas as excecoes de largura, padding e tamanho de logo do modo cadastro, deixando apenas o formulario abaixo do toggle variar.
+- a implantacao real de Historico foi iniciada e ligada as tabelas v1 `public.user_prompts` e `public.user_results`, preservando a ideia original do v1: salvar prompt/configuracao da busca e guardar os PNCPs retornados para reabrir a consulta depois.
+- foram criados endpoints autenticados de Historico: `GET /api/user/history`, `POST /api/user/history`, `GET /api/user/history-detail?prompt_id=...` e `DELETE /api/user/history/:id`, todos usando a sessao Supabase via cookie.
+- o backend de Historico passou a adaptar dinamicamente o schema ativo de `user_prompts`, incluindo `filters`, `preproc_output`, `active`, parametros de busca, limite, ordenacao, relevancia e tipo/abordagem da consulta.
+- foi criado `src/app/providers/HistoryProvider.jsx`, carregando historico apos login, limpando no logout, expondo `loadHistory`, `saveHistory`, `removeHistory` e `loadHistoryDetail`, com retry curto para falhas transitorias de rede.
+- `src/services/api/userApi.jsx` passou a expor as chamadas de Historico, e o boot do app passou a carregar `HistoryProvider` junto de Auth e Favoritos.
+- a Busca passou a salvar historico ao final de uma busca bem-sucedida sem bloquear a UI; em caso de falha no salvamento, a busca continua funcionando.
+- itens de Historico na SearchRail, no ActivityRail e na Home agora usam dados reais quando ha sessao, mostram estados de anonimo/loading/vazio/erro e abrem uma aba de Busca com icone de historico.
+- a abertura de item historico reutiliza a area de resultados da Busca: carrega `user_results`, hidrata os editais em `public.contratacao`, normaliza pelo adapter existente e renderiza tabela/detalhe no mesmo fluxo visual da busca.
+- foi adicionado suporte a Historico pendente em `GovGoSearchUiAdapter`, permitindo clicar em historico fora da tela de Busca e abrir a aba correta ao entrar no workspace.
+- validacao tecnica confirmou `py_compile` limpo para `run.py` e `src/backend/user/api/service.py`, endpoints de Historico retornando `401` sem sessao, schema ativo de `user_prompts`/`user_results` acessivel, e `git diff --check` sem erros.
+- foi identificado um servidor antigo ainda escutando na porta `8765`, respondendo `404` para `/api/user/history`; para testar a frente nova no navegador, o servidor `python .\run.py` precisa ser reiniciado para carregar as novas rotas.
+- apos confirmacao de que o Historico estava funcionando mas o mapa da aba historica ficava cinza, foi identificado que a reidratacao do Historico buscava `user_results -> contratacao`, mas nao enriquecia os resultados com `lat/lon` de `public.municipios` como a busca normal faz.
+- o endpoint `GET /api/user/history-detail` passou a fazer `LEFT JOIN public.municipios` pelo `unidade_orgao_codigo_ibge`, retornando `latitude`, `longitude`, `municipality_code` e tambem `details.lat/details.lon`, sem alterar `SearchResultsMap` nem a regra geral de coordenadas do mapa.
+- validacao somente leitura em historico real confirmou 11 resultados reabertos e 11 resultados com coordenadas top-level e em `details`, usando amostra de Curitiba/PR `(-25.432956, -49.2718478851)`.
+- a renovacao automatica de sessao foi implantada no backend de usuario: `/api/auth/me` e todas as rotas `/api/user/*` agora tentam validar o `access_token`; se ele estiver expirado, usam o `refresh_token` Supabase para obter nova sessao e devolvem novos cookies HttpOnly.
+- a validacao local simulou `access_token` expirado e `refresh_token` valido, confirmando troca para novo access token e retorno de dois cabecalhos `Set-Cookie`; chamadas sem nenhum cookie continuam retornando `401 Sessao nao encontrada.`.

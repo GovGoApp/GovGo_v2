@@ -3,7 +3,9 @@ function ModeHome({onMode}) {
   const go = (m) => onMode && onMode(m);
   const auth = window.useGovGoAuth ? window.useGovGoAuth() : null;
   const favoritesState = window.useGovGoFavorites ? window.useGovGoFavorites() : null;
+  const historyState = window.useGovGoHistory ? window.useGovGoHistory() : null;
   const favoritos = favoritesState?.favorites || [];
+  const historyItems = historyState?.history || [];
   const favoriteCountLabel = favoritesState?.status === "loading" ? "..." : String(favoritos.length);
   const favoriteDelta = favoritesState?.status === "loading" ? "carregando" : "ativos";
 
@@ -15,6 +17,14 @@ function ModeHome({onMode}) {
   const openFavorite = (favorite) => {
     if (typeof openFavoriteInBusca === "function") {
       openFavoriteInBusca(favorite, (routeKey) => go(routeKey));
+      return;
+    }
+    go("busca");
+  };
+
+  const openHistory = (historyItem) => {
+    if (typeof openHistoryInBusca === "function") {
+      openHistoryInBusca(historyItem, (routeKey) => go(routeKey));
       return;
     }
     go("busca");
@@ -58,7 +68,7 @@ function ModeHome({onMode}) {
     { label: "Valor pipeline estimado",    value: "R$ 86,4 mi", delta: "+8,2%", tone: "green", icon: <Icon.trend size={14}/> },
   ];
 
-  const recentSearches = DATA.historico || [];
+  const recentSearches = historyState ? historyItems : (DATA.historico || []);
   const recentes = DATA.relatorios || [];
 
   const accentBg = (a) => a === "orange" ? "var(--orange)" : a === "blue" ? "var(--deep-blue)" : a === "green" ? "var(--green)" : "var(--ink-2)";
@@ -278,8 +288,23 @@ function ModeHome({onMode}) {
               <button onClick={() => go("busca")} style={{all: "unset", cursor: "pointer", fontSize: 11.5, color: "var(--deep-blue)", fontWeight: 500}}>Todas</button>
             </div>
             <div>
+              {historyState && auth?.status !== "authenticated" && (
+                <div style={{padding: "16px", fontSize: 12.5, color: "var(--ink-3)"}}>
+                  Entre para carregar suas buscas recentes.
+                </div>
+              )}
+              {historyState && auth?.status === "authenticated" && historyState.status === "loading" && (
+                <div style={{padding: "16px", fontSize: 12.5, color: "var(--ink-3)"}}>
+                  Carregando historico...
+                </div>
+              )}
+              {historyState && auth?.status === "authenticated" && historyState.status !== "loading" && recentSearches.length === 0 && (
+                <div style={{padding: "16px", fontSize: 12.5, color: "var(--ink-3)"}}>
+                  Nenhuma busca recente ainda.
+                </div>
+              )}
               {recentSearches.slice(0, 4).map((h, i) => (
-                <button key={i} onClick={() => go("busca")} style={{
+                <button key={h.promptId || h.id || i} onClick={() => historyState ? openHistory(h) : go("busca")} style={{
                   all: "unset", cursor: "pointer", display: "flex", alignItems: "center",
                   padding: "10px 16px", gap: 10, width: "100%", boxSizing: "border-box",
                   borderTop: i === 0 ? "none" : "1px solid var(--hairline-soft)",
@@ -287,9 +312,9 @@ function ModeHome({onMode}) {
                 onMouseEnter={e => e.currentTarget.style.background = "var(--rail)"}
                 onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                   <Icon.search size={12} style={{color: "var(--ink-3)"}}/>
-                  <span style={{flex: 1, fontSize: 12.5, color: "var(--ink-1)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>{h.q}</span>
-                  <span className="mono" style={{fontSize: 11, color: "var(--ink-3)"}}>{h.hits}</span>
-                  <span style={{fontSize: 11, color: "var(--ink-3)", width: 60, textAlign: "right"}}>{h.when}</span>
+                  <span style={{flex: 1, fontSize: 12.5, color: "var(--ink-1)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>{h.title || h.q || h.query || h.text}</span>
+                  <span className="mono" style={{fontSize: 11, color: "var(--ink-3)"}}>{h.resultCount ?? h.hits ?? 0}</span>
+                  <span style={{fontSize: 11, color: "var(--ink-3)", width: 60, textAlign: "right"}}>{h.when || h.createdAtLabel || ""}</span>
                 </button>
               ))}
             </div>

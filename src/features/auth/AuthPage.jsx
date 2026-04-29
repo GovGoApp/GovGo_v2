@@ -71,9 +71,9 @@
 
   function AuthInput({type = "text", value, onChange, placeholder, autoComplete, action, inputMode}) {
     return (
-      <div className="gg-auth-input-shell">
+      <div className="gg-input gg-auth-input-shell">
         <input
-          className="gg-auth-input"
+          className="gg-input__field gg-auth-input"
           type={type}
           value={value || ""}
           onChange={(event) => onChange(event.target.value)}
@@ -89,7 +89,7 @@
   function AuthField({label, children}) {
     return (
       <label className="gg-auth-field">
-        <span className="gg-auth-label">{label}</span>
+        <span className="gg-label gg-auth-label">{label}</span>
         {children}
       </label>
     );
@@ -99,7 +99,7 @@
     const [theme] = useState(readTheme);
     return (
       <div className="gg-auth-loading">
-        <div className="gg-auth-loading-card">
+        <div className="gg-card gg-auth-loading-card">
           <img
             className="gg-auth-loading-logo"
             src={theme === "dark" ? LOGO_DARK_URL : LOGO_LIGHT_URL}
@@ -152,6 +152,7 @@
     const isConfirm = mode === "confirm";
     const isForgot = mode === "forgot";
     const isReset = mode === "reset";
+    const isAuthChoice = mode === "signin" || isSignup;
     const title = isSignup
       ? "Criar sua conta"
       : isConfirm
@@ -265,7 +266,7 @@
       <div className="gg-auth-page" data-screen-label={`GovGo v2 - ${title}`}>
         <div className="gg-auth-top">
           <button
-            className="gg-auth-theme"
+            className="gg-iconbtn gg-auth-theme"
             type="button"
             onClick={toggleTheme}
             title={theme === "dark" ? "Modo claro" : "Modo escuro"}
@@ -275,20 +276,49 @@
         </div>
 
         <div className="gg-auth-center">
-          <section className="gg-auth-card" aria-label={title}>
-            <div className="gg-auth-logo-row">
-              <img className="gg-auth-logo" src={logoUrl} alt="GovGo" />
-              {mode !== "signin" && (
-                <button className="gg-auth-back" type="button" onClick={() => switchMode("signin")}>
-                  <Icon.chevLeft size={14}/> Voltar
-                </button>
+          <section className={`gg-card gg-auth-card ${isAuthChoice ? "is-auth-choice" : "is-secondary-mode"}`} aria-label={title}>
+            <div className="gg-auth-card__body">
+              <div className="gg-auth-logo-row">
+                <img className="gg-auth-logo" src={logoUrl} alt="GovGo" />
+                {!isAuthChoice && (
+                  <button className="gg-btn gg-btn--ghost gg-btn--sm gg-auth-back" type="button" onClick={() => switchMode("signin")}>
+                    <Icon.chevLeft size={14}/> Voltar
+                  </button>
+                )}
+              </div>
+
+              {!isAuthChoice && (
+                <div className="gg-auth-heading">
+                  <span className="gg-eyebrow gg-auth-kicker">Conta GovGo</span>
+                  <h1 className="gg-auth-title">{title}</h1>
+                  <p className="gg-auth-subtitle">{subtitle}</p>
+                </div>
               )}
-            </div>
 
-            <h1 className="gg-auth-title">{title}</h1>
-            <p className="gg-auth-subtitle">{subtitle}</p>
+              {isAuthChoice && (
+                <div className="gg-auth-mode-switch" role="tablist" aria-label="Acesso GovGo">
+                  <button
+                    className={`gg-auth-mode-option ${mode === "signin" ? "is-active" : ""}`}
+                    type="button"
+                    role="tab"
+                    aria-selected={mode === "signin"}
+                    onClick={() => switchMode("signin")}
+                  >
+                    Entrar
+                  </button>
+                  <button
+                    className={`gg-auth-mode-option ${isSignup ? "is-active" : ""}`}
+                    type="button"
+                    role="tab"
+                    aria-selected={isSignup}
+                    onClick={() => switchMode("signup")}
+                  >
+                    Criar conta
+                  </button>
+                </div>
+              )}
 
-            <form className="gg-auth-form" onSubmit={handleSubmit}>
+              <form className="gg-auth-form" onSubmit={handleSubmit}>
               {isSignup && (
                 <div className="gg-auth-grid">
                   <AuthField label="Nome">
@@ -344,7 +374,7 @@
                     autoComplete={isSignup ? "new-password" : "current-password"}
                     action={
                       <button
-                        className="gg-auth-inline-button"
+                        className="gg-btn gg-btn--ghost gg-btn--sm gg-auth-inline-button"
                         type="button"
                         onClick={() => setShowPassword((current) => !current)}
                       >
@@ -376,7 +406,7 @@
                     autoComplete="new-password"
                     action={
                       <button
-                        className="gg-auth-inline-button"
+                        className="gg-btn gg-btn--ghost gg-btn--sm gg-auth-inline-button"
                         type="button"
                         onClick={() => setShowPassword((current) => !current)}
                       >
@@ -397,7 +427,7 @@
                     />
                     Lembrar email neste navegador
                   </label>
-                  <button className="gg-auth-link" type="button" onClick={() => switchMode("forgot")}>
+                  <button className="gg-btn gg-btn--ghost gg-btn--sm gg-auth-link" type="button" onClick={() => switchMode("forgot")}>
                     Esqueci minha senha
                   </button>
                 </div>
@@ -407,24 +437,14 @@
               {error && <div className="gg-auth-message gg-auth-message--error">{error}</div>}
 
               <div className="gg-auth-actions">
-                <button className="gg-auth-button gg-auth-button--primary" type="submit" disabled={busy || !canSubmit}>
+                <button className="gg-btn gg-btn--primary gg-btn--lg gg-auth-submit" type="submit" disabled={busy || !canSubmit}>
                   {busy ? "Aguarde..." : title}
                 </button>
-                {mode === "signin" && (
-                  <button className="gg-auth-button gg-auth-button--outline" type="button" onClick={() => switchMode("signup")}>
-                    Cadastrar
-                  </button>
-                )}
               </div>
-            </form>
+              </form>
+            </div>
           </section>
         </div>
-
-        <footer className="gg-auth-footer">
-          <span>2026 GovGo v2</span>
-          <span>Suporte</span>
-          <span>Status</span>
-        </footer>
       </div>
     );
   }
