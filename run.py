@@ -43,6 +43,33 @@ USER_GET_ROUTES = {
 }
 USER_POST_ROUTES = {"/api/user/favorites", "/api/user/history"}
 USER_DELETE_PREFIXES = ("/api/user/favorites/", "/api/user/history/")
+REPORT_GET_ROUTES = {"/api/reports/history", "/api/reports/workspace"}
+REPORT_GET_PREFIXES = ("/api/reports/history/",)
+REPORT_POST_ROUTES = {
+    "/api/reports/run",
+    "/api/reports/generate-sql",
+    "/api/reports/execute",
+    "/api/reports/save",
+    "/api/reports/workspace",
+}
+REPORT_DELETE_PREFIXES = ("/api/reports/history/", "/api/reports/chats/")
+
+
+def _is_report_export_route(route: str) -> bool:
+    return route.startswith("/api/reports/") and route.endswith("/export")
+
+
+def _report_export_id(route: str) -> str:
+    if not _is_report_export_route(route):
+        return ""
+    return unquote(route[len("/api/reports/"):-len("/export")].strip("/"))
+
+
+def _report_history_id(route: str) -> str:
+    prefix = "/api/reports/history/"
+    if not route.startswith(prefix):
+        return ""
+    return unquote(route[len(prefix):].strip("/"))
 
 
 def _json_default(value):
@@ -111,7 +138,7 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
 
     def do_OPTIONS(self) -> None:
         route = urlsplit(self.path).path
-        if route not in (AUTH_GET_ROUTES | AUTH_POST_ROUTES | USER_GET_ROUTES | USER_POST_ROUTES | {
+        if route not in (AUTH_GET_ROUTES | AUTH_POST_ROUTES | USER_GET_ROUTES | USER_POST_ROUTES | REPORT_GET_ROUTES | REPORT_POST_ROUTES | {
             "/api/search",
             "/api/search-config",
             "/api/search-filters",
@@ -120,7 +147,7 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
             "/api/edital-documentos",
             "/api/edital-document-view",
             "/api/edital-documents-summary",
-        }) and not any(route.startswith(prefix) for prefix in USER_DELETE_PREFIXES):
+        }) and not any(route.startswith(prefix) for prefix in USER_DELETE_PREFIXES + REPORT_DELETE_PREFIXES + REPORT_GET_PREFIXES) and not _is_report_export_route(route):
             self.send_error(404, "Endpoint nao encontrado.")
             return
 
@@ -169,6 +196,28 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
             self._write_json(status_code, response, headers)
             return
 
+        if route in REPORT_GET_ROUTES or _is_report_export_route(route) or any(route.startswith(prefix) for prefix in REPORT_GET_PREFIXES):
+            try:
+                from src.backend.reports.api.service import ReportsApiError, handle_reports_route
+                from src.backend.user.api.service import AuthApiError
+
+                status_code, response, headers = handle_reports_route(
+                    route,
+                    "GET",
+                    payload=self._read_query_params(),
+                    cookies=self._read_cookies(),
+                    path_value=_report_export_id(route) or _report_history_id(route),
+                )
+            except (AuthApiError, ReportsApiError) as exc:
+                self._write_json(exc.status_code, {"ok": False, "error": exc.message})
+                return
+            except Exception as exc:
+                self._write_json(500, {"ok": False, "error": str(exc)})
+                return
+
+            self._write_json(status_code, response, headers)
+            return
+
         if route not in {"/api/search-config", "/api/search-filters"}:
             super().do_GET()
             return
@@ -188,7 +237,7 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
 
     def do_POST(self) -> None:
         route = urlsplit(self.path).path
-        if route not in (AUTH_POST_ROUTES | USER_POST_ROUTES | {
+        if route not in (AUTH_POST_ROUTES | USER_POST_ROUTES | REPORT_POST_ROUTES | {
             "/api/search",
             "/api/search-config",
             "/api/search-filters",
@@ -247,6 +296,27 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
             self._write_json(status_code, response, headers)
             return
 
+        if route in REPORT_POST_ROUTES:
+            try:
+                from src.backend.reports.api.service import ReportsApiError, handle_reports_route
+                from src.backend.user.api.service import AuthApiError
+
+                status_code, response, headers = handle_reports_route(
+                    route,
+                    "POST",
+                    payload=payload,
+                    cookies=self._read_cookies(),
+                )
+            except (AuthApiError, ReportsApiError) as exc:
+                self._write_json(exc.status_code, {"ok": False, "error": exc.message})
+                return
+            except Exception as exc:
+                self._write_json(500, {"ok": False, "error": str(exc)})
+                return
+
+            self._write_json(status_code, response, headers)
+            return
+
         try:
             from src.backend.search.api.service import (
                 get_edital_documents,
@@ -294,8 +364,34 @@ class QuietStaticHandler(SimpleHTTPRequestHandler):
 
     def do_DELETE(self) -> None:
         route = urlsplit(self.path).path
-        if not any(route.startswith(prefix) for prefix in USER_DELETE_PREFIXES):
+        if not any(route.startswith(prefix) for prefix in USER_DELETE_PREFIXES + REPORT_DELETE_PREFIXES):
             self.send_error(404, "Endpoint nao encontrado.")
+            return
+
+        if any(route.startswith(prefix) for prefix in REPORT_DELETE_PREFIXES):
+            try:
+                from src.backend.reports.api.service import ReportsApiError, handle_reports_route
+                from src.backend.user.api.service import AuthApiError
+
+                path_value = ""
+                for prefix in REPORT_DELETE_PREFIXES:
+                    if route.startswith(prefix):
+                        path_value = unquote(route[len(prefix):])
+                        break
+                status_code, response, headers = handle_reports_route(
+                    route,
+                    "DELETE",
+                    cookies=self._read_cookies(),
+                    path_value=path_value,
+                )
+            except (AuthApiError, ReportsApiError) as exc:
+                self._write_json(exc.status_code, {"ok": False, "error": exc.message})
+                return
+            except Exception as exc:
+                self._write_json(500, {"ok": False, "error": str(exc)})
+                return
+
+            self._write_json(status_code, response, headers)
             return
 
         try:
@@ -406,6 +502,9 @@ def _existing_server_matches_current_api() -> bool:
         return False
     favorite_detail_status = _get_status(f"http://{HOST}:{PORT}/api/user/favorite-detail?pncp_id=healthcheck")
     if favorite_detail_status not in {200, 401, 404}:
+        return False
+    reports_status = _get_status(f"http://{HOST}:{PORT}/api/reports/history")
+    if reports_status not in {200, 401}:
         return False
 
     required_post_urls = [

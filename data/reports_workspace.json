@@ -1,0 +1,1760 @@
+{
+  "37ba3f85-8720-4aa8-800e-4428b2057f5a": {
+    "version": 1,
+    "activeId": "d0baa08e-a56e-4351-adcd-dbea2f043a3c",
+    "historyMode": "saved",
+    "chatOpen": true,
+    "activeChat": {
+      "id": "57e58d3d-498d-48dc-8f77-25087c2aac27",
+      "title": "Dispensas de licitação para alimentação",
+      "messages": [
+        {
+          "id": "abd4716d-1fe9-4c23-8a40-661e10b59b60",
+          "role": "user",
+          "text": "me de as dispensas de licitação para alimentação",
+          "sql": "",
+          "reportId": "",
+          "reportTitle": "",
+          "reportSubtitle": "",
+          "rowCount": 0,
+          "status": "",
+          "error": "",
+          "createdAt": "2026-04-30T23:10:07.512483+00:00"
+        },
+        {
+          "id": "8e9bad42-3e66-4041-a690-0981fcb0f4e3",
+          "role": "assistant",
+          "text": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.modalidade_nome FROM contratacao AS c WHERE c.modalidade_nome ILIKE '%dispensa de licitação%' AND c.objeto_compra ILIKE '%alimentação%' ORDER BY c.data_publicacao_pncp DESC LIMIT 1000",
+          "sql": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.modalidade_nome FROM contratacao AS c WHERE c.modalidade_nome ILIKE '%dispensa de licitação%' AND c.objeto_compra ILIKE '%alimentação%' ORDER BY c.data_publicacao_pncp DESC LIMIT 1000",
+          "reportId": "e12a6d69-f4e9-4bf6-bb24-09b9f38ab00c",
+          "reportTitle": "Dispensas de licitação para alimentação",
+          "reportSubtitle": "Contratações por dispensa de licitação relacionadas à alimentação",
+          "rowCount": 0,
+          "status": "ok",
+          "error": "",
+          "createdAt": "2026-04-30T23:10:07.512483+00:00"
+        },
+        {
+          "id": "f355eb46-faa8-4d57-86c4-900d113e2371",
+          "role": "user",
+          "text": "voce precisa verificar qual codigo e nome equivale a modalidade dispensa antes de fazer o select. faça um select das modalidades em contratacataco",
+          "sql": "",
+          "reportId": "",
+          "reportTitle": "",
+          "reportSubtitle": "",
+          "rowCount": 0,
+          "status": "",
+          "error": "",
+          "createdAt": "2026-04-30T23:11:30.096164+00:00"
+        },
+        {
+          "id": "a32a043b-7dcc-4f9b-a423-41baf8b4244a",
+          "role": "assistant",
+          "text": "SELECT DISTINCT modalidade_id, modalidade_nome FROM contratacao ORDER BY modalidade_nome",
+          "sql": "SELECT DISTINCT modalidade_id, modalidade_nome FROM contratacao ORDER BY modalidade_nome",
+          "reportId": "4c2d145d-707a-44bf-a762-4250f70c6a91",
+          "reportTitle": "Lista de modalidades de contratacao",
+          "reportSubtitle": "Identificacao e nome das modalidades em contratacoes",
+          "rowCount": 14,
+          "status": "ok",
+          "error": "",
+          "createdAt": "2026-04-30T23:11:30.096164+00:00"
+        },
+        {
+          "id": "e11f4a8e-589d-4c1e-9dca-924747d7793b",
+          "role": "user",
+          "text": "modalidade_nome = \"Dispensa\", numero 8",
+          "sql": "",
+          "reportId": "",
+          "reportTitle": "",
+          "reportSubtitle": "",
+          "rowCount": 0,
+          "status": "",
+          "error": "",
+          "createdAt": "2026-04-30T23:12:20.776098+00:00"
+        },
+        {
+          "id": "c35a7af9-66c0-46dd-88ed-99930be394f8",
+          "role": "assistant",
+          "text": "Erro ao executar SQL: operator does not exist: text = integer\nLINE 1: ..._nome FROM contratacao AS c WHERE c.modalidade_id = 8 AND c....\n                                                             ^\nHINT:  No operator matches the given name and argument types. You might need to add explicit type casts.\n",
+          "sql": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.modalidade_nome FROM contratacao AS c WHERE c.modalidade_id = 8 AND c.objeto_compra ILIKE '%alimentação%' ORDER BY c.data_publicacao_pncp DESC LIMIT 1000;",
+          "reportId": "9d23580d-5b88-486c-9974-4e885d1fa920",
+          "reportTitle": "Contratacoes por dispensa em alimentacao",
+          "reportSubtitle": "Relatorio de contratacoes na modalidade 'dispensa' para alimentacao",
+          "rowCount": 0,
+          "status": "error",
+          "error": "Erro ao executar SQL: operator does not exist: text = integer\nLINE 1: ..._nome FROM contratacao AS c WHERE c.modalidade_id = 8 AND c....\n                                                             ^\nHINT:  No operator matches the given name and argument types. You might need to add explicit type casts.\n",
+          "createdAt": "2026-04-30T23:12:20.776098+00:00"
+        },
+        {
+          "id": "f7a258b8-abd9-4e41-bb1f-08a520875b21",
+          "role": "user",
+          "text": "use modalidade_nome Inexigibilidade",
+          "sql": "",
+          "reportId": "",
+          "reportTitle": "",
+          "reportSubtitle": "",
+          "rowCount": 0,
+          "status": "",
+          "error": "",
+          "createdAt": "2026-04-30T23:14:42.545289+00:00"
+        },
+        {
+          "id": "c5ab5ad6-33ec-4de9-9374-33041e9b6271",
+          "role": "assistant",
+          "text": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.modalidade_nome FROM contratacao AS c WHERE c.modalidade_nome ILIKE '%inexigibilidade%' AND c.objeto_compra ILIKE '%alimentação%' ORDER BY c.data_publicacao_pncp DESC LIMIT 1000",
+          "sql": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.modalidade_nome FROM contratacao AS c WHERE c.modalidade_nome ILIKE '%inexigibilidade%' AND c.objeto_compra ILIKE '%alimentação%' ORDER BY c.data_publicacao_pncp DESC LIMIT 1000",
+          "reportId": "694f19b4-cbef-40b5-aefd-444c778543c7",
+          "reportTitle": "Contratações por Inexigibilidade em Alimentação",
+          "reportSubtitle": "Listagem de contratações de alimentação com a modalidade Inexigibilidade",
+          "rowCount": 1000,
+          "status": "ok",
+          "error": "",
+          "createdAt": "2026-04-30T23:14:42.545289+00:00"
+        },
+        {
+          "id": "247e560f-d58c-4d45-87cc-3f661dce7102",
+          "role": "user",
+          "text": "ordene por valor estimado desc",
+          "sql": "",
+          "reportId": "",
+          "reportTitle": "",
+          "reportSubtitle": "",
+          "rowCount": 0,
+          "status": "",
+          "error": "",
+          "createdAt": "2026-04-30T23:15:25.509417+00:00"
+        },
+        {
+          "id": "6ff7e8da-4b78-4607-9de2-9f34f390d986",
+          "role": "assistant",
+          "text": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.modalidade_nome FROM contratacao AS c WHERE c.modalidade_nome ILIKE '%inexigibilidade%' AND c.objeto_compra ILIKE '%alimentação%' ORDER BY CAST(c.valor_total_estimado AS numeric) DESC LIMIT 1000",
+          "sql": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.modalidade_nome FROM contratacao AS c WHERE c.modalidade_nome ILIKE '%inexigibilidade%' AND c.objeto_compra ILIKE '%alimentação%' ORDER BY CAST(c.valor_total_estimado AS numeric) DESC LIMIT 1000",
+          "reportId": "d0baa08e-a56e-4351-adcd-dbea2f043a3c",
+          "reportTitle": "Contratações por Inexigibilidade em Alimentação",
+          "reportSubtitle": "Ranking por valor estimado de contratos de alimentação",
+          "rowCount": 1000,
+          "status": "ok",
+          "error": "",
+          "createdAt": "2026-04-30T23:15:25.509417+00:00"
+        }
+      ]
+    },
+    "tabs": [
+      {
+        "id": "9d23580d-5b88-486c-9974-4e885d1fa920",
+        "title": "Contratacoes por dispensa em alimentacao",
+        "count": "0",
+        "status": "error",
+        "closable": true
+      },
+      {
+        "id": "694f19b4-cbef-40b5-aefd-444c778543c7",
+        "title": "Contratações por Inexigibilidade em Alimentação",
+        "count": "1000",
+        "status": "ok",
+        "closable": true
+      },
+      {
+        "id": "d0baa08e-a56e-4351-adcd-dbea2f043a3c",
+        "title": "Contratações por Inexigibilidade em Alimentação",
+        "count": "1000",
+        "status": "ok",
+        "closable": true
+      },
+      {
+        "id": "pending-1777648255108",
+        "title": "e u pedi uma lista de contratações em ordem descrescente de...",
+        "count": "erro",
+        "status": "error",
+        "closable": true
+      },
+      {
+        "id": "fd395863-d14f-4285-9ccc-b3cd27e93f54",
+        "title": "quero a contagem de contratacoes por modalidade (linha) e anos (cada ano de 2021 a 2026 como uma",
+        "count": "14",
+        "status": "ok",
+        "closable": true
+      },
+      {
+        "id": "0ef6463a-2e32-4863-8069-2993a4341d7a",
+        "title": "Colunas da tabela CNAE",
+        "count": "0",
+        "status": "error",
+        "closable": true
+      },
+      {
+        "id": "e4414efd-4556-451d-8a32-989ec1f3f11d",
+        "title": "Estrutura da tabela CNAE",
+        "count": "0",
+        "status": "error",
+        "closable": true
+      },
+      {
+        "id": "f635d91d-de61-4f6f-aaca-b4ebec33fe67",
+        "title": "Colunas da tabela CNAE",
+        "count": "13",
+        "status": "ok",
+        "closable": true
+      },
+      {
+        "id": "3981dbb1-faf3-4230-bd7c-37cbf1558f4a",
+        "title": "Campos CNAE relacionados a compras e vendas",
+        "count": "0",
+        "status": "error",
+        "closable": true
+      },
+      {
+        "id": "923c2a0e-8ad7-4a67-9b23-3acdad8c731b",
+        "title": "Listagem de CNAE relacionados a computador",
+        "count": "0",
+        "status": "error",
+        "closable": true
+      },
+      {
+        "id": "ac9fdadb-159c-4268-a424-845f61111732",
+        "title": "Listagem de CNAE",
+        "count": "0",
+        "status": "error",
+        "closable": true
+      },
+      {
+        "id": "fd2c817e-d72c-4fa7-bdd7-1e401ff1f17c",
+        "title": "Tabela Completa de CNAE",
+        "count": "0",
+        "status": "error",
+        "closable": true
+      },
+      {
+        "id": "pending-1777650354994",
+        "title": "Retire esse caracter \"`\"",
+        "count": "...",
+        "status": "running",
+        "closable": true
+      },
+      {
+        "id": "5a15e78c-164b-4fbe-b008-7a2c5bc5fc55",
+        "title": "Distribuição por setores e sub-setores CNAE",
+        "count": "86",
+        "status": "ok",
+        "closable": true
+      },
+      {
+        "id": "57bc1984-4511-47f2-bb1c-160f895fde57",
+        "title": "Setores CNAE por Categoria",
+        "count": "20",
+        "status": "ok",
+        "closable": true
+      },
+      {
+        "id": "3aa9926d-c7e4-44c6-8d01-1dcfb8e41e00",
+        "title": "Resumo por Categoria Principal",
+        "count": "2",
+        "status": "ok",
+        "closable": true
+      }
+    ],
+    "reports": {
+      "9d23580d-5b88-486c-9974-4e885d1fa920": {
+        "id": "9d23580d-5b88-486c-9974-4e885d1fa920",
+        "title": "Contratacoes por dispensa em alimentacao",
+        "subtitle": "Relatorio de contratacoes na modalidade 'dispensa' para alimentacao",
+        "question": "modalidade_nome = \"Dispensa\", numero 8",
+        "sql": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.modalidade_nome FROM contratacao AS c WHERE c.modalidade_id = 8 AND c.objeto_compra ILIKE '%alimentação%' ORDER BY c.data_publicacao_pncp DESC LIMIT 1000;",
+        "executedSql": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.modalidade_nome FROM contratacao AS c WHERE c.modalidade_id = 8 AND c.objeto_compra ILIKE '%alimentação%' ORDER BY c.data_publicacao_pncp DESC LIMIT 1000;",
+        "columns": [],
+        "rows": [],
+        "rowCount": 0,
+        "elapsedMs": 0,
+        "status": "error",
+        "error": "Erro ao executar SQL: operator does not exist: text = integer\nLINE 1: ..._nome FROM contratacao AS c WHERE c.modalidade_id = 8 AND c....\n                                                             ^\nHINT:  No operator matches the given name and argument types. You might need to add explicit type casts.\n",
+        "saved": false
+      },
+      "694f19b4-cbef-40b5-aefd-444c778543c7": {
+        "id": "694f19b4-cbef-40b5-aefd-444c778543c7",
+        "title": "Contratações por Inexigibilidade em Alimentação",
+        "subtitle": "Listagem de contratações de alimentação com a modalidade Inexigibilidade",
+        "question": "use modalidade_nome Inexigibilidade",
+        "sql": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.modalidade_nome FROM contratacao AS c WHERE c.modalidade_nome ILIKE '%inexigibilidade%' AND c.objeto_compra ILIKE '%alimentação%' ORDER BY c.data_publicacao_pncp DESC LIMIT 1000",
+        "executedSql": "",
+        "columns": [
+          "numero_controle_pncp",
+          "objeto_compra",
+          "valor_total_homologado",
+          "modalidade_nome"
+        ],
+        "rows": [
+          {
+            "numero_controle_pncp": "13667230000150-1-000049/2025",
+            "objeto_compra": "Aquisição de gêneros alimentícios da Agricultura Familiar e do Empreendedor Familiar Rural, para o atendimento ao Programa Nacional de Alimentação Escolar – PNAE, para o ano de 2025.",
+            "valor_total_homologado": null,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "87613014000169-1-000232/2026",
+            "objeto_compra": "SOLICITO EMPENHO PARA A EMPRESA  BANDA GDÓ E PRODUÇÕES LTDA CNPJ Nº \n49.780.606/0001-86 , PARA ANIMAÇÃO DO BAILE ALUSIVO AOS 61 ANO DE BOSSOROCA-RS, NUM TOTAL DE 3 HORAS DE ANIMAÇÃO, NUM VALOR DE R$ 22.000,00. A EMPRESA SE RESPONSABILIZA, PELO TRANSPORTE, MONTAGEM E DESMONTAGEM DOS EQUIPAMENTOS, E ALIMENTAÇÃO PARA SEUS COMPONENTES .   A EMPRESA HORA CONTRATADA DEVERÁ INICIAR SEUS TRABALHOS ÀS 22:00HR DO DIA 11/10/2026 E SE ESTENDER ATÉ ÀS 01:00HR DO DIA 12/10/2026. O LOCAL DO EVENTO ESTA A SER DEFINIDO, FRIZANDO SER NA CIDADE DE BOSSOROCA, EM LOCAL DE FACIL ACESSO.. \nFISCAL DO CONTRATO : JOBE SILVEIRA ",
+            "valor_total_homologado": null,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "00814574000101-1-000035/2026",
+            "objeto_compra": "CONTRATAÇÃO DE EMPRESA ESPECIALIZADA EM PRESTAÇÃO DE SERVIÇOS E CAPACITAÇÃO PROFISSIONAL “ATUALIZAÇÃO URGENTE PARA EXECUTIVO E LEGISLATIVO: LAI, LGPD, TRANSPARÊNCIA E VEDAÇÕES ELEITORAIS COM TEMAS SENSÍVEIS DE BENEFÍCIOS E REMUNERAÇÃO: VALE-ALIMENTAÇÃO NO",
+            "valor_total_homologado": 1390,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "04628681000198-1-000185/2025",
+            "objeto_compra": "[LICITANET] - Locação de um imóvel destinado para fins de instalações e funcionamento do Conselho Municipal de Alimentação Escolar (CAE), Conselho de Acompanhamento e Controle Social do FUNDEB (CACSFUNDEB) e Depósito de Materiais Permanente e de Consumo da Secretaria Municipal de Educação – SEMED.",
+            "valor_total_homologado": null,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "00394502000144-1-003569/2026",
+            "objeto_compra": "A aquisição de gêneros alimentícios, é necessária, uma vez que o fornecimento de alimentação para os militares em serviço, tripulações de submarinos, equipe de apoio e demais Organizações Militares (OM) apoiadas integra o rol de obrigações da Marinha do Brasil, em obediência aos preceitos do Regulamento de Alimentação da Marinha (RAM) ou norma específica equivalente e às diretrizes de bem-estar da tropa. Os gêneros alimentícios serão utilizados no preparo das refeições diárias, quais sejam desjejum, almoço, jantar e rancho noturno, servidas aos militares e funcionários aqui lotados, e sua falta pode acarretar sérios prejuízos à saúde, bem-estar, moral e operacionalidade desta Base de Submarinos e das OM apoiadas.",
+            "valor_total_homologado": 74230.3,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "05082233000102-1-000039/2026",
+            "objeto_compra": "Inscrição para participar do Curso “ NOVO: VALE ALIMENTAÇÃO PARA VEREADOR, LICENÇA 120 DIAS, TETO REMUNERATÓRIO E TEMAS\nRELEVANTES \". entre os dias 05  a 08 de maio, em Porto Alegre-RS, no Inlegis\n\nVereador: Itamar Trombetta",
+            "valor_total_homologado": null,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "76208826000102-1-000086/2026",
+            "objeto_compra": "Constitui objeto do presente processo a contratação de empresa especializada para o fornecimento de alimentação destinada aos atletas e à comissão técnica do Município de Corbélia/PR, durante a participação na Paraná Cup, a ser realizada no Município de Goioerê, visando assegurar condições adequadas de nutrição, desempenho e bem-estar aos participantes durante as competições.",
+            "valor_total_homologado": 15400,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "95640553000115-1-000025/2026",
+            "objeto_compra": "Credenciamento para compra direta de produtos da agricultura familiar para o preparo da alimentação escolar da rede de ensino municipal de Ivaté-PR.",
+            "valor_total_homologado": null,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "00393272000107-1-000010/2026",
+            "objeto_compra": "Locação de espaço físico, incluindo a montagem e desmontagem de reuniões, reservas de espaços físicos, com fornecimento de alimentação e bebidas não alcoólicas para realização das Reuniões de Presidentes/Tesoureiros e APAF que ocorrerão em 22 a 24 de maio e 11 a 13 de dezembro de 2026.\n\n\n",
+            "valor_total_homologado": 620585.86,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "88814181000130-1-000234/2026",
+            "objeto_compra": "Contratação de serviços de agenciamento de logística, estadia e alimentação e cooperação para viabilização da participação de representantes da Rede Internacional Cidade das Crianças em evento a ser realizado no Município, com temática vinculada ao Projeto Internacional Cidade das Crianças, conforme condições e exigências estabelecidas no termo de referência.",
+            "valor_total_homologado": null,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "13828397000156-1-000063/2026",
+            "objeto_compra": "FORNECIMENTO DE GÊNEROS ALIMENTÍCIOS DA AGRICULTURA FAMILIAR E\r\nDO EMPREENDEDOR FAMILIAR RURAL PARA ALIMENTAÇÃO ESCOLAR, A FIM DE ATENDER OS ALUNOS DA\r\nREDE MUNICIPAL DE CACHOEIRA/BA, PARA O ANO LETIVO DE 2026",
+            "valor_total_homologado": 9775,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "36975571000199-1-000196/2026",
+            "objeto_compra": "CONCESSÃO DE ADIANTAMENTO   PARA GENEROS DE ALIMENTAÇÃO  PARA MARIA APARECIDA DE CARVALHO SILVA, DESTINADO A SUPRIR AS DESPESAS COM VIAGEM AFIM DE PARTICIPAR DO XXXIX CONGRESSO DO CONASEM, DE 12 A 15/07/2026.",
+            "valor_total_homologado": null,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "80912108000190-1-000044/2026",
+            "objeto_compra": "AQUISIÇÃO DE GÊNEROS ALIMENTÍCIOS DA AGRICULTURA FAMILIAR E EMPREENDEDOR FAMILIAR RURAL, PARA O ATENDIMENTO AO PROGRAMA NACIONAL DE ALIMENTAÇÃO ESCOLAR - PNAE, CONFORME ESPECIFICAÇÕES E QUANTIDADES DOS GÊNEROS ALIMENTÍCIOS DESCRITOS NO TERMO DE REFERÊNCIA DE EDITAL PROCESSO LICITATÓRIO Nº 12/2026 – CHAMADA PÚBLICA Nº 01/2026.",
+            "valor_total_homologado": null,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "56089790000188-1-000098/2026",
+            "objeto_compra": " Prestação de serviços de alimentação em Unidades de Conservação",
+            "valor_total_homologado": 560.5,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "01612483000148-1-000018/2026",
+            "objeto_compra": "CONTRATAÇÃO PARA APRESENTAÇÃO ARTISTICA DA BANDA CHICOTE DE LUXO, INCLUINDO EQUIPE TÉCNICA E ARTÍSTICA PRÓPRIA, DESPESAS COM TRANSPORTE, ALIMENTAÇÃO, HOSPEDAGEM, ENCARGOS TRABALHISTAS, PREVIDENCIÁRIOS E FISCAIS, BEM COMO, DEMAIS CUSTOS OPERACIONAIS NECESSÁRIOS A REALIZAÇÃO DO ESÉTÁCULO.",
+            "valor_total_homologado": null,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "01612444000140-1-000039/2026",
+            "objeto_compra": "contratação dos credenciados na Chamada Pública n°.001/2026 com objetivo de aquisição de gêneros alimentícios da Agricultura Familiar e do Empreendedor Familiar Rural, para o atendimento do Programa Nacional de Alimentação Escolar- PNAE",
+            "valor_total_homologado": null,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "00394452000103-1-008400/2026",
+            "objeto_compra": "A aquisição do gênero alimentício (Ovos)  é justificada pela necessidade de garantir a alimentação diária, equilibrada e de alto valor nutricional para pacientes, militares e pessoal de saúde.",
+            "valor_total_homologado": 3321,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "15363895000104-1-000002/2026",
+            "objeto_compra": "AQUISIÇÃO DE EQUIPAMENTOS DESTINADOS A ALIMENTAÇÃO ELÉTRICA DA SALA DE RAIO X, GARANTINDO ISOLAMENTO, SEGURANÇA E ESTABILIDADE NO FORNECIMENTO DE ENERGIA AOS EQUIPAMENTOS RADIOLÓGICOS",
+            "valor_total_homologado": 21905.35,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "01784600000150-1-000022/2026",
+            "objeto_compra": "Contratação de empresa especializada para prestação de serviços técnicos\nprofissionais de assessoria e consultoria pública para diagnóstico, manutenção,\nalimentação, revisão e gerenciamento do Portal da Transparência da Câmara\nMunicipal de Ubiratã.\n",
+            "valor_total_homologado": 60000,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "13828397000156-1-000062/2026",
+            "objeto_compra": "FORNECIMENTO DE GÊNEROS ALIMENTÍCIOS DA AGRICULTURA FAMILIAR E\r\nDO EMPREENDEDOR FAMILIAR RURAL ARA ALIMENTAÇÃO ESCOLAR, A FIM DE ATENDER OS ALUNOS DA REDE MUNICIPAL DE CACHOEIRA/BA, PARA O ANO LETIVO DE 2026,",
+            "valor_total_homologado": 236250,
+            "modalidade_nome": "Inexigibilidade"
+          }
+        ],
+        "rowCount": 1000,
+        "elapsedMs": 15023,
+        "status": "ok",
+        "error": "",
+        "saved": false
+      },
+      "d0baa08e-a56e-4351-adcd-dbea2f043a3c": {
+        "id": "d0baa08e-a56e-4351-adcd-dbea2f043a3c",
+        "title": "Contratações por Inexigibilidade em Alimentação",
+        "subtitle": "Ranking por valor estimado de contratos de alimentação",
+        "question": "ordene por valor estimado desc",
+        "sql": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.modalidade_nome FROM contratacao AS c WHERE c.modalidade_nome ILIKE '%inexigibilidade%' AND c.objeto_compra ILIKE '%alimentação%' ORDER BY CAST(c.valor_total_estimado AS numeric) DESC LIMIT 1000",
+        "executedSql": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.modalidade_nome FROM contratacao AS c WHERE c.modalidade_nome ILIKE '%inexigibilidade%' AND c.objeto_compra ILIKE '%alimentação%' ORDER BY CAST(c.valor_total_estimado AS numeric) DESC LIMIT 1000",
+        "columns": [
+          "numero_controle_pncp",
+          "objeto_compra",
+          "valor_total_homologado",
+          "modalidade_nome"
+        ],
+        "rows": [
+          {
+            "numero_controle_pncp": "06087991000178-1-000005/2025",
+            "objeto_compra": "Aquisição de Gêneros Alimentícios da Agricultura Familiar e do Empreendedor Familiar Rural, destinado ao atendimento do Programa Nacional de Alimentação Escolar – PNAE.",
+            "valor_total_homologado": null,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "63025530000104-1-000832/2025",
+            "objeto_compra": "CONTRATAÇÃO DE EMPRESA FACILITADORA ESPECIALIZADA NA PRESTAÇÃO DOS SERVIÇOS DE IMPLEMENTAÇÃO, GERENCIAMENTO E ADMINISTRAÇÃO DE VALE-ALIMENTAÇÃO\n",
+            "valor_total_homologado": 339012000,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "63025530000104-1-000834/2025",
+            "objeto_compra": "CONTRATAÇÃO DE EMPRESA FACILITADORA ESPECIALIZADA NA PRESTAÇÃO DOS SERVIÇOS DE IMPLEMENTAÇÃO, GERENCIAMENTO E ADMINISTRAÇÃO DE VALE-ALIMENTAÇÃO\n",
+            "valor_total_homologado": 30302100,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "63025530000104-1-000835/2025",
+            "objeto_compra": "CONTRATAÇÃO DE EMPRESA FACILITADORA ESPECIALIZADA NA PRESTAÇÃO DOS SERVIÇOS DE IMPLEMENTAÇÃO, GERENCIAMENTO E ADMINISTRAÇÃO DE VALE-ALIMENTAÇÃO\n",
+            "valor_total_homologado": 38158200,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "63025530000104-1-000837/2025",
+            "objeto_compra": "CONTRATAÇÃO DE EMPRESA FACILITADORA ESPECIALIZADA NA PRESTAÇÃO DOS SERVIÇOS DE IMPLEMENTAÇÃO, GERENCIAMENTO E ADMINISTRAÇÃO DE VALE-ALIMENTAÇÃO\n",
+            "valor_total_homologado": 13815900,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "63025530000104-1-000838/2025",
+            "objeto_compra": "CONTRATAÇÃO DE EMPRESA FACILITADORA ESPECIALIZADA NA PRESTAÇÃO DOS SERVIÇOS DE IMPLEMENTAÇÃO, GERENCIAMENTO E ADMINISTRAÇÃO DE VALE-ALIMENTAÇÃO\n",
+            "valor_total_homologado": 1199700,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "63025530000104-1-000839/2025",
+            "objeto_compra": "CONTRATAÇÃO DE EMPRESA FACILITADORA ESPECIALIZADA NA PRESTAÇÃO DOS SERVIÇOS DE IMPLEMENTAÇÃO, GERENCIAMENTO E ADMINISTRAÇÃO DE VALE-ALIMENTAÇÃO\n",
+            "valor_total_homologado": 281581200,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "63025530000104-1-000840/2025",
+            "objeto_compra": "CONTRATAÇÃO DE EMPRESA FACILITADORA ESPECIALIZADA NA PRESTAÇÃO DOS SERVIÇOS DE IMPLEMENTAÇÃO, GERENCIAMENTO E ADMINISTRAÇÃO DE VALE-ALIMENTAÇÃO\n",
+            "valor_total_homologado": 52709400,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "33657248000189-1-000264/2024",
+            "objeto_compra": "Prestação de serviços de administração, intermediação e emissão de cartões eletrônicos com chip para os benefícios de alimentação instituídos no âmbito do Programa de Alimentação do Trabalhador – PAT, seguida de recargas mensais nos cartões, para os empregados e estagiários que prestam serviços às empresas integrantes do Sistema BNDES (BNDES e suas subsidiárias, BNDES Participações S.A – BNDESPAR e Agência Especial de Financiamento Industrial – FINAME), em todas as Unidades do BNDES localizadas no Rio de Janeiro, São Paulo, Brasília e Recife ou outro município do território nacional onde o BNDES possa vir a instalar escritório de representação, conforme especificações constantes do Projeto Básico (Anexo I do Edital do Credenciamento nº 002/2024 - BNDES) e da proposta apresentada pelo contratado.",
+            "valor_total_homologado": 607785256.4,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "11367414000170-1-000008/2025",
+            "objeto_compra": "1.1.\tAquisição de gêneros alimentícios da Agricultura Familiar e do  Empreendedor  Familiar  Rural,  para  o  atendimento ao programa nacional de alimentação escolar – PNAE, destinados a  rede municipal de ensino de Carnaíba – PE.",
+            "valor_total_homologado": null,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "34621748000123-1-000002/2026",
+            "objeto_compra": "\t\nCONTRATAÇÃO DA PREFEITURA MUNICIPAL DE ALTAMIRA/PA PARA O FORNECIMENTO, VIA RESTAURANTE POPULAR, DE ALIMENTAÇÃO PARA DISCENTES EM SITUAÇÃO DE VULNERABILIDADE SOCIOECONÔMICA DO CAMPUS DE ALTAMIRA DA UFPA",
+            "valor_total_homologado": 200000,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "45276128000110-1-003435/2025",
+            "objeto_compra": " - INEXIGIBILIDADE VEROCHEQUE REFEIÇÕES LTDA.\r\nPRESTAÇÃO DE SERVIÇOS DE IMPLANTAÇÃO, ORGANIZAÇÃO, GERENCIAMENTO E ADMINISTRAÇÃO DE SISTEMA AUXILIO ALIMENTAÇÃO POR MEIO DE CARTÃO ELETRÔNICO INDIVIDUALIZADO COM FORNECIMENTO MENSAL PARA OS SERVIDORES MUNICIPAIS ATIVOS E INATIVOS DA PREFEITURA MUNICIPAL DE ARARAQUARA/SP\r\n",
+            "valor_total_homologado": 94260600,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "45276128000110-1-003130/2025",
+            "objeto_compra": "INEXIGIBILIDADE VEROCHEQUE REFEIÇÕES LTDA.\r\nPRESTAÇÃO DE SERVIÇOS DE IMPLANTAÇÃO, ORGANIZAÇÃO, GERENCIAMENTO E ADMINISTRAÇÃO DE SISTEMA AUXILIO ALIMENTAÇÃO POR MEIO DE CARTÃO ELETRÔNICO INDIVIDUALIZADO COM FORNECIMENTO MENSAL PARA OS SERVIDORES MUNICIPAIS ATIVOS E INATIVOS DA PREFEITURA MUNICIPAL DE ARARAQUARA/SP\r\n",
+            "valor_total_homologado": 94260600,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "57500902000104-1-000105/2025",
+            "objeto_compra": "Credenciamento de empresas especializadas na prestação de serviços de administração, gerenciamento, emissão e fornecimento de vale-refeição e vale-alimentação, por meio de cartão eletrônico com chip de segurança (ou solução similar ou superior ao de chip), que permita o serviço de pagamento por celular,\r\n sem que haja contato físico entre dispositivos, com arranjo de pagamento do tipo aberto, bem como a disponibilização de rede credenciada de estabelecimentos para a aquisição de gêneros alimentícios pelos servidores da FUMEC.",
+            "valor_total_homologado": null,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "76282656000106-1-000321/2025",
+            "objeto_compra": "Credenciamento de agricultores familiares e empreendedores familiares rurais enquadrados no Programa Nacional de Fortalecimento da Agricultura Familiar – PRONAF, participantes de organizações econômicas – cooperativas e associações ou grupo formal para aquisição de gêneros alimentícios destinados à alimentação escolar nas escolas fundamentais e centros de educação infantil da rede pública de ensino do Município, visando a execução do Programa Nacional de Alimentação Escolar – PNAE",
+            "valor_total_homologado": null,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "17702499000262-1-000157/2025",
+            "objeto_compra": " PARA PRESTAÇÃO DOS SERVIÇOS DE FORNECIMENTO DE VALE ALIMENTAÇÃO E REFEIÇÃO, NA MODALIDADE DE BENEFÍCIO FLEXIVEL, POR CARTÃO MAGNÉTICO COM TECNOLOGIA DE CHIP FULL GRADE atra´ves do Processo nº  002/2025 realizado pelo Consócio Intermunicipal de Saneamento Básico da Zona da Mata de Minas Gerais CNPJ 10.331.797/0001-63, o qual o município é órgão participante conforme Anexo I do edital publicado e Ata de Registro de Preços n° 048/2025",
+            "valor_total_homologado": 30875000,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "76161181000108-1-000097/2025",
+            "objeto_compra": "Credenciamento Auxílio Alimentação",
+            "valor_total_homologado": null,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "46189718000179-1-000382/2024",
+            "objeto_compra": "Contrato de prestação de serviços de emissão, utilização e administração de Cartão-Alimentação com chip, no valor atual mensal/unitário de R$ 1.200,00 (um mil e duzentos reais) destinados aos servidores municipais ativos",
+            "valor_total_homologado": null,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "76417005000186-1-000009/2025",
+            "objeto_compra": "CHAMAMENTO PÚBLICO PARA AQUISIÇÃO DE GÊNEROS ALIMENTÍCIOS, ORIUNDOS DA AGRICULTURA FAMILIAR, DESTINADOS AO PROGRAMA NACIONAL DE ALIMENTAÇÃO ESCOLAR (PNAE) PARA ATENDIMENTO AOS CENTROS MUNICIPAIS DE EDUCAÇÃO INFANTIL E ESCOLAS DO MUNÍCIPIO DE CURITIBA PREV",
+            "valor_total_homologado": null,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "45318581000142-1-000073/2025",
+            "objeto_compra": "CREDENCIAMENTO/SELEÇÃO DE EMPRESA ESPECIALIZADA PARA FORNECIMENTO E ADMINISTRAÇÃO DE VALE-ALIMENTAÇÃO, POR MEIO DE CARTÃO MAGNÉTICO, ELETRÔNICO OU TECNOLOGIA EQUIVALENTE, COM ACEITAÇÃO EM REDE DE ESTABELECIMENTOS COMERCIAIS (SUPERMERCADOS, MERCADOS, AÇOUGUES, PADARIAS E CONGÊNERES).",
+            "valor_total_homologado": null,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "08883951000168-1-000119/2025",
+            "objeto_compra": "[Portal de Compras Públicas] - CHAMADA PUBLICA DA AGRICULTURA FAMILIAR de interessados para\r\napresentar projeto de venda de gêneros alimentícios da agricultura familiar e do empreendedor familiar rural para\r\natender ao programa nacional de Alimentação Escolar/PNAE visando fornecimento de merenda escolar aos alunos\r\ndo municípiodeTEIXEIRA/PB.",
+            "valor_total_homologado": null,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "08778276000107-1-000033/2026",
+            "objeto_compra": "CONTRATAÇÃO DA EMPRESA PARA FORNECIMENTOS DE ALIMENTAÇÃO PARA A EXECUÇÃO DO PROGRAMA TÁ NA MESA.",
+            "valor_total_homologado": 13974312,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "08778276000107-1-000036/2026",
+            "objeto_compra": "CONTRATAÇÃO DA EMPRESA PARA FORNECIMENTOS DE ALIMENTAÇÃO PARA A EXECUÇÃO DO PROGRAMA TÁ NA MESA.",
+            "valor_total_homologado": 13649328,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "08778276000107-1-000032/2026",
+            "objeto_compra": "CONTRATAÇÃO DA EMPRESA PARA FORNECIMENTOS DE ALIMENTAÇÃO PARA A EXECUÇÃO DO PROGRAMA TÁ NA MESA.",
+            "valor_total_homologado": 13324344,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "08778276000107-1-000020/2026",
+            "objeto_compra": "CONTRATAÇÃO DA EMPRESA PARA FORNECIMENTOS DE ALIMENTAÇÃO PARA A EXECUÇÃO DO PROGRAMA TÁ NA MESA.",
+            "valor_total_homologado": 12999360,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "08778276000107-1-000012/2026",
+            "objeto_compra": "CONTRATAÇÃO DA EMPRESA PARA FORNECIMENTOS DE ALIMENTAÇÃO PARA A EXECUÇÃO DO PROGRAMA TÁ NA MESA.",
+            "valor_total_homologado": 311984640,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "46634598000171-1-000116/2026",
+            "objeto_compra": "CREDENCIAMENTO PARA FORNECIMENTO DE CARTAO ALIMENTAÇÃO.",
+            "valor_total_homologado": 12884400,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "08778276000107-1-000019/2026",
+            "objeto_compra": "CONTRATAÇÃO DA EMPRESA PARA FORNECIMENTOS DE ALIMENTAÇÃO PARA A EXECUÇÃO DO PROGRAMA TÁ NA MESA.",
+            "valor_total_homologado": 304185024,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "45749819000194-1-000012/2025",
+            "objeto_compra": "Credenciamento para contratação de serviços de empresa especializada para administração, gerenciamento e emissão de documentos em forma eletrônica para fornecimento dos benefícios de vale alimentação.",
+            "valor_total_homologado": null,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "08778276000107-1-000035/2026",
+            "objeto_compra": "CONTRATAÇÃO DA EMPRESA PARA FORNECIMENTOS DE ALIMENTAÇÃO PARA A EXECUÇÃO DO PROGRAMA TÁ NA MESA.",
+            "valor_total_homologado": 7799616,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "78198975000163-1-000168/2025",
+            "objeto_compra": "Credenciamento de pessoas jurídicas especializadas na prestação de serviços de gerenciamento, administração e fornecimento de auxílio-alimentação aos servidores públicos do Município de Goioerê-PR, por meio de cartão eletrônico com chip e senha (PIN), com tecnologia de segurança adequada, aceito em rede de estabelecimentos credenciados, conforme condições, quantidades e exigências estabelecidas no Edital e seus anexos.",
+            "valor_total_homologado": null,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "08778276000107-1-000002/2026",
+            "objeto_compra": "CONTRATAÇÃO DA EMPRESA PARA FORNECIMENTOS DE ALIMENTAÇÃO PARA A EXECUÇÃO DO PROGRAMA TÁ NA MESA.",
+            "valor_total_homologado": 7149648,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "10572022000180-1-001275/2025",
+            "objeto_compra": "Aquisição de produtos beneficiados da AF para o Programa de Alimentação Escolar do Estado.COODAPISJG COOPERATIVA DE JABOATAO DOS GUARARAPES - CNPJ: 01.29.478.560/0001-38",
+            "valor_total_homologado": 6712867.74,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "08778276000107-1-000028/2026",
+            "objeto_compra": "CONTRATAÇÃO DA EMPRESA PARA FORNECIMENTOS DE ALIMENTAÇÃO PARA A EXECUÇÃO DO PROGRAMA TÁ NA MESA.",
+            "valor_total_homologado": 6499680,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "08778276000107-1-000001/2026",
+            "objeto_compra": "CONTRATAÇÃO DA EMPRESA PARA FORNECIMENTOS DE ALIMENTAÇÃO PARA A EXECUÇÃO DO PROGRAMA TÁ NA MESA.",
+            "valor_total_homologado": 155992320,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "76282656000106-1-000043/2025",
+            "objeto_compra": "Credenciamento para contratação de empresas especializadas na administração, gerenciamento e fornecimento de vale-alimentação e vale-refeição, na forma de cartão eletrônico-magnético com chip de segurança e senha pessoal, podendo ser bandeirado em PVC, na modalidade flexível, destinado aos empregados públicos celetistas do Município de Maringá.",
+            "valor_total_homologado": 6304971.03,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "08778276000107-1-000029/2026",
+            "objeto_compra": "CONTRATAÇÃO DA EMPRESA PARA FORNECIMENTOS DE ALIMENTAÇÃO PARA A EXECUÇÃO DO PROGRAMA TÁ NA MESA.",
+            "valor_total_homologado": 6174696,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "08778276000107-1-000008/2026",
+            "objeto_compra": "CONTRATAÇÃO DA EMPRESA PARA FORNECIMENTOS DE ALIMENTAÇÃO PARA A EXECUÇÃO DO PROGRAMA TÁ NA MESA.",
+            "valor_total_homologado": 140393088,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "08778276000107-1-000024/2026",
+            "objeto_compra": "CONTRATAÇÃO DA EMPRESA PARA FORNECIMENTOS DE ALIMENTAÇÃO PARA A EXECUÇÃO DO PROGRAMA TÁ NA MESA.",
+            "valor_total_homologado": 5524728,
+            "modalidade_nome": "Inexigibilidade"
+          },
+          {
+            "numero_controle_pncp": "00444232000139-1-000597/2025",
+            "objeto_compra": "Contrato de fornecimento e prestação de serviços de gerenciamento, implementação, administração e disponibilização de créditos em cartões eletrônicos/magnéticos (com chip) ou outros de tecnologia mais avançada nas modalidades de alimentação e refeição, sob demanda, para Indústria de Material Bélico do Brasil – Filial Fábrica da Estrela.",
+            "valor_total_homologado": 5487285.12,
+            "modalidade_nome": "Inexigibilidade"
+          }
+        ],
+        "rowCount": 1000,
+        "elapsedMs": 12721,
+        "status": "ok",
+        "error": "",
+        "saved": false
+      },
+      "pending-1777648255108": {
+        "id": "pending-1777648255108",
+        "title": "e u pedi uma lista de contratações em ordem descrescente de...",
+        "subtitle": "",
+        "question": "e u pedi uma lista de contratações em ordem descrescente de valor estimado , com id, obejto, municipio, orgao, uf, data...",
+        "sql": "",
+        "executedSql": "",
+        "columns": [],
+        "rows": [],
+        "rowCount": 0,
+        "elapsedMs": 0,
+        "status": "error",
+        "error": "Failed to fetch",
+        "saved": false
+      },
+      "fd395863-d14f-4285-9ccc-b3cd27e93f54": {
+        "id": "fd395863-d14f-4285-9ccc-b3cd27e93f54",
+        "title": "quero a contagem de contratacoes por modalidade (linha) e anos (cada ano de 2021 a 2026 como uma",
+        "subtitle": "",
+        "question": "quero a contagem de contratacoes por modalidade (linha) e anos (cada ano de 2021 a 2026 como uma coluna) + coluna totalizador  + coluna percentual do total, orednacao total desc",
+        "sql": "SELECT c.modalidade_nome, COUNT(CASE WHEN c.ano_compra = '2021' THEN 1 END) AS \"2021\", COUNT(CASE WHEN c.ano_compra = '2022' THEN 1 END) AS \"2022\", COUNT(CASE WHEN c.ano_compra = '2023' THEN 1 END) AS \"2023\", COUNT(CASE WHEN c.ano_compra = '2024' THEN 1 END) AS \"2024\", COUNT(CASE WHEN c.ano_compra = '2025' THEN 1 END) AS \"2025\", COUNT(CASE WHEN c.ano_compra = '2026' THEN 1 END) AS \"2026\", COUNT(*) AS total_contratacoes, ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER(), 2) AS percentual_total FROM contratacao AS c GROUP BY c.modalidade_nome ORDER BY total_contratacoes DESC",
+        "executedSql": "",
+        "columns": [
+          "modalidade_nome",
+          "2021",
+          "2022",
+          "2023",
+          "2024",
+          "2025",
+          "2026",
+          "total_contratacoes",
+          "percentual_total"
+        ],
+        "rows": [
+          {
+            "2021": 74,
+            "2022": 296,
+            "2023": 1297,
+            "2024": 20322,
+            "2025": 670498,
+            "2026": 170423,
+            "modalidade_nome": "Dispensa",
+            "total_contratacoes": 863113,
+            "percentual_total": 48.15
+          },
+          {
+            "2021": 34,
+            "2022": 139,
+            "2023": 310,
+            "2024": 13859,
+            "2025": 380807,
+            "2026": 92729,
+            "modalidade_nome": "Pregão - Eletrônico",
+            "total_contratacoes": 487887,
+            "percentual_total": 27.22
+          },
+          {
+            "2021": 23,
+            "2022": 84,
+            "2023": 373,
+            "2024": 9614,
+            "2025": 241609,
+            "2026": 74470,
+            "modalidade_nome": "Inexigibilidade",
+            "total_contratacoes": 326502,
+            "percentual_total": 18.22
+          },
+          {
+            "2021": 0,
+            "2022": 3,
+            "2023": 25,
+            "2024": 1430,
+            "2025": 46279,
+            "2026": 17704,
+            "modalidade_nome": "Concorrência - Eletrônica",
+            "total_contratacoes": 65441,
+            "percentual_total": 3.65
+          },
+          {
+            "2021": 1,
+            "2022": 11,
+            "2023": 29,
+            "2024": 789,
+            "2025": 20238,
+            "2026": 7007,
+            "modalidade_nome": "Credenciamento",
+            "total_contratacoes": 28206,
+            "percentual_total": 1.57
+          },
+          {
+            "2021": 7,
+            "2022": 18,
+            "2023": 36,
+            "2024": 326,
+            "2025": 10569,
+            "2026": 2576,
+            "modalidade_nome": "Pregão - Presencial",
+            "total_contratacoes": 13532,
+            "percentual_total": 0.75
+          },
+          {
+            "2021": 0,
+            "2022": 8,
+            "2023": 13,
+            "2024": 203,
+            "2025": 2795,
+            "2026": 1057,
+            "modalidade_nome": "Concorrência - Presencial",
+            "total_contratacoes": 4083,
+            "percentual_total": 0.23
+          },
+          {
+            "2021": 0,
+            "2022": 0,
+            "2023": 1,
+            "2024": 31,
+            "2025": 1249,
+            "2026": 367,
+            "modalidade_nome": "Leilão - Eletrônico",
+            "total_contratacoes": 1648,
+            "percentual_total": 0.09
+          },
+          {
+            "2021": 0,
+            "2022": 0,
+            "2023": 0,
+            "2024": 3,
+            "2025": 632,
+            "2026": 165,
+            "modalidade_nome": "Pré-qualificação",
+            "total_contratacoes": 809,
+            "percentual_total": 0.05
+          },
+          {
+            "2021": 0,
+            "2022": 0,
+            "2023": 2,
+            "2024": 12,
+            "2025": 357,
+            "2026": 103,
+            "modalidade_nome": "Leilão - Presencial",
+            "total_contratacoes": 474,
+            "percentual_total": 0.03
+          },
+          {
+            "2021": 0,
+            "2022": 0,
+            "2023": 0,
+            "2024": 5,
+            "2025": 329,
+            "2026": 115,
+            "modalidade_nome": "Manifestação de Interesse",
+            "total_contratacoes": 449,
+            "percentual_total": 0.03
+          },
+          {
+            "2021": 0,
+            "2022": 0,
+            "2023": 1,
+            "2024": 7,
+            "2025": 152,
+            "2026": 47,
+            "modalidade_nome": "Concurso",
+            "total_contratacoes": 207,
+            "percentual_total": 0.01
+          },
+          {
+            "2021": 0,
+            "2022": 0,
+            "2023": 22,
+            "2024": 34,
+            "2025": 54,
+            "2026": 11,
+            "modalidade_nome": "Inaplicabilidade da Licitação",
+            "total_contratacoes": 121,
+            "percentual_total": 0.01
+          },
+          {
+            "2021": 1,
+            "2022": 0,
+            "2023": 1,
+            "2024": 1,
+            "2025": 5,
+            "2026": 1,
+            "modalidade_nome": "Diálogo Competitivo",
+            "total_contratacoes": 9,
+            "percentual_total": 0
+          }
+        ],
+        "rowCount": 14,
+        "elapsedMs": 11150,
+        "status": "ok",
+        "error": "",
+        "saved": true
+      },
+      "0ef6463a-2e32-4863-8069-2993a4341d7a": {
+        "id": "0ef6463a-2e32-4863-8069-2993a4341d7a",
+        "title": "Colunas da tabela CNAE",
+        "subtitle": "Identificacao dos nomes das colunas na tabela CNAE",
+        "question": "procure pela tabela cnae e descubra quais sao suas colunas",
+        "sql": "SELECT column_name FROM information_schema.columns WHERE table_name = 'cnae';`",
+        "executedSql": "SELECT column_name FROM information_schema.columns WHERE table_name = 'cnae';`",
+        "columns": [],
+        "rows": [],
+        "rowCount": 0,
+        "elapsedMs": 0,
+        "status": "error",
+        "error": "Somente uma instrucao SQL pode ser executada.",
+        "saved": false
+      },
+      "e4414efd-4556-451d-8a32-989ec1f3f11d": {
+        "id": "e4414efd-4556-451d-8a32-989ec1f3f11d",
+        "title": "Estrutura da tabela CNAE",
+        "subtitle": "Colunas presentes na tabela CNAE",
+        "question": "SELECT column_name FROM information_schema.columns WHERE table_name = 'cnae';",
+        "sql": "SELECT column_name FROM information_schema.columns WHERE table_name = 'cnae';`",
+        "executedSql": "SELECT column_name FROM information_schema.columns WHERE table_name = 'cnae';`",
+        "columns": [],
+        "rows": [],
+        "rowCount": 0,
+        "elapsedMs": 0,
+        "status": "error",
+        "error": "Somente uma instrucao SQL pode ser executada.",
+        "saved": false
+      },
+      "f635d91d-de61-4f6f-aaca-b4ebec33fe67": {
+        "id": "f635d91d-de61-4f6f-aaca-b4ebec33fe67",
+        "title": "Colunas da tabela CNAE",
+        "subtitle": "Listagem dos nomes das colunas na tabela CNAE no sistema",
+        "question": "voce esta colocando esse \"`\" no final da instrução que esta trapalhando o sql",
+        "sql": "SELECT column_name FROM information_schema.columns WHERE table_name = 'cnae'",
+        "executedSql": "SELECT * FROM (SELECT column_name FROM information_schema.columns WHERE table_name = 'cnae') AS govgo_report_query LIMIT 1000",
+        "columns": [
+          "column_name"
+        ],
+        "rows": [
+          {
+            "column_name": "cod_total"
+          },
+          {
+            "column_name": "nome_total"
+          },
+          {
+            "column_name": "cod_nv0"
+          },
+          {
+            "column_name": "nom_nv0"
+          },
+          {
+            "column_name": "cod_nv1"
+          },
+          {
+            "column_name": "nom_nv1"
+          },
+          {
+            "column_name": "cod_nv2"
+          },
+          {
+            "column_name": "nom_nv2"
+          },
+          {
+            "column_name": "cod_nv3"
+          },
+          {
+            "column_name": "nom_nv3"
+          },
+          {
+            "column_name": "cod_nv4"
+          },
+          {
+            "column_name": "nom_nv4"
+          },
+          {
+            "column_name": "cnae_emb"
+          }
+        ],
+        "rowCount": 13,
+        "elapsedMs": 590,
+        "status": "ok",
+        "error": "",
+        "saved": false
+      },
+      "3981dbb1-faf3-4230-bd7c-37cbf1558f4a": {
+        "id": "3981dbb1-faf3-4230-bd7c-37cbf1558f4a",
+        "title": "Campos CNAE relacionados a compras e vendas",
+        "subtitle": "Listagem de campos CNAE que mencionam compra, venda ou computadores",
+        "question": "cod_total nome_total cod_nv0 nom_nv0 cod_nv1 nom_nv1 cod_nv2 nom_nv2 cod_nv3 nom_nv3 cod_nv4 nom_nv4 cnae_emb, esses sao os campos. agora tente responder a pergunta original",
+        "sql": "SELECT cod_total, nome_total FROM cnae WHERE nome_total ILIKE '%compra%' OR nome_total ILIKE '%venda%' OR nome_total ILIKE '%computadores%' LIMIT 1000;`",
+        "executedSql": "SELECT cod_total, nome_total FROM cnae WHERE nome_total ILIKE '%compra%' OR nome_total ILIKE '%venda%' OR nome_total ILIKE '%computadores%' LIMIT 1000;`",
+        "columns": [],
+        "rows": [],
+        "rowCount": 0,
+        "elapsedMs": 0,
+        "status": "error",
+        "error": "Somente uma instrucao SQL pode ser executada.",
+        "saved": false
+      },
+      "923c2a0e-8ad7-4a67-9b23-3acdad8c731b": {
+        "id": "923c2a0e-8ad7-4a67-9b23-3acdad8c731b",
+        "title": "Listagem de CNAE relacionados a computador",
+        "subtitle": "Classificacoes de CNAE que incluem a palavra 'computador'",
+        "question": "liste o cnae inteiro",
+        "sql": "SELECT * FROM cnae WHERE nome_total ILIKE '%computador%' LIMIT 1000;`",
+        "executedSql": "SELECT * FROM cnae WHERE nome_total ILIKE '%computador%' LIMIT 1000;`",
+        "columns": [],
+        "rows": [],
+        "rowCount": 0,
+        "elapsedMs": 0,
+        "status": "error",
+        "error": "Somente uma instrucao SQL pode ser executada.",
+        "saved": false
+      },
+      "ac9fdadb-159c-4268-a424-845f61111732": {
+        "id": "ac9fdadb-159c-4268-a424-845f61111732",
+        "title": "Listagem de CNAE",
+        "subtitle": "Consulta aos primeiros registros de CNAE",
+        "question": "SELECT * FROM cnae",
+        "sql": "SELECT * FROM cnae LIMIT 1000;`",
+        "executedSql": "SELECT * FROM cnae LIMIT 1000;`",
+        "columns": [],
+        "rows": [],
+        "rowCount": 0,
+        "elapsedMs": 0,
+        "status": "error",
+        "error": "Somente uma instrucao SQL pode ser executada.",
+        "saved": false
+      },
+      "fd2c817e-d72c-4fa7-bdd7-1e401ff1f17c": {
+        "id": "fd2c817e-d72c-4fa7-bdd7-1e401ff1f17c",
+        "title": "Tabela Completa de CNAE",
+        "subtitle": "Listagem detalhada da Classificação Nacional de Atividades Econômicas",
+        "question": "me a tabela completa de cnae",
+        "sql": "SELECT * FROM cnae LIMIT 1000;`",
+        "executedSql": "SELECT * FROM cnae LIMIT 1000;`",
+        "columns": [],
+        "rows": [],
+        "rowCount": 0,
+        "elapsedMs": 0,
+        "status": "error",
+        "error": "Somente uma instrucao SQL pode ser executada.",
+        "saved": false
+      },
+      "pending-1777650354994": {
+        "id": "pending-1777650354994",
+        "title": "Retire esse caracter \"`\"",
+        "subtitle": "",
+        "question": "Retire esse caracter \"`\"",
+        "sql": "",
+        "executedSql": "",
+        "columns": [],
+        "rows": [],
+        "rowCount": 0,
+        "elapsedMs": 0,
+        "status": "running",
+        "error": "",
+        "saved": false
+      },
+      "5a15e78c-164b-4fbe-b008-7a2c5bc5fc55": {
+        "id": "5a15e78c-164b-4fbe-b008-7a2c5bc5fc55",
+        "title": "Distribuição por setores e sub-setores CNAE",
+        "subtitle": "Quantidade de registros agrupados por setores principais e sub-setores",
+        "question": "muito bem ! agora faça a mesma coisa com cod_nv0, nom_nv0, cod_nv1 e nom_nv1",
+        "sql": "SELECT cod_nv0, nom_nv0, cod_nv1, nom_nv1, COUNT(*) AS total FROM cnae GROUP BY cod_nv0, nom_nv0, cod_nv1, nom_nv1 ORDER BY cod_nv0, cod_nv1",
+        "executedSql": "SELECT * FROM (SELECT cod_nv0, nom_nv0, cod_nv1, nom_nv1, COUNT(*) AS total FROM cnae GROUP BY cod_nv0, nom_nv0, cod_nv1, nom_nv1 ORDER BY cod_nv0, cod_nv1) AS govgo_report_query LIMIT 1000",
+        "columns": [
+          "cod_nv0",
+          "nom_nv0",
+          "cod_nv1",
+          "nom_nv1",
+          "total"
+        ],
+        "rows": [
+          {
+            "cod_nv0": "A",
+            "nom_nv0": "AGRICULTURA, PECUÁRIA, PRODUÇÃO FLORESTAL, PESCA E AQUICULTURA",
+            "cod_nv1": "01",
+            "nom_nv1": "AGRICULTURA, PECUÁRIA E SERVIÇOS RELACIONADOS",
+            "total": 82
+          },
+          {
+            "cod_nv0": "A",
+            "nom_nv0": "AGRICULTURA, PECUÁRIA, PRODUÇÃO FLORESTAL, PESCA E AQUICULTURA",
+            "cod_nv1": "02",
+            "nom_nv1": "PRODUÇÃO FLORESTAL",
+            "total": 18
+          },
+          {
+            "cod_nv0": "A",
+            "nom_nv0": "AGRICULTURA, PECUÁRIA, PRODUÇÃO FLORESTAL, PESCA E AQUICULTURA",
+            "cod_nv1": "03",
+            "nom_nv1": "PESCA E AQÜICULTURA",
+            "total": 22
+          },
+          {
+            "cod_nv0": "B",
+            "nom_nv0": "INDÚSTRIAS EXTRATIVAS",
+            "cod_nv1": "05",
+            "nom_nv1": "EXTRAÇÃO DE CARVÃO MINERAL",
+            "total": 2
+          },
+          {
+            "cod_nv0": "B",
+            "nom_nv0": "INDÚSTRIAS EXTRATIVAS",
+            "cod_nv1": "06",
+            "nom_nv1": "EXTRAÇÃO DE PETRÓLEO E GÁS NATURAL",
+            "total": 3
+          },
+          {
+            "cod_nv0": "B",
+            "nom_nv0": "INDÚSTRIAS EXTRATIVAS",
+            "cod_nv1": "07",
+            "nom_nv1": "EXTRAÇÃO DE MINERAIS METÁLICOS",
+            "total": 16
+          },
+          {
+            "cod_nv0": "B",
+            "nom_nv0": "INDÚSTRIAS EXTRATIVAS",
+            "cod_nv1": "08",
+            "nom_nv1": "EXTRAÇÃO DE MINERAIS NÃO METÁLICOS",
+            "total": 20
+          },
+          {
+            "cod_nv0": "B",
+            "nom_nv0": "INDÚSTRIAS EXTRATIVAS",
+            "cod_nv1": "09",
+            "nom_nv1": "ATIVIDADES DE APOIO À EXTRAÇÃO DE MINERAIS",
+            "total": 4
+          },
+          {
+            "cod_nv0": "C",
+            "nom_nv0": "INDÚSTRIAS DE TRANSFORMAÇÃO",
+            "cod_nv1": "10",
+            "nom_nv1": "FABRICAÇÃO DE PRODUTOS ALIMENTÍCIOS",
+            "total": 56
+          },
+          {
+            "cod_nv0": "C",
+            "nom_nv0": "INDÚSTRIAS DE TRANSFORMAÇÃO",
+            "cod_nv1": "11",
+            "nom_nv1": "FABRICAÇÃO DE BEBIDAS",
+            "total": 11
+          },
+          {
+            "cod_nv0": "C",
+            "nom_nv0": "INDÚSTRIAS DE TRANSFORMAÇÃO",
+            "cod_nv1": "12",
+            "nom_nv1": "FABRICAÇÃO DE PRODUTOS DO FUMO",
+            "total": 5
+          },
+          {
+            "cod_nv0": "C",
+            "nom_nv0": "INDÚSTRIAS DE TRANSFORMAÇÃO",
+            "cod_nv1": "13",
+            "nom_nv1": "FABRICAÇÃO DE PRODUTOS TÊXTEIS",
+            "total": 16
+          },
+          {
+            "cod_nv0": "C",
+            "nom_nv0": "INDÚSTRIAS DE TRANSFORMAÇÃO",
+            "cod_nv1": "14",
+            "nom_nv1": "CONFECÇÃO DE ARTIGOS DO VESTUÁRIO E ACESSÓRIOS",
+            "total": 11
+          },
+          {
+            "cod_nv0": "C",
+            "nom_nv0": "INDÚSTRIAS DE TRANSFORMAÇÃO",
+            "cod_nv1": "15",
+            "nom_nv1": "PREPARAÇÃO DE COUROS E FABRICAÇÃO DE ARTEFATOS DE COURO, ARTIGOS PARA VIAGEM E CALÇADOS",
+            "total": 9
+          },
+          {
+            "cod_nv0": "C",
+            "nom_nv0": "INDÚSTRIAS DE TRANSFORMAÇÃO",
+            "cod_nv1": "16",
+            "nom_nv1": "FABRICAÇÃO DE PRODUTOS DE MADEIRA",
+            "total": 10
+          },
+          {
+            "cod_nv0": "C",
+            "nom_nv0": "INDÚSTRIAS DE TRANSFORMAÇÃO",
+            "cod_nv1": "17",
+            "nom_nv1": "FABRICAÇÃO DE CELULOSE, PAPEL E PRODUTOS DE PAPEL",
+            "total": 12
+          },
+          {
+            "cod_nv0": "C",
+            "nom_nv0": "INDÚSTRIAS DE TRANSFORMAÇÃO",
+            "cod_nv1": "18",
+            "nom_nv1": "IMPRESSÃO E REPRODUÇÃO DE GRAVAÇÕES",
+            "total": 11
+          },
+          {
+            "cod_nv0": "C",
+            "nom_nv0": "INDÚSTRIAS DE TRANSFORMAÇÃO",
+            "cod_nv1": "19",
+            "nom_nv1": "FABRICAÇÃO DE COQUE, DE PRODUTOS DERIVADOS DO PETRÓLEO E DE BIOCOMBUSTÍVEIS",
+            "total": 7
+          },
+          {
+            "cod_nv0": "C",
+            "nom_nv0": "INDÚSTRIAS DE TRANSFORMAÇÃO",
+            "cod_nv1": "20",
+            "nom_nv1": "FABRICAÇÃO DE PRODUTOS QUÍMICOS",
+            "total": 30
+          },
+          {
+            "cod_nv0": "C",
+            "nom_nv0": "INDÚSTRIAS DE TRANSFORMAÇÃO",
+            "cod_nv1": "21",
+            "nom_nv1": "FABRICAÇÃO DE PRODUTOS FARMOQUÍMICOS E FARMACÊUTICOS",
+            "total": 6
+          },
+          {
+            "cod_nv0": "C",
+            "nom_nv0": "INDÚSTRIAS DE TRANSFORMAÇÃO",
+            "cod_nv1": "22",
+            "nom_nv1": "FABRICAÇÃO DE PRODUTOS DE BORRACHA E DE MATERIAL PLÁSTICO",
+            "total": 10
+          },
+          {
+            "cod_nv0": "C",
+            "nom_nv0": "INDÚSTRIAS DE TRANSFORMAÇÃO",
+            "cod_nv1": "23",
+            "nom_nv1": "FABRICAÇÃO DE PRODUTOS DE MINERAIS NÃO METÁLICOS",
+            "total": 22
+          },
+          {
+            "cod_nv0": "C",
+            "nom_nv0": "INDÚSTRIAS DE TRANSFORMAÇÃO",
+            "cod_nv1": "24",
+            "nom_nv1": "METALURGIA",
+            "total": 21
+          },
+          {
+            "cod_nv0": "C",
+            "nom_nv0": "INDÚSTRIAS DE TRANSFORMAÇÃO",
+            "cod_nv1": "25",
+            "nom_nv1": "FABRICAÇÃO DE PRODUTOS DE METAL, EXCETO MÁQUINAS\nE EQUIPAMENTOS",
+            "total": 23
+          },
+          {
+            "cod_nv0": "C",
+            "nom_nv0": "INDÚSTRIAS DE TRANSFORMAÇÃO",
+            "cod_nv1": "26",
+            "nom_nv1": "FABRICAÇÃO DE EQUIPAMENTOS DE INFORMÁTICA, PRODUTOS ELETRÔNICOS E ÓPTICOS",
+            "total": 12
+          },
+          {
+            "cod_nv0": "C",
+            "nom_nv0": "INDÚSTRIAS DE TRANSFORMAÇÃO",
+            "cod_nv1": "27",
+            "nom_nv1": "FABRICAÇÃO DE MÁQUINAS, APARELHOS E MATERIAIS ELÉTRICOS",
+            "total": 17
+          },
+          {
+            "cod_nv0": "C",
+            "nom_nv0": "INDÚSTRIAS DE TRANSFORMAÇÃO",
+            "cod_nv1": "28",
+            "nom_nv1": "FABRICAÇÃO DE MÁQUINAS E EQUIPAMENTOS",
+            "total": 32
+          },
+          {
+            "cod_nv0": "C",
+            "nom_nv0": "INDÚSTRIAS DE TRANSFORMAÇÃO",
+            "cod_nv1": "29",
+            "nom_nv1": "FABRICAÇÃO DE VEÍCULOS AUTOMOTORES, REBOQUES E CARROCERIAS",
+            "total": 16
+          },
+          {
+            "cod_nv0": "C",
+            "nom_nv0": "INDÚSTRIAS DE TRANSFORMAÇÃO",
+            "cod_nv1": "30",
+            "nom_nv1": "FABRICAÇÃO DE OUTROS EQUIPAMENTOS DE TRANSPORTE, EXCETO VEÍCULOS AUTOMOTORES",
+            "total": 12
+          },
+          {
+            "cod_nv0": "C",
+            "nom_nv0": "INDÚSTRIAS DE TRANSFORMAÇÃO",
+            "cod_nv1": "31",
+            "nom_nv1": "FABRICAÇÃO DE MÓVEIS",
+            "total": 4
+          },
+          {
+            "cod_nv0": "C",
+            "nom_nv0": "INDÚSTRIAS DE TRANSFORMAÇÃO",
+            "cod_nv1": "32",
+            "nom_nv1": "FABRICAÇÃO DE PRODUTOS DIVERSOS",
+            "total": 28
+          },
+          {
+            "cod_nv0": "C",
+            "nom_nv0": "INDÚSTRIAS DE TRANSFORMAÇÃO",
+            "cod_nv1": "33",
+            "nom_nv1": "MANUTENÇÃO, REPARAÇÃO E INSTALAÇÃO DE MÁQUINAS E EQUIPAMENTOS",
+            "total": 39
+          },
+          {
+            "cod_nv0": "D",
+            "nom_nv0": "ELETRICIDADE E GÁS",
+            "cod_nv1": "35",
+            "nom_nv1": "ELETRICIDADE, GÁS E OUTRAS UTILIDADES",
+            "total": 8
+          },
+          {
+            "cod_nv0": "E",
+            "nom_nv0": "ÁGUA, ESGOTO, ATIVIDADES DE GESTÃO DE RESÍDUOS E DESCONTAMINAÇÃO",
+            "cod_nv1": "36",
+            "nom_nv1": "CAPTAÇÃO, TRATAMENTO E DISTRIBUIÇÃO DE ÁGUA",
+            "total": 2
+          },
+          {
+            "cod_nv0": "E",
+            "nom_nv0": "ÁGUA, ESGOTO, ATIVIDADES DE GESTÃO DE RESÍDUOS E DESCONTAMINAÇÃO",
+            "cod_nv1": "37",
+            "nom_nv1": "ESGOTO E ATIVIDADES RELACIONADAS",
+            "total": 2
+          },
+          {
+            "cod_nv0": "E",
+            "nom_nv0": "ÁGUA, ESGOTO, ATIVIDADES DE GESTÃO DE RESÍDUOS E DESCONTAMINAÇÃO",
+            "cod_nv1": "38",
+            "nom_nv1": "COLETA, TRATAMENTO E DISPOSIÇÃO DE RESÍDUOS; RECUPERAÇÃO DE MATERIAIS",
+            "total": 9
+          },
+          {
+            "cod_nv0": "E",
+            "nom_nv0": "ÁGUA, ESGOTO, ATIVIDADES DE GESTÃO DE RESÍDUOS E DESCONTAMINAÇÃO",
+            "cod_nv1": "39",
+            "nom_nv1": "DESCONTAMINAÇÃO E OUTROS SERVIÇOS DE GESTÃO DE RESÍDUOS",
+            "total": 1
+          },
+          {
+            "cod_nv0": "F",
+            "nom_nv0": "CONSTRUÇÃO",
+            "cod_nv1": "41",
+            "nom_nv1": "CONSTRUÇÃO DE EDIFÍCIOS",
+            "total": 2
+          },
+          {
+            "cod_nv0": "F",
+            "nom_nv0": "CONSTRUÇÃO",
+            "cod_nv1": "42",
+            "nom_nv1": "OBRAS DE INFRAESTRUTURA",
+            "total": 17
+          },
+          {
+            "cod_nv0": "F",
+            "nom_nv0": "CONSTRUÇÃO",
+            "cod_nv1": "43",
+            "nom_nv1": "SERVIÇOS ESPECIALIZADOS PARA CONSTRUÇÃO",
+            "total": 28
+          }
+        ],
+        "rowCount": 86,
+        "elapsedMs": 580,
+        "status": "ok",
+        "error": "",
+        "saved": true
+      },
+      "57bc1984-4511-47f2-bb1c-160f895fde57": {
+        "id": "57bc1984-4511-47f2-bb1c-160f895fde57",
+        "title": "Setores CNAE por Categoria",
+        "subtitle": "Quantidade de registros agrupados por categoria de atividade econômica",
+        "question": "ela esta na estrutura basta fazer o select com esses campos da tabela cnae. vai nafe",
+        "sql": "SELECT cod_nv0, nom_nv0, COUNT(*) AS total FROM cnae GROUP BY cod_nv0, nom_nv0 ORDER BY cod_nv0",
+        "executedSql": "",
+        "columns": [
+          "cod_nv0",
+          "nom_nv0",
+          "total"
+        ],
+        "rows": [
+          {
+            "cod_nv0": "A",
+            "nom_nv0": "AGRICULTURA, PECUÁRIA, PRODUÇÃO FLORESTAL, PESCA E AQUICULTURA",
+            "total": 122
+          },
+          {
+            "cod_nv0": "B",
+            "nom_nv0": "INDÚSTRIAS EXTRATIVAS",
+            "total": 45
+          },
+          {
+            "cod_nv0": "C",
+            "nom_nv0": "INDÚSTRIAS DE TRANSFORMAÇÃO",
+            "total": 420
+          },
+          {
+            "cod_nv0": "D",
+            "nom_nv0": "ELETRICIDADE E GÁS",
+            "total": 8
+          },
+          {
+            "cod_nv0": "E",
+            "nom_nv0": "ÁGUA, ESGOTO, ATIVIDADES DE GESTÃO DE RESÍDUOS E DESCONTAMINAÇÃO",
+            "total": 14
+          },
+          {
+            "cod_nv0": "F",
+            "nom_nv0": "CONSTRUÇÃO",
+            "total": 47
+          },
+          {
+            "cod_nv0": "G",
+            "nom_nv0": "COMÉRCIO; REPARAÇÃO DE VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "total": 226
+          },
+          {
+            "cod_nv0": "H",
+            "nom_nv0": "TRANSPORTE, ARMAZENAGEM E CORREIO",
+            "total": 70
+          },
+          {
+            "cod_nv0": "I",
+            "nom_nv0": "ALOJAMENTO E ALIMENTAÇÃO",
+            "total": 16
+          },
+          {
+            "cod_nv0": "J",
+            "nom_nv0": "INFORMAÇÃO E COMUNICAÇÃO",
+            "total": 47
+          },
+          {
+            "cod_nv0": "K",
+            "nom_nv0": "ATIVIDADES FINANCEIRAS, DE SEGUROS E SERVIÇOS RELACIONADOS",
+            "total": 65
+          },
+          {
+            "cod_nv0": "L",
+            "nom_nv0": "ATIVIDADES IMOBILIÁRIAS",
+            "total": 6
+          },
+          {
+            "cod_nv0": "M",
+            "nom_nv0": "ATIVIDADES PROFISSIONAIS, CIENTÍFICAS E TÉCNICAS",
+            "total": 40
+          },
+          {
+            "cod_nv0": "N",
+            "nom_nv0": "ATIVIDADES ADMINISTRATIVAS E SERVIÇOS COMPLEMENTARES",
+            "total": 54
+          },
+          {
+            "cod_nv0": "O",
+            "nom_nv0": "ADMINISTRAÇÃO PÚBLICA, DEFESA E SEGURIDADE SOCIAL",
+            "total": 9
+          },
+          {
+            "cod_nv0": "P",
+            "nom_nv0": "EDUCAÇÃO",
+            "total": 23
+          },
+          {
+            "cod_nv0": "Q",
+            "nom_nv0": "SAÚDE HUMANA E SERVIÇOS SOCIAIS",
+            "total": 53
+          },
+          {
+            "cod_nv0": "R",
+            "nom_nv0": "ARTES, CULTURA, ESPORTE E RECREAÇÃO",
+            "total": 28
+          },
+          {
+            "cod_nv0": "S",
+            "nom_nv0": "OUTRAS ATIVIDADES DE SERVIÇOS",
+            "total": 37
+          },
+          {
+            "cod_nv0": "T",
+            "nom_nv0": "SERVIÇOS DOMÉSTICOS",
+            "total": 1
+          }
+        ],
+        "rowCount": 20,
+        "elapsedMs": 497,
+        "status": "ok",
+        "error": "",
+        "saved": false
+      },
+      "3aa9926d-c7e4-44c6-8d01-1dcfb8e41e00": {
+        "id": "3aa9926d-c7e4-44c6-8d01-1dcfb8e41e00",
+        "title": "Resumo por Categoria Principal",
+        "subtitle": "Distribuição de itens por categorias de Material e Serviço",
+        "question": "resuma por COD_NV0 e N)M_NV0",
+        "sql": "SELECT cod_nv0, nom_nv0, COUNT(*) AS total FROM categoria GROUP BY cod_nv0, nom_nv0 ORDER BY cod_nv0",
+        "executedSql": "",
+        "columns": [
+          "cod_nv0",
+          "nom_nv0",
+          "total"
+        ],
+        "rows": [
+          {
+            "cod_nv0": "M",
+            "nom_nv0": "MATERIAL",
+            "total": 10260
+          },
+          {
+            "cod_nv0": "S",
+            "nom_nv0": "SERVIÇO",
+            "total": 2822
+          }
+        ],
+        "rowCount": 2,
+        "elapsedMs": 1019,
+        "status": "ok",
+        "error": "",
+        "saved": false
+      }
+    },
+    "updatedAt": "2026-05-01T19:58:50.711562+00:00"
+  },
+  "5d3b153a-3854-4d70-8039-9ba34a698d67": {
+    "version": 1,
+    "activeId": "intro",
+    "historyMode": "reports",
+    "chatOpen": true,
+    "activeChat": {
+      "id": "231bc019-ac03-4bca-b359-e916a1cc4fbf",
+      "title": "Top 10 compradores de alimentacao hospitalar nos ultimos 12 meses",
+      "messages": [
+        {
+          "id": "07d78e97-519c-4e5b-b8cb-2365ecd6fcae",
+          "role": "user",
+          "text": "Top 10 compradores de alimentacao hospitalar nos ultimos 12 meses",
+          "sql": "",
+          "reportId": "",
+          "reportTitle": "",
+          "reportSubtitle": "",
+          "rowCount": 0,
+          "status": "",
+          "error": "",
+          "createdAt": "2026-04-30T19:13:08.969088+00:00"
+        },
+        {
+          "id": "af004251-bf71-42e3-bce4-94fbe8232c1d",
+          "role": "assistant",
+          "text": "Erro ao executar SQL: operator does not exist: text >= timestamp without time zone\nLINE 1: ...imentação hospitalar%' AND c.data_publicacao_pncp >= (CURREN...\n                                                             ^\nHINT:  No operator matches the given name and argument types. You might need to add explicit type casts.\n",
+          "sql": "SELECT c.orgao_entidade_razao_social, SUM(c.valor_total_homologado) AS total_gasto FROM contratacao AS c JOIN item_contratacao AS ic ON c.numero_controle_pncp = ic.numero_controle_pncp WHERE ic.descricao_item ILIKE '%alimentação hospitalar%' AND c.data_publicacao_pncp >= (CURRENT_DATE - INTERVAL '1 year') GROUP BY c.orgao_entidade_razao_social ORDER BY total_gasto DESC LIMIT 10;",
+          "reportId": "42c952c8-a923-4742-8caa-e4bc535ab5c1",
+          "reportTitle": "Top 10 compradores de alimentacao hospitalar nos ultimos 12 meses",
+          "reportSubtitle": "",
+          "rowCount": 0,
+          "status": "error",
+          "error": "Erro ao executar SQL: operator does not exist: text >= timestamp without time zone\nLINE 1: ...imentação hospitalar%' AND c.data_publicacao_pncp >= (CURREN...\n                                                             ^\nHINT:  No operator matches the given name and argument types. You might need to add explicit type casts.\n",
+          "createdAt": "2026-04-30T19:13:08.969088+00:00"
+        },
+        {
+          "id": "a5fc27e0-3bff-45e8-8184-fc983beab6a9",
+          "role": "user",
+          "text": "Top 10 compradores de alimentacao hospitalar nos ultimos 12 meses",
+          "sql": "",
+          "reportId": "",
+          "reportTitle": "",
+          "reportSubtitle": "",
+          "rowCount": 0,
+          "status": "",
+          "error": "",
+          "createdAt": "2026-04-30T19:13:32.268139+00:00"
+        },
+        {
+          "id": "69040194-7c10-4c30-b0ba-e01658a9c9b3",
+          "role": "assistant",
+          "text": "Erro ao executar SQL: operator does not exist: text >= timestamp without time zone\nLINE 1: ...entação hospitalar%' AND c.data_abertura_proposta >= (CURREN...\n                                                             ^\nHINT:  No operator matches the given name and argument types. You might need to add explicit type casts.\n",
+          "sql": "SELECT c.orgao_entidade_razao_social, SUM(c.valor_total_homologado) AS total_gasto FROM contratacao AS c JOIN item_contratacao AS ic ON c.numero_controle_pncp = ic.numero_controle_pncp WHERE ic.descricao_item ILIKE '%alimentação hospitalar%' AND c.data_abertura_proposta >= (CURRENT_DATE - INTERVAL '1 year') GROUP BY c.orgao_entidade_razao_social ORDER BY total_gasto DESC LIMIT 10;",
+          "reportId": "3ff00b4f-6039-4aae-b6a0-c29cb4418129",
+          "reportTitle": "Top 10 compradores de alimentacao hospitalar nos ultimos 12 meses",
+          "reportSubtitle": "",
+          "rowCount": 0,
+          "status": "error",
+          "error": "Erro ao executar SQL: operator does not exist: text >= timestamp without time zone\nLINE 1: ...entação hospitalar%' AND c.data_abertura_proposta >= (CURREN...\n                                                             ^\nHINT:  No operator matches the given name and argument types. You might need to add explicit type casts.\n",
+          "createdAt": "2026-04-30T19:13:32.268139+00:00"
+        },
+        {
+          "id": "4b1c840c-77d9-4232-84aa-fb9d0e797956",
+          "role": "user",
+          "text": "faça contagem do numero de cotratacoes pelo numero de de itens que as contratacções possuem",
+          "sql": "",
+          "reportId": "",
+          "reportTitle": "",
+          "reportSubtitle": "",
+          "rowCount": 0,
+          "status": "",
+          "error": "",
+          "createdAt": "2026-04-30T19:15:14.802419+00:00"
+        },
+        {
+          "id": "e2b19136-880e-4c03-a519-2ff6018e464c",
+          "role": "assistant",
+          "text": "Erro ao executar SQL: canceling statement due to statement timeout\n",
+          "sql": "SELECT COUNT(*) AS quantidade_contratacoes, COUNT(ic.numero_item) AS numero_itens FROM contratacao AS c JOIN item_contratacao AS ic ON c.numero_controle_pncp = ic.numero_controle_pncp;",
+          "reportId": "",
+          "reportTitle": "",
+          "reportSubtitle": "",
+          "rowCount": 0,
+          "status": "error",
+          "error": "Erro ao executar SQL: canceling statement due to statement timeout\n",
+          "createdAt": "2026-04-30T19:15:14.802419+00:00"
+        },
+        {
+          "id": "ca07ec93-b1d4-4c82-b1ab-178f5bfa68e5",
+          "role": "user",
+          "text": "quantas contratacoes existem com 10 itens?",
+          "sql": "",
+          "reportId": "",
+          "reportTitle": "",
+          "reportSubtitle": "",
+          "rowCount": 0,
+          "status": "",
+          "error": "",
+          "createdAt": "2026-04-30T19:27:17.034725+00:00"
+        },
+        {
+          "id": "159943de-8f60-4985-9847-efe7b0eeff5a",
+          "role": "assistant",
+          "text": "Erro ao executar SQL: canceling statement due to statement timeout\n",
+          "sql": "SELECT COUNT(*) AS quantidade_contratacoes FROM ( SELECT c.numero_controle_pncp FROM contratacao AS c JOIN item_contratacao AS ic ON c.numero_controle_pncp = ic.numero_controle_pncp GROUP BY c.numero_controle_pncp HAVING COUNT(ic.numero_item) = 10 ) AS subquery;",
+          "reportId": "",
+          "reportTitle": "",
+          "reportSubtitle": "",
+          "rowCount": 0,
+          "status": "error",
+          "error": "Erro ao executar SQL: canceling statement due to statement timeout\n",
+          "createdAt": "2026-04-30T19:27:17.034725+00:00"
+        },
+        {
+          "id": "b15dbd38-10af-4240-ba4a-5e30b4d51942",
+          "role": "user",
+          "text": "me de a contagem de contratações para cada numero de itens de 0 a 10 ou mais",
+          "sql": "",
+          "reportId": "",
+          "reportTitle": "",
+          "reportSubtitle": "",
+          "rowCount": 0,
+          "status": "",
+          "error": "",
+          "createdAt": "2026-04-30T19:49:24.466826+00:00"
+        },
+        {
+          "id": "f8b47f21-7553-49aa-a173-57fda5e82f25",
+          "role": "assistant",
+          "text": "SELECT item_count, COUNT(*) AS quantidade_contratacoes FROM ( SELECT c.numero_controle_pncp, COUNT(ic.numero_item) AS item_count FROM contratacao AS c LEFT JOIN item_contratacao AS ic ON c.numero_controle_pncp = ic.numero_controle_pncp GROUP BY c.numero_controle_pncp ) AS subquery GROUP BY item_count HAVING item_count BETWEEN 0 AND 10 OR item_count > 10 ORDER BY item_count",
+          "sql": "SELECT item_count, COUNT(*) AS quantidade_contratacoes FROM ( SELECT c.numero_controle_pncp, COUNT(ic.numero_item) AS item_count FROM contratacao AS c LEFT JOIN item_contratacao AS ic ON c.numero_controle_pncp = ic.numero_controle_pncp GROUP BY c.numero_controle_pncp ) AS subquery GROUP BY item_count HAVING item_count BETWEEN 0 AND 10 OR item_count > 10 ORDER BY item_count",
+          "reportId": "",
+          "reportTitle": "",
+          "reportSubtitle": "",
+          "rowCount": 11,
+          "status": "ok",
+          "error": "",
+          "createdAt": "2026-04-30T19:49:24.466826+00:00"
+        },
+        {
+          "id": "7d69e717-b205-47b8-bd4c-77c0fb584478",
+          "role": "user",
+          "text": "agora quero ver, alem do total de contratacoes que ver a contagem de contratações ano a ano por numero de itens",
+          "sql": "",
+          "reportId": "",
+          "reportTitle": "",
+          "reportSubtitle": "",
+          "rowCount": 0,
+          "status": "",
+          "error": "",
+          "createdAt": "2026-04-30T19:53:18.071090+00:00"
+        },
+        {
+          "id": "f11f272f-b631-41f3-8034-030581ca278b",
+          "role": "assistant",
+          "text": "SELECT ano_compra, item_count, COUNT(*) AS quantidade_contratacoes FROM ( SELECT c.ano_compra, c.numero_controle_pncp, COUNT(ic.numero_item) AS item_count FROM contratacao AS c LEFT JOIN item_contratacao AS ic ON c.numero_controle_pncp = ic.numero_controle_pncp GROUP BY c.ano_compra, c.numero_controle_pncp ) AS subquery GROUP BY ano_compra, item_count ORDER BY ano_compra, item_count",
+          "sql": "SELECT ano_compra, item_count, COUNT(*) AS quantidade_contratacoes FROM ( SELECT c.ano_compra, c.numero_controle_pncp, COUNT(ic.numero_item) AS item_count FROM contratacao AS c LEFT JOIN item_contratacao AS ic ON c.numero_controle_pncp = ic.numero_controle_pncp GROUP BY c.ano_compra, c.numero_controle_pncp ) AS subquery GROUP BY ano_compra, item_count ORDER BY ano_compra, item_count",
+          "reportId": "",
+          "reportTitle": "",
+          "reportSubtitle": "",
+          "rowCount": 107,
+          "status": "ok",
+          "error": "",
+          "createdAt": "2026-04-30T19:53:18.071090+00:00"
+        },
+        {
+          "id": "eb60927c-fcc2-4579-94fa-6b5f58833eac",
+          "role": "user",
+          "text": "voce nao entendeu : quero a contagem das contratações tendo por linhas o numero de itens de contratacaõa e tendo por colunas o ano da contratação, de 2021 a 2026",
+          "sql": "",
+          "reportId": "",
+          "reportTitle": "",
+          "reportSubtitle": "",
+          "rowCount": 0,
+          "status": "",
+          "error": "",
+          "createdAt": "2026-04-30T19:55:11.621919+00:00"
+        },
+        {
+          "id": "bb24d8d6-2e3c-4e6d-8b1c-cb793108abf2",
+          "role": "assistant",
+          "text": "SELECT item_count, COUNT(CASE WHEN ano_compra = '2021' THEN 1 END) AS contratacoes_2021, COUNT(CASE WHEN ano_compra = '2022' THEN 1 END) AS contratacoes_2022, COUNT(CASE WHEN ano_compra = '2023' THEN 1 END) AS contratacoes_2023, COUNT(CASE WHEN ano_compra = '2024' THEN 1 END) AS contratacoes_2024, COUNT(CASE WHEN ano_compra = '2025' THEN 1 END) AS contratacoes_2025, COUNT(CASE WHEN ano_compra = '2026' THEN 1 END) AS contratacoes_2026 FROM ( SELECT c.ano_compra, c.numero_controle_pncp, COUNT(ic.numero_item) AS item_count FROM contratacao AS c LEFT JOIN item_contratacao AS ic ON c.numero_controle_pncp = ic.numero_controle_pncp GROUP BY c.ano_compra, c.numero_controle_pncp ) AS subquery GROUP BY item_count ORDER BY item_count",
+          "sql": "SELECT item_count, COUNT(CASE WHEN ano_compra = '2021' THEN 1 END) AS contratacoes_2021, COUNT(CASE WHEN ano_compra = '2022' THEN 1 END) AS contratacoes_2022, COUNT(CASE WHEN ano_compra = '2023' THEN 1 END) AS contratacoes_2023, COUNT(CASE WHEN ano_compra = '2024' THEN 1 END) AS contratacoes_2024, COUNT(CASE WHEN ano_compra = '2025' THEN 1 END) AS contratacoes_2025, COUNT(CASE WHEN ano_compra = '2026' THEN 1 END) AS contratacoes_2026 FROM ( SELECT c.ano_compra, c.numero_controle_pncp, COUNT(ic.numero_item) AS item_count FROM contratacao AS c LEFT JOIN item_contratacao AS ic ON c.numero_controle_pncp = ic.numero_controle_pncp GROUP BY c.ano_compra, c.numero_controle_pncp ) AS subquery GROUP BY item_count ORDER BY item_count",
+          "reportId": "",
+          "reportTitle": "",
+          "reportSubtitle": "",
+          "rowCount": 11,
+          "status": "ok",
+          "error": "",
+          "createdAt": "2026-04-30T19:55:11.621919+00:00"
+        },
+        {
+          "id": "b65507c7-ae6d-4846-b465-0ab517bff8cf",
+          "role": "user",
+          "text": "quero que o nome das colunas seja somente o ano, contratacoes",
+          "sql": "",
+          "reportId": "",
+          "reportTitle": "",
+          "reportSubtitle": "",
+          "rowCount": 0,
+          "status": "",
+          "error": "",
+          "createdAt": "2026-04-30T19:57:35.207197+00:00"
+        },
+        {
+          "id": "3f2d5e32-3bc6-4c8e-8627-f9173de2fb14",
+          "role": "assistant",
+          "text": "SELECT item_count, COUNT(CASE WHEN ano_compra = '2021' THEN 1 END) AS \"2021\", COUNT(CASE WHEN ano_compra = '2022' THEN 1 END) AS \"2022\", COUNT(CASE WHEN ano_compra = '2023' THEN 1 END) AS \"2023\", COUNT(CASE WHEN ano_compra = '2024' THEN 1 END) AS \"2024\", COUNT(CASE WHEN ano_compra = '2025' THEN 1 END) AS \"2025\", COUNT(CASE WHEN ano_compra = '2026' THEN 1 END) AS \"2026\" FROM ( SELECT c.ano_compra, c.numero_controle_pncp, COUNT(ic.numero_item) AS item_count FROM contratacao AS c LEFT JOIN item_contratacao AS ic ON c.numero_controle_pncp = ic.numero_controle_pncp GROUP BY c.ano_compra, c.numero_controle_pncp ) AS subquery GROUP BY item_count ORDER BY item_count",
+          "sql": "SELECT item_count, COUNT(CASE WHEN ano_compra = '2021' THEN 1 END) AS \"2021\", COUNT(CASE WHEN ano_compra = '2022' THEN 1 END) AS \"2022\", COUNT(CASE WHEN ano_compra = '2023' THEN 1 END) AS \"2023\", COUNT(CASE WHEN ano_compra = '2024' THEN 1 END) AS \"2024\", COUNT(CASE WHEN ano_compra = '2025' THEN 1 END) AS \"2025\", COUNT(CASE WHEN ano_compra = '2026' THEN 1 END) AS \"2026\" FROM ( SELECT c.ano_compra, c.numero_controle_pncp, COUNT(ic.numero_item) AS item_count FROM contratacao AS c LEFT JOIN item_contratacao AS ic ON c.numero_controle_pncp = ic.numero_controle_pncp GROUP BY c.ano_compra, c.numero_controle_pncp ) AS subquery GROUP BY item_count ORDER BY item_count",
+          "reportId": "",
+          "reportTitle": "",
+          "reportSubtitle": "",
+          "rowCount": 11,
+          "status": "ok",
+          "error": "",
+          "createdAt": "2026-04-30T19:57:35.207197+00:00"
+        },
+        {
+          "id": "af85b9de-9ff1-4cd9-a077-eed7b10bc7c5",
+          "role": "user",
+          "text": "ordene pelo valor total estimado desc",
+          "sql": "",
+          "reportId": "",
+          "reportTitle": "",
+          "reportSubtitle": "",
+          "rowCount": 0,
+          "status": "",
+          "error": "",
+          "createdAt": "2026-04-30T20:22:23.743299+00:00"
+        },
+        {
+          "id": "6732b72b-0f99-4b83-ac09-bfd410ceb8e5",
+          "role": "assistant",
+          "text": "Erro ao executar SQL: subquery uses ungrouped column \"subquery.numero_controle_pncp\" from outer query\nLINE 1: ...contratacao AS ic WHERE ic.numero_controle_pncp = subquery.n...\n                                                             ^\n",
+          "sql": "SELECT item_count, COUNT(CASE WHEN ano_compra = '2021' THEN 1 END) AS \"2021\", COUNT(CASE WHEN ano_compra = '2022' THEN 1 END) AS \"2022\", COUNT(CASE WHEN ano_compra = '2023' THEN 1 END) AS \"2023\", COUNT(CASE WHEN ano_compra = '2024' THEN 1 END) AS \"2024\", COUNT(CASE WHEN ano_compra = '2025' THEN 1 END) AS \"2025\", COUNT(CASE WHEN ano_compra = '2026' THEN 1 END) AS \"2026\" FROM ( SELECT c.ano_compra, c.numero_controle_pncp, COUNT(ic.numero_item) AS item_count FROM contratacao AS c LEFT JOIN item_contratacao AS ic ON c.numero_controle_pncp = ic.numero_controle_pncp GROUP BY c.ano_compra, c.numero_controle_pncp ) AS subquery GROUP BY item_count ORDER BY ( SELECT SUM(CAST(ic.valor_total_estimado AS numeric)) FROM item_contratacao AS ic WHERE ic.numero_controle_pncp = subquery.numero_controle_pncp ) DESC;",
+          "reportId": "",
+          "reportTitle": "",
+          "reportSubtitle": "",
+          "rowCount": 0,
+          "status": "error",
+          "error": "Erro ao executar SQL: subquery uses ungrouped column \"subquery.numero_controle_pncp\" from outer query\nLINE 1: ...contratacao AS ic WHERE ic.numero_controle_pncp = subquery.n...\n                                                             ^\n",
+          "createdAt": "2026-04-30T20:22:23.743299+00:00"
+        }
+      ]
+    },
+    "tabs": [
+      {
+        "id": "intro",
+        "title": "Nova consulta",
+        "count": null,
+        "status": "idle",
+        "closable": false
+      }
+    ],
+    "reports": {
+      "intro": {
+        "id": "intro",
+        "title": "Nova consulta",
+        "subtitle": "",
+        "question": "",
+        "sql": "",
+        "executedSql": "",
+        "columns": [],
+        "rows": [],
+        "rowCount": 0,
+        "elapsedMs": 0,
+        "status": "idle",
+        "error": "",
+        "saved": false
+      }
+    },
+    "updatedAt": "2026-05-01T16:03:06.378476+00:00"
+  }
+}

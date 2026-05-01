@@ -1,0 +1,1013 @@
+[
+  {
+    "id": "231bc019-ac03-4bca-b359-e916a1cc4fbf",
+    "userId": "5d3b153a-3854-4d70-8039-9ba34a698d67",
+    "threadId": "thread_950eLmb56KlDAZBkwQTN31Ow",
+    "title": "Top 10 compradores de alimentacao hospitalar nos ultimos 12 meses",
+    "createdAt": "2026-04-30T19:13:03.323571+00:00",
+    "updatedAt": "2026-04-30T20:22:23.743299+00:00",
+    "messages": [
+      {
+        "id": "07d78e97-519c-4e5b-b8cb-2365ecd6fcae",
+        "role": "user",
+        "text": "Top 10 compradores de alimentacao hospitalar nos ultimos 12 meses",
+        "createdAt": "2026-04-30T19:13:08.969088+00:00"
+      },
+      {
+        "id": "af004251-bf71-42e3-bce4-94fbe8232c1d",
+        "role": "assistant",
+        "text": "Erro ao executar SQL: operator does not exist: text >= timestamp without time zone\nLINE 1: ...imentação hospitalar%' AND c.data_publicacao_pncp >= (CURREN...\n                                                             ^\nHINT:  No operator matches the given name and argument types. You might need to add explicit type casts.\n",
+        "sql": "SELECT c.orgao_entidade_razao_social, SUM(c.valor_total_homologado) AS total_gasto FROM contratacao AS c JOIN item_contratacao AS ic ON c.numero_controle_pncp = ic.numero_controle_pncp WHERE ic.descricao_item ILIKE '%alimentação hospitalar%' AND c.data_publicacao_pncp >= (CURRENT_DATE - INTERVAL '1 year') GROUP BY c.orgao_entidade_razao_social ORDER BY total_gasto DESC LIMIT 10;",
+        "reportId": "42c952c8-a923-4742-8caa-e4bc535ab5c1",
+        "rowCount": 0,
+        "status": "error",
+        "error": "Erro ao executar SQL: operator does not exist: text >= timestamp without time zone\nLINE 1: ...imentação hospitalar%' AND c.data_publicacao_pncp >= (CURREN...\n                                                             ^\nHINT:  No operator matches the given name and argument types. You might need to add explicit type casts.\n",
+        "createdAt": "2026-04-30T19:13:08.969088+00:00"
+      },
+      {
+        "id": "a5fc27e0-3bff-45e8-8184-fc983beab6a9",
+        "role": "user",
+        "text": "Top 10 compradores de alimentacao hospitalar nos ultimos 12 meses",
+        "createdAt": "2026-04-30T19:13:32.268139+00:00"
+      },
+      {
+        "id": "69040194-7c10-4c30-b0ba-e01658a9c9b3",
+        "role": "assistant",
+        "text": "Erro ao executar SQL: operator does not exist: text >= timestamp without time zone\nLINE 1: ...entação hospitalar%' AND c.data_abertura_proposta >= (CURREN...\n                                                             ^\nHINT:  No operator matches the given name and argument types. You might need to add explicit type casts.\n",
+        "sql": "SELECT c.orgao_entidade_razao_social, SUM(c.valor_total_homologado) AS total_gasto FROM contratacao AS c JOIN item_contratacao AS ic ON c.numero_controle_pncp = ic.numero_controle_pncp WHERE ic.descricao_item ILIKE '%alimentação hospitalar%' AND c.data_abertura_proposta >= (CURRENT_DATE - INTERVAL '1 year') GROUP BY c.orgao_entidade_razao_social ORDER BY total_gasto DESC LIMIT 10;",
+        "reportId": "3ff00b4f-6039-4aae-b6a0-c29cb4418129",
+        "rowCount": 0,
+        "status": "error",
+        "error": "Erro ao executar SQL: operator does not exist: text >= timestamp without time zone\nLINE 1: ...entação hospitalar%' AND c.data_abertura_proposta >= (CURREN...\n                                                             ^\nHINT:  No operator matches the given name and argument types. You might need to add explicit type casts.\n",
+        "createdAt": "2026-04-30T19:13:32.268139+00:00"
+      },
+      {
+        "id": "4b1c840c-77d9-4232-84aa-fb9d0e797956",
+        "role": "user",
+        "text": "faça contagem do numero de cotratacoes pelo numero de de itens que as contratacções possuem",
+        "createdAt": "2026-04-30T19:15:14.802419+00:00"
+      },
+      {
+        "id": "e2b19136-880e-4c03-a519-2ff6018e464c",
+        "role": "assistant",
+        "text": "Erro ao executar SQL: canceling statement due to statement timeout\n",
+        "sql": "SELECT COUNT(*) AS quantidade_contratacoes, COUNT(ic.numero_item) AS numero_itens FROM contratacao AS c JOIN item_contratacao AS ic ON c.numero_controle_pncp = ic.numero_controle_pncp;",
+        "reportId": "",
+        "rowCount": 0,
+        "status": "error",
+        "error": "Erro ao executar SQL: canceling statement due to statement timeout\n",
+        "createdAt": "2026-04-30T19:15:14.802419+00:00",
+        "reportDeleted": true
+      },
+      {
+        "id": "ca07ec93-b1d4-4c82-b1ab-178f5bfa68e5",
+        "role": "user",
+        "text": "quantas contratacoes existem com 10 itens?",
+        "createdAt": "2026-04-30T19:27:17.034725+00:00"
+      },
+      {
+        "id": "159943de-8f60-4985-9847-efe7b0eeff5a",
+        "role": "assistant",
+        "text": "Erro ao executar SQL: canceling statement due to statement timeout\n",
+        "sql": "SELECT COUNT(*) AS quantidade_contratacoes FROM ( SELECT c.numero_controle_pncp FROM contratacao AS c JOIN item_contratacao AS ic ON c.numero_controle_pncp = ic.numero_controle_pncp GROUP BY c.numero_controle_pncp HAVING COUNT(ic.numero_item) = 10 ) AS subquery;",
+        "reportId": "",
+        "rowCount": 0,
+        "status": "error",
+        "error": "Erro ao executar SQL: canceling statement due to statement timeout\n",
+        "createdAt": "2026-04-30T19:27:17.034725+00:00",
+        "reportDeleted": true
+      },
+      {
+        "id": "b15dbd38-10af-4240-ba4a-5e30b4d51942",
+        "role": "user",
+        "text": "me de a contagem de contratações para cada numero de itens de 0 a 10 ou mais",
+        "createdAt": "2026-04-30T19:49:24.466826+00:00"
+      },
+      {
+        "id": "f8b47f21-7553-49aa-a173-57fda5e82f25",
+        "role": "assistant",
+        "text": "SELECT item_count, COUNT(*) AS quantidade_contratacoes FROM ( SELECT c.numero_controle_pncp, COUNT(ic.numero_item) AS item_count FROM contratacao AS c LEFT JOIN item_contratacao AS ic ON c.numero_controle_pncp = ic.numero_controle_pncp GROUP BY c.numero_controle_pncp ) AS subquery GROUP BY item_count HAVING item_count BETWEEN 0 AND 10 OR item_count > 10 ORDER BY item_count",
+        "sql": "SELECT item_count, COUNT(*) AS quantidade_contratacoes FROM ( SELECT c.numero_controle_pncp, COUNT(ic.numero_item) AS item_count FROM contratacao AS c LEFT JOIN item_contratacao AS ic ON c.numero_controle_pncp = ic.numero_controle_pncp GROUP BY c.numero_controle_pncp ) AS subquery GROUP BY item_count HAVING item_count BETWEEN 0 AND 10 OR item_count > 10 ORDER BY item_count",
+        "reportId": "",
+        "rowCount": 11,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-04-30T19:49:24.466826+00:00",
+        "reportDeleted": true
+      },
+      {
+        "id": "7d69e717-b205-47b8-bd4c-77c0fb584478",
+        "role": "user",
+        "text": "agora quero ver, alem do total de contratacoes que ver a contagem de contratações ano a ano por numero de itens",
+        "createdAt": "2026-04-30T19:53:18.071090+00:00"
+      },
+      {
+        "id": "f11f272f-b631-41f3-8034-030581ca278b",
+        "role": "assistant",
+        "text": "SELECT ano_compra, item_count, COUNT(*) AS quantidade_contratacoes FROM ( SELECT c.ano_compra, c.numero_controle_pncp, COUNT(ic.numero_item) AS item_count FROM contratacao AS c LEFT JOIN item_contratacao AS ic ON c.numero_controle_pncp = ic.numero_controle_pncp GROUP BY c.ano_compra, c.numero_controle_pncp ) AS subquery GROUP BY ano_compra, item_count ORDER BY ano_compra, item_count",
+        "sql": "SELECT ano_compra, item_count, COUNT(*) AS quantidade_contratacoes FROM ( SELECT c.ano_compra, c.numero_controle_pncp, COUNT(ic.numero_item) AS item_count FROM contratacao AS c LEFT JOIN item_contratacao AS ic ON c.numero_controle_pncp = ic.numero_controle_pncp GROUP BY c.ano_compra, c.numero_controle_pncp ) AS subquery GROUP BY ano_compra, item_count ORDER BY ano_compra, item_count",
+        "reportId": "",
+        "rowCount": 107,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-04-30T19:53:18.071090+00:00",
+        "reportDeleted": true
+      },
+      {
+        "id": "eb60927c-fcc2-4579-94fa-6b5f58833eac",
+        "role": "user",
+        "text": "voce nao entendeu : quero a contagem das contratações tendo por linhas o numero de itens de contratacaõa e tendo por colunas o ano da contratação, de 2021 a 2026",
+        "createdAt": "2026-04-30T19:55:11.621919+00:00"
+      },
+      {
+        "id": "bb24d8d6-2e3c-4e6d-8b1c-cb793108abf2",
+        "role": "assistant",
+        "text": "SELECT item_count, COUNT(CASE WHEN ano_compra = '2021' THEN 1 END) AS contratacoes_2021, COUNT(CASE WHEN ano_compra = '2022' THEN 1 END) AS contratacoes_2022, COUNT(CASE WHEN ano_compra = '2023' THEN 1 END) AS contratacoes_2023, COUNT(CASE WHEN ano_compra = '2024' THEN 1 END) AS contratacoes_2024, COUNT(CASE WHEN ano_compra = '2025' THEN 1 END) AS contratacoes_2025, COUNT(CASE WHEN ano_compra = '2026' THEN 1 END) AS contratacoes_2026 FROM ( SELECT c.ano_compra, c.numero_controle_pncp, COUNT(ic.numero_item) AS item_count FROM contratacao AS c LEFT JOIN item_contratacao AS ic ON c.numero_controle_pncp = ic.numero_controle_pncp GROUP BY c.ano_compra, c.numero_controle_pncp ) AS subquery GROUP BY item_count ORDER BY item_count",
+        "sql": "SELECT item_count, COUNT(CASE WHEN ano_compra = '2021' THEN 1 END) AS contratacoes_2021, COUNT(CASE WHEN ano_compra = '2022' THEN 1 END) AS contratacoes_2022, COUNT(CASE WHEN ano_compra = '2023' THEN 1 END) AS contratacoes_2023, COUNT(CASE WHEN ano_compra = '2024' THEN 1 END) AS contratacoes_2024, COUNT(CASE WHEN ano_compra = '2025' THEN 1 END) AS contratacoes_2025, COUNT(CASE WHEN ano_compra = '2026' THEN 1 END) AS contratacoes_2026 FROM ( SELECT c.ano_compra, c.numero_controle_pncp, COUNT(ic.numero_item) AS item_count FROM contratacao AS c LEFT JOIN item_contratacao AS ic ON c.numero_controle_pncp = ic.numero_controle_pncp GROUP BY c.ano_compra, c.numero_controle_pncp ) AS subquery GROUP BY item_count ORDER BY item_count",
+        "reportId": "",
+        "rowCount": 11,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-04-30T19:55:11.621919+00:00",
+        "reportDeleted": true
+      },
+      {
+        "id": "b65507c7-ae6d-4846-b465-0ab517bff8cf",
+        "role": "user",
+        "text": "quero que o nome das colunas seja somente o ano, contratacoes",
+        "createdAt": "2026-04-30T19:57:35.207197+00:00"
+      },
+      {
+        "id": "3f2d5e32-3bc6-4c8e-8627-f9173de2fb14",
+        "role": "assistant",
+        "text": "SELECT item_count, COUNT(CASE WHEN ano_compra = '2021' THEN 1 END) AS \"2021\", COUNT(CASE WHEN ano_compra = '2022' THEN 1 END) AS \"2022\", COUNT(CASE WHEN ano_compra = '2023' THEN 1 END) AS \"2023\", COUNT(CASE WHEN ano_compra = '2024' THEN 1 END) AS \"2024\", COUNT(CASE WHEN ano_compra = '2025' THEN 1 END) AS \"2025\", COUNT(CASE WHEN ano_compra = '2026' THEN 1 END) AS \"2026\" FROM ( SELECT c.ano_compra, c.numero_controle_pncp, COUNT(ic.numero_item) AS item_count FROM contratacao AS c LEFT JOIN item_contratacao AS ic ON c.numero_controle_pncp = ic.numero_controle_pncp GROUP BY c.ano_compra, c.numero_controle_pncp ) AS subquery GROUP BY item_count ORDER BY item_count",
+        "sql": "SELECT item_count, COUNT(CASE WHEN ano_compra = '2021' THEN 1 END) AS \"2021\", COUNT(CASE WHEN ano_compra = '2022' THEN 1 END) AS \"2022\", COUNT(CASE WHEN ano_compra = '2023' THEN 1 END) AS \"2023\", COUNT(CASE WHEN ano_compra = '2024' THEN 1 END) AS \"2024\", COUNT(CASE WHEN ano_compra = '2025' THEN 1 END) AS \"2025\", COUNT(CASE WHEN ano_compra = '2026' THEN 1 END) AS \"2026\" FROM ( SELECT c.ano_compra, c.numero_controle_pncp, COUNT(ic.numero_item) AS item_count FROM contratacao AS c LEFT JOIN item_contratacao AS ic ON c.numero_controle_pncp = ic.numero_controle_pncp GROUP BY c.ano_compra, c.numero_controle_pncp ) AS subquery GROUP BY item_count ORDER BY item_count",
+        "reportId": "",
+        "rowCount": 11,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-04-30T19:57:35.207197+00:00",
+        "reportDeleted": true
+      },
+      {
+        "id": "af85b9de-9ff1-4cd9-a077-eed7b10bc7c5",
+        "role": "user",
+        "text": "ordene pelo valor total estimado desc",
+        "createdAt": "2026-04-30T20:22:23.743299+00:00"
+      },
+      {
+        "id": "6732b72b-0f99-4b83-ac09-bfd410ceb8e5",
+        "role": "assistant",
+        "text": "Erro ao executar SQL: subquery uses ungrouped column \"subquery.numero_controle_pncp\" from outer query\nLINE 1: ...contratacao AS ic WHERE ic.numero_controle_pncp = subquery.n...\n                                                             ^\n",
+        "sql": "SELECT item_count, COUNT(CASE WHEN ano_compra = '2021' THEN 1 END) AS \"2021\", COUNT(CASE WHEN ano_compra = '2022' THEN 1 END) AS \"2022\", COUNT(CASE WHEN ano_compra = '2023' THEN 1 END) AS \"2023\", COUNT(CASE WHEN ano_compra = '2024' THEN 1 END) AS \"2024\", COUNT(CASE WHEN ano_compra = '2025' THEN 1 END) AS \"2025\", COUNT(CASE WHEN ano_compra = '2026' THEN 1 END) AS \"2026\" FROM ( SELECT c.ano_compra, c.numero_controle_pncp, COUNT(ic.numero_item) AS item_count FROM contratacao AS c LEFT JOIN item_contratacao AS ic ON c.numero_controle_pncp = ic.numero_controle_pncp GROUP BY c.ano_compra, c.numero_controle_pncp ) AS subquery GROUP BY item_count ORDER BY ( SELECT SUM(CAST(ic.valor_total_estimado AS numeric)) FROM item_contratacao AS ic WHERE ic.numero_controle_pncp = subquery.numero_controle_pncp ) DESC;",
+        "reportId": "",
+        "rowCount": 0,
+        "status": "error",
+        "error": "Erro ao executar SQL: subquery uses ungrouped column \"subquery.numero_controle_pncp\" from outer query\nLINE 1: ...contratacao AS ic WHERE ic.numero_controle_pncp = subquery.n...\n                                                             ^\n",
+        "createdAt": "2026-04-30T20:22:23.743299+00:00",
+        "reportDeleted": true
+      }
+    ],
+    "reportIds": [
+      "42c952c8-a923-4742-8caa-e4bc535ab5c1",
+      "3ff00b4f-6039-4aae-b6a0-c29cb4418129"
+    ]
+  },
+  {
+    "id": "0802755d-a12a-4e04-b99b-400dcc33716b",
+    "userId": "5d3b153a-3854-4d70-8039-9ba34a698d67",
+    "threadId": "thread_37DCIbsYw4MbtFBpUKFP47NS",
+    "title": "me de contratações de abril de 2026 cujos itens tem a palavra \"pão\" ou \"pães\"",
+    "createdAt": "2026-04-30T19:46:36.898287+00:00",
+    "updatedAt": "2026-04-30T19:46:54.214070+00:00",
+    "messages": [
+      {
+        "id": "2dfc8780-6ab6-4aa0-b873-255292eadb70",
+        "role": "user",
+        "text": "me de contratações de abril de 2026 cujos itens tem a palavra \"pão\" ou \"pães\"",
+        "createdAt": "2026-04-30T19:46:54.214070+00:00"
+      },
+      {
+        "id": "92ad433a-3dd1-416d-8685-1b3d7240ba06",
+        "role": "assistant",
+        "text": "SELECT c.numero_controle_pncp, c.ano_compra, c.objeto_compra, c.valor_total_homologado, c.data_abertura_proposta, c.orgao_entidade_razao_social, c.unidade_orgao_municipio_nome, c.unidade_orgao_uf_sigla FROM contratacao AS c JOIN item_contratacao AS i ON c.numero_controle_pncp = i.numero_controle_pncp WHERE c.ano_compra = '2026' AND c.data_abertura_proposta LIKE '2026-04-%' AND (i.descricao_item ILIKE '%pão%' OR i.descricao_item ILIKE '%pães%') ORDER BY c.data_publicacao_pncp DESC LIMIT 1000",
+        "sql": "SELECT c.numero_controle_pncp, c.ano_compra, c.objeto_compra, c.valor_total_homologado, c.data_abertura_proposta, c.orgao_entidade_razao_social, c.unidade_orgao_municipio_nome, c.unidade_orgao_uf_sigla FROM contratacao AS c JOIN item_contratacao AS i ON c.numero_controle_pncp = i.numero_controle_pncp WHERE c.ano_compra = '2026' AND c.data_abertura_proposta LIKE '2026-04-%' AND (i.descricao_item ILIKE '%pão%' OR i.descricao_item ILIKE '%pães%') ORDER BY c.data_publicacao_pncp DESC LIMIT 1000",
+        "reportId": "",
+        "rowCount": 844,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-04-30T19:46:54.214070+00:00",
+        "reportDeleted": true
+      }
+    ],
+    "reportIds": []
+  },
+  {
+    "id": "80c0d1fb-8e70-4150-82d4-fcc5530612e9",
+    "userId": "37ba3f85-8720-4aa8-800e-4428b2057f5a",
+    "threadId": "thread_VrMpqqQcdKlRf9wjXXlxLrLE",
+    "title": "quais sao as categorias sobre compras de computação",
+    "createdAt": "2026-04-30T20:15:18.603716+00:00",
+    "updatedAt": "2026-04-30T22:33:13.339259+00:00",
+    "messages": [
+      {
+        "id": "afe28ada-f247-412b-ae39-d0d4d33cef6e",
+        "role": "user",
+        "text": "quais sao as categorias sobre compras de computação",
+        "createdAt": "2026-04-30T20:15:24.219501+00:00"
+      },
+      {
+        "id": "06ebe80a-84a0-4108-a21f-db5c2ba08771",
+        "role": "assistant",
+        "text": "SELECT DISTINCT nom_cat FROM categoria WHERE nom_cat ILIKE '%computação%' ORDER BY nom_cat LIMIT 1000",
+        "sql": "SELECT DISTINCT nom_cat FROM categoria WHERE nom_cat ILIKE '%computação%' ORDER BY nom_cat LIMIT 1000",
+        "reportId": "1a995f68-23a7-4151-854b-a0b4806f40aa",
+        "rowCount": 3,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-04-30T20:15:24.219501+00:00"
+      },
+      {
+        "id": "d1bead3a-f6db-46c5-a1fb-eddabb659256",
+        "role": "user",
+        "text": "eu quero saber nao so o nome , mas os campos principais da tabela",
+        "createdAt": "2026-04-30T20:16:11.271008+00:00"
+      },
+      {
+        "id": "08ce740e-1297-441d-b05d-7e177e644677",
+        "role": "assistant",
+        "text": "SELECT cod_cat, nom_cat, cod_nv0, nom_nv1, cod_nv2, nom_nv3 FROM categoria WHERE nom_cat ILIKE '%computação%' ORDER BY nom_cat LIMIT 1000",
+        "sql": "SELECT cod_cat, nom_cat, cod_nv0, nom_nv1, cod_nv2, nom_nv3 FROM categoria WHERE nom_cat ILIKE '%computação%' ORDER BY nom_cat LIMIT 1000",
+        "reportId": "30adc503-3659-43f9-80c5-70399a4b4561",
+        "rowCount": 3,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-04-30T20:16:11.271008+00:00"
+      },
+      {
+        "id": "ecd0d4b1-9f7c-4ebc-ad59-4eb9fe68ccb4",
+        "role": "user",
+        "text": "quais são as contratações relacionadas a essas categorias em abril de 2026",
+        "createdAt": "2026-04-30T20:18:17.988428+00:00"
+      },
+      {
+        "id": "26d71007-ed54-4b1c-86c7-ebe32e0003ed",
+        "role": "assistant",
+        "text": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.data_abertura_proposta FROM contratacao AS c JOIN categoria AS cat ON c.cod_cat = cat.cod_cat WHERE cat.nom_cat ILIKE '%computação%' AND c.data_abertura_proposta LIKE '2026-04%' ORDER BY c.data_abertura_proposta DESC LIMIT 1000",
+        "sql": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.data_abertura_proposta FROM contratacao AS c JOIN categoria AS cat ON c.cod_cat = cat.cod_cat WHERE cat.nom_cat ILIKE '%computação%' AND c.data_abertura_proposta LIKE '2026-04%' ORDER BY c.data_abertura_proposta DESC LIMIT 1000",
+        "reportId": "0d2b5527-5f8e-4b50-9cd6-81983e6e0a19",
+        "rowCount": 0,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-04-30T20:18:17.988428+00:00"
+      },
+      {
+        "id": "38cffff3-8a24-4460-983a-d80ca1172e69",
+        "role": "user",
+        "text": "na verdade voce tem que pegar os codigos de categoria que voce achou relacionados a computadores e pesquisar no vetor top_categories que esta na tabela contratacao_emb, e entao achar as contratacoes",
+        "createdAt": "2026-04-30T20:20:12.256928+00:00"
+      },
+      {
+        "id": "78396944-d2c1-4a8d-80da-9b6c5d442116",
+        "role": "assistant",
+        "text": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.data_abertura_proposta FROM contratacao AS c JOIN contratacao_emb AS e ON c.numero_controle_pncp = e.numero_controle_pncp WHERE e.top_categories && (SELECT ARRAY_AGG(cat.cod_cat) FROM categoria AS cat WHERE cat.nom_cat ILIKE '%computação%') AND c.data_abertura_proposta LIKE '2026-04%' ORDER BY c.data_abertura_proposta DESC LIMIT 1000",
+        "sql": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.data_abertura_proposta FROM contratacao AS c JOIN contratacao_emb AS e ON c.numero_controle_pncp = e.numero_controle_pncp WHERE e.top_categories && (SELECT ARRAY_AGG(cat.cod_cat) FROM categoria AS cat WHERE cat.nom_cat ILIKE '%computação%') AND c.data_abertura_proposta LIKE '2026-04%' ORDER BY c.data_abertura_proposta DESC LIMIT 1000",
+        "reportId": "9465d62a-09c8-4041-9386-c3e444836e96",
+        "rowCount": 111,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-04-30T20:20:12.256928+00:00"
+      },
+      {
+        "id": "2f57cac2-5390-4f77-9190-8406f3a95f39",
+        "role": "user",
+        "text": "ordene pelo valor homologado desc e limit de 100",
+        "createdAt": "2026-04-30T20:21:10.024000+00:00"
+      },
+      {
+        "id": "6546ed49-8694-4bf5-994c-d85e7130507c",
+        "role": "assistant",
+        "text": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.data_abertura_proposta FROM contratacao AS c JOIN contratacao_emb AS e ON c.numero_controle_pncp = e.numero_controle_pncp WHERE e.top_categories && (SELECT ARRAY_AGG(cat.cod_cat) FROM categoria AS cat WHERE cat.nom_cat ILIKE '%computação%') AND c.data_abertura_proposta LIKE '2026-04%' ORDER BY c.valor_total_homologado DESC LIMIT 100",
+        "sql": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.data_abertura_proposta FROM contratacao AS c JOIN contratacao_emb AS e ON c.numero_controle_pncp = e.numero_controle_pncp WHERE e.top_categories && (SELECT ARRAY_AGG(cat.cod_cat) FROM categoria AS cat WHERE cat.nom_cat ILIKE '%computação%') AND c.data_abertura_proposta LIKE '2026-04%' ORDER BY c.valor_total_homologado DESC LIMIT 100",
+        "reportId": "7866b11c-579b-4d3a-b6fc-19f9e7d4b26d",
+        "rowCount": 100,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-04-30T20:21:10.024000+00:00"
+      },
+      {
+        "id": "4a1d7e6b-a631-4029-b7e9-344d027baedc",
+        "role": "user",
+        "text": "ordene pelo outro valor",
+        "createdAt": "2026-04-30T20:21:35.857191+00:00"
+      },
+      {
+        "id": "b82a8b0d-fe14-47b2-8a39-bcb9a5f90475",
+        "role": "assistant",
+        "text": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.data_abertura_proposta FROM contratacao AS c JOIN contratacao_emb AS e ON c.numero_controle_pncp = e.numero_controle_pncp WHERE e.top_categories && (SELECT ARRAY_AGG(cat.cod_cat) FROM categoria AS cat WHERE cat.nom_cat ILIKE '%computação%') AND c.data_abertura_proposta LIKE '2026-04%' ORDER BY CAST(c.valor_total_estimado AS numeric) DESC LIMIT 100",
+        "sql": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.data_abertura_proposta FROM contratacao AS c JOIN contratacao_emb AS e ON c.numero_controle_pncp = e.numero_controle_pncp WHERE e.top_categories && (SELECT ARRAY_AGG(cat.cod_cat) FROM categoria AS cat WHERE cat.nom_cat ILIKE '%computação%') AND c.data_abertura_proposta LIKE '2026-04%' ORDER BY CAST(c.valor_total_estimado AS numeric) DESC LIMIT 100",
+        "reportId": "9922afb1-f104-4f8f-9d5c-eed5641308f3",
+        "rowCount": 100,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-04-30T20:21:35.857191+00:00"
+      },
+      {
+        "id": "7bf0d5b4-ee7c-46ec-bb44-7db99a730640",
+        "role": "user",
+        "text": "oredene pelo valor estaimado desc",
+        "createdAt": "2026-04-30T20:22:57.642149+00:00"
+      },
+      {
+        "id": "9d3e75b3-1f84-4335-bca9-f65b776a07da",
+        "role": "assistant",
+        "text": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.data_abertura_proposta FROM contratacao AS c JOIN contratacao_emb AS e ON c.numero_controle_pncp = e.numero_controle_pncp WHERE e.top_categories && (SELECT ARRAY_AGG(cat.cod_cat) FROM categoria AS cat WHERE cat.nom_cat ILIKE '%computação%') AND c.data_abertura_proposta LIKE '2026-04%' ORDER BY CAST(c.valor_total_estimado AS numeric) DESC LIMIT 100",
+        "sql": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.data_abertura_proposta FROM contratacao AS c JOIN contratacao_emb AS e ON c.numero_controle_pncp = e.numero_controle_pncp WHERE e.top_categories && (SELECT ARRAY_AGG(cat.cod_cat) FROM categoria AS cat WHERE cat.nom_cat ILIKE '%computação%') AND c.data_abertura_proposta LIKE '2026-04%' ORDER BY CAST(c.valor_total_estimado AS numeric) DESC LIMIT 100",
+        "reportId": "287c2135-d531-42a4-b0f0-1e76d062dd33",
+        "rowCount": 100,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-04-30T20:22:57.642149+00:00"
+      },
+      {
+        "id": "a0a91da7-5f3d-4003-bb3c-b099d3ab13aa",
+        "role": "user",
+        "text": "eu quero ver c.valor_total_estimado, e nao homologado!",
+        "createdAt": "2026-04-30T20:23:49.525339+00:00"
+      },
+      {
+        "id": "839f4975-e9a2-4a47-8d26-bc0f18e9866a",
+        "role": "assistant",
+        "text": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_estimado, c.data_abertura_proposta FROM contratacao AS c JOIN contratacao_emb AS e ON c.numero_controle_pncp = e.numero_controle_pncp WHERE e.top_categories && (SELECT ARRAY_AGG(cat.cod_cat) FROM categoria AS cat WHERE cat.nom_cat ILIKE '%computação%') AND c.data_abertura_proposta LIKE '2026-04%' ORDER BY CAST(c.valor_total_estimado AS numeric) DESC LIMIT 100",
+        "sql": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_estimado, c.data_abertura_proposta FROM contratacao AS c JOIN contratacao_emb AS e ON c.numero_controle_pncp = e.numero_controle_pncp WHERE e.top_categories && (SELECT ARRAY_AGG(cat.cod_cat) FROM categoria AS cat WHERE cat.nom_cat ILIKE '%computação%') AND c.data_abertura_proposta LIKE '2026-04%' ORDER BY CAST(c.valor_total_estimado AS numeric) DESC LIMIT 100",
+        "reportId": "9226f68b-3cef-4130-ab47-060af604046a",
+        "rowCount": 100,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-04-30T20:23:49.525339+00:00"
+      },
+      {
+        "id": "8453be8f-040a-472b-a577-41bb77d6e99c",
+        "role": "user",
+        "text": "coloque o numero de itebs tamb",
+        "createdAt": "2026-04-30T22:33:13.339259+00:00"
+      },
+      {
+        "id": "ce28b81a-369b-4e70-be71-ea8726ee92b2",
+        "role": "assistant",
+        "text": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_estimado, c.data_abertura_proposta, COUNT(ic.numero_item) AS numero_itens FROM contratacao AS c JOIN contratacao_emb AS e ON c.numero_controle_pncp = e.numero_controle_pncp JOIN item_contratacao AS ic ON c.numero_controle_pncp = ic.numero_controle_pncp WHERE e.top_categories && (SELECT ARRAY_AGG(cat.cod_cat) FROM categoria AS cat WHERE cat.nom_cat ILIKE '%computação%') AND c.data_abertura_proposta LIKE '2026-04%' GROUP BY c.numero_controle_pncp, c.objeto_compra, c.valor_total_estimado, c.data_abertura_proposta ORDER BY CAST(c.valor_total_estimado AS numeric) DESC LIMIT 100",
+        "sql": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_estimado, c.data_abertura_proposta, COUNT(ic.numero_item) AS numero_itens FROM contratacao AS c JOIN contratacao_emb AS e ON c.numero_controle_pncp = e.numero_controle_pncp JOIN item_contratacao AS ic ON c.numero_controle_pncp = ic.numero_controle_pncp WHERE e.top_categories && (SELECT ARRAY_AGG(cat.cod_cat) FROM categoria AS cat WHERE cat.nom_cat ILIKE '%computação%') AND c.data_abertura_proposta LIKE '2026-04%' GROUP BY c.numero_controle_pncp, c.objeto_compra, c.valor_total_estimado, c.data_abertura_proposta ORDER BY CAST(c.valor_total_estimado AS numeric) DESC LIMIT 100",
+        "reportId": "8601ecc7-be05-42c7-81ed-c53a18b67688",
+        "rowCount": 100,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-04-30T22:33:13.339259+00:00"
+      }
+    ],
+    "reportIds": [
+      "1a995f68-23a7-4151-854b-a0b4806f40aa",
+      "30adc503-3659-43f9-80c5-70399a4b4561",
+      "0d2b5527-5f8e-4b50-9cd6-81983e6e0a19",
+      "9465d62a-09c8-4041-9386-c3e444836e96",
+      "7866b11c-579b-4d3a-b6fc-19f9e7d4b26d",
+      "9922afb1-f104-4f8f-9d5c-eed5641308f3",
+      "287c2135-d531-42a4-b0f0-1e76d062dd33",
+      "9226f68b-3cef-4130-ab47-060af604046a",
+      "8601ecc7-be05-42c7-81ed-c53a18b67688"
+    ]
+  },
+  {
+    "id": "8b5812e7-c19a-4e16-918b-7cae2288a652",
+    "userId": "37ba3f85-8720-4aa8-800e-4428b2057f5a",
+    "threadId": "thread_79yoTKSvN1vcgKwp94gRoijZ",
+    "title": "quais sao os cnaes relacionados a compra de venda de computadores",
+    "createdAt": "2026-04-30T20:16:56.687971+00:00",
+    "updatedAt": "2026-05-01T15:42:37.081912+00:00",
+    "messages": [
+      {
+        "id": "df01a07b-346c-45b8-b01f-3d8d5bd5ee2c",
+        "role": "user",
+        "text": "quais sao os cnaes relacionados a compra de venda de computadores",
+        "createdAt": "2026-04-30T20:17:05.503267+00:00"
+      },
+      {
+        "id": "5474ae96-d05d-482b-83f1-a90522f34b7f",
+        "role": "assistant",
+        "text": "Somente uma instrucao SQL pode ser executada.",
+        "sql": "SELECT cod_cat, nom_cat FROM categoria WHERE nom_cat ILIKE '%computadores%' OR nom_nv0 ILIKE '%computadores%' OR nom_nv1 ILIKE '%computadores%' OR nom_nv2 ILIKE '%computadores%' OR nom_nv3 ILIKE '%computadores%' LIMIT 1000;`",
+        "reportId": "774b2e71-d563-4a15-9a95-c37b6dbd4614",
+        "rowCount": 0,
+        "status": "error",
+        "error": "Somente uma instrucao SQL pode ser executada.",
+        "createdAt": "2026-04-30T20:17:05.503267+00:00"
+      },
+      {
+        "id": "eb6c7259-7f38-4d8e-8f9c-34ce6d4ef020",
+        "role": "user",
+        "text": "procure pela tabela cnae e descubra quais sao suas colunas",
+        "createdAt": "2026-05-01T15:35:50.182024+00:00"
+      },
+      {
+        "id": "22a8c00a-ce5f-4aea-b546-f5bef5668a5e",
+        "role": "assistant",
+        "text": "Somente uma instrucao SQL pode ser executada.",
+        "sql": "SELECT column_name FROM information_schema.columns WHERE table_name = 'cnae';`",
+        "reportId": "0ef6463a-2e32-4863-8069-2993a4341d7a",
+        "reportTitle": "Colunas da tabela CNAE",
+        "reportSubtitle": "Identificacao dos nomes das colunas na tabela CNAE",
+        "rowCount": 0,
+        "status": "error",
+        "error": "Somente uma instrucao SQL pode ser executada.",
+        "createdAt": "2026-05-01T15:35:50.182024+00:00"
+      },
+      {
+        "id": "0460d717-81df-4f1b-9a3e-e73115140100",
+        "role": "user",
+        "text": "SELECT column_name FROM information_schema.columns WHERE table_name = 'cnae';",
+        "createdAt": "2026-05-01T15:37:26.058501+00:00"
+      },
+      {
+        "id": "568adf31-ab2f-4bd1-81ca-3417d15460ee",
+        "role": "assistant",
+        "text": "Somente uma instrucao SQL pode ser executada.",
+        "sql": "SELECT column_name FROM information_schema.columns WHERE table_name = 'cnae';`",
+        "reportId": "e4414efd-4556-451d-8a32-989ec1f3f11d",
+        "reportTitle": "Estrutura da tabela CNAE",
+        "reportSubtitle": "Colunas presentes na tabela CNAE",
+        "rowCount": 0,
+        "status": "error",
+        "error": "Somente uma instrucao SQL pode ser executada.",
+        "createdAt": "2026-05-01T15:37:26.058501+00:00"
+      },
+      {
+        "id": "8545c557-d45c-4d8f-ade3-ebd76f5a06f7",
+        "role": "user",
+        "text": "voce esta colocando esse \"`\" no final da instrução que esta trapalhando o sql",
+        "createdAt": "2026-05-01T15:40:24.738920+00:00"
+      },
+      {
+        "id": "10bf14b0-448b-413a-b3ce-8fb2054c9410",
+        "role": "assistant",
+        "text": "SELECT column_name FROM information_schema.columns WHERE table_name = 'cnae'",
+        "sql": "SELECT column_name FROM information_schema.columns WHERE table_name = 'cnae'",
+        "reportId": "f635d91d-de61-4f6f-aaca-b4ebec33fe67",
+        "reportTitle": "Colunas da tabela CNAE",
+        "reportSubtitle": "Listagem dos nomes das colunas na tabela CNAE no sistema",
+        "rowCount": 13,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-05-01T15:40:24.738920+00:00"
+      },
+      {
+        "id": "f796c59e-788f-4b19-886b-9798de4f43aa",
+        "role": "user",
+        "text": "cod_total nome_total cod_nv0 nom_nv0 cod_nv1 nom_nv1 cod_nv2 nom_nv2 cod_nv3 nom_nv3 cod_nv4 nom_nv4 cnae_emb, esses sao os campos. agora tente responder a pergunta original",
+        "createdAt": "2026-05-01T15:41:24.448876+00:00"
+      },
+      {
+        "id": "555054cc-dca1-413a-aad0-98b1bee88106",
+        "role": "assistant",
+        "text": "Somente uma instrucao SQL pode ser executada.",
+        "sql": "SELECT cod_total, nome_total FROM cnae WHERE nome_total ILIKE '%compra%' OR nome_total ILIKE '%venda%' OR nome_total ILIKE '%computadores%' LIMIT 1000;`",
+        "reportId": "3981dbb1-faf3-4230-bd7c-37cbf1558f4a",
+        "reportTitle": "Campos CNAE relacionados a compras e vendas",
+        "reportSubtitle": "Listagem de campos CNAE que mencionam compra, venda ou computadores",
+        "rowCount": 0,
+        "status": "error",
+        "error": "Somente uma instrucao SQL pode ser executada.",
+        "createdAt": "2026-05-01T15:41:24.448876+00:00"
+      },
+      {
+        "id": "2cd082fd-2c3f-444b-b161-224892d9dc2c",
+        "role": "user",
+        "text": "use somente computador",
+        "createdAt": "2026-05-01T15:41:52.461466+00:00"
+      },
+      {
+        "id": "f1f6a327-7f25-40f0-b36e-3bea45593565",
+        "role": "assistant",
+        "text": "Somente uma instrucao SQL pode ser executada.",
+        "sql": "SELECT cod_total, nome_total FROM cnae WHERE nome_total ILIKE '%computador%' LIMIT 1000;`",
+        "reportId": "bea6145c-9dca-4024-a068-35be15de7315",
+        "reportTitle": "Itens relacionados a computador",
+        "reportSubtitle": "Consulta de nomes e codigos associados a computadores",
+        "rowCount": 0,
+        "status": "error",
+        "error": "Somente uma instrucao SQL pode ser executada.",
+        "createdAt": "2026-05-01T15:41:52.461466+00:00"
+      },
+      {
+        "id": "05b815d8-69d9-4e6b-8428-ae97c15326f9",
+        "role": "user",
+        "text": "liste o cnae inteiro",
+        "createdAt": "2026-05-01T15:42:15.662986+00:00"
+      },
+      {
+        "id": "514703e7-56ff-42f1-a32b-27fcbcd5698d",
+        "role": "assistant",
+        "text": "Somente uma instrucao SQL pode ser executada.",
+        "sql": "SELECT * FROM cnae WHERE nome_total ILIKE '%computador%' LIMIT 1000;`",
+        "reportId": "923c2a0e-8ad7-4a67-9b23-3acdad8c731b",
+        "reportTitle": "Listagem de CNAE relacionados a computador",
+        "reportSubtitle": "Classificacoes de CNAE que incluem a palavra 'computador'",
+        "rowCount": 0,
+        "status": "error",
+        "error": "Somente uma instrucao SQL pode ser executada.",
+        "createdAt": "2026-05-01T15:42:15.662986+00:00"
+      },
+      {
+        "id": "f507a531-60b0-4158-b62d-026e350fc509",
+        "role": "user",
+        "text": "SELECT * FROM cnae",
+        "createdAt": "2026-05-01T15:42:37.081912+00:00"
+      },
+      {
+        "id": "58460755-b136-4360-a253-52b0aa7d2341",
+        "role": "assistant",
+        "text": "Somente uma instrucao SQL pode ser executada.",
+        "sql": "SELECT * FROM cnae LIMIT 1000;`",
+        "reportId": "ac9fdadb-159c-4268-a424-845f61111732",
+        "reportTitle": "Listagem de CNAE",
+        "reportSubtitle": "Consulta aos primeiros registros de CNAE",
+        "rowCount": 0,
+        "status": "error",
+        "error": "Somente uma instrucao SQL pode ser executada.",
+        "createdAt": "2026-05-01T15:42:37.081912+00:00"
+      }
+    ],
+    "reportIds": [
+      "774b2e71-d563-4a15-9a95-c37b6dbd4614",
+      "0ef6463a-2e32-4863-8069-2993a4341d7a",
+      "e4414efd-4556-451d-8a32-989ec1f3f11d",
+      "f635d91d-de61-4f6f-aaca-b4ebec33fe67",
+      "3981dbb1-faf3-4230-bd7c-37cbf1558f4a",
+      "bea6145c-9dca-4024-a068-35be15de7315",
+      "923c2a0e-8ad7-4a67-9b23-3acdad8c731b",
+      "ac9fdadb-159c-4268-a424-845f61111732"
+    ]
+  },
+  {
+    "id": "1c1a2dd2-14f3-4032-aed7-ae4829966297",
+    "userId": "37ba3f85-8720-4aa8-800e-4428b2057f5a",
+    "threadId": "thread_rADcFQKj91QBx8muD6qvodjI",
+    "title": "quero a contagem de contratacoes por modalidade (linha) e anos (cada ano de 2021 a 2026 como uma",
+    "createdAt": "2026-04-30T22:18:02.876489+00:00",
+    "updatedAt": "2026-04-30T22:18:23.171913+00:00",
+    "messages": [
+      {
+        "id": "d0758a8a-8a16-401c-92a9-27af5480a640",
+        "role": "user",
+        "text": "quero a contagem de contratacoes por modalidade (linha) e anos (cada ano de 2021 a 2026 como uma coluna) + coluna totalizador  + coluna percentual do total, orednacao total desc",
+        "createdAt": "2026-04-30T22:18:23.171913+00:00"
+      },
+      {
+        "id": "b4c9bdd5-0a31-460e-9c52-f7dc9f12ecb1",
+        "role": "assistant",
+        "text": "SELECT c.modalidade_nome, COUNT(CASE WHEN c.ano_compra = '2021' THEN 1 END) AS \"2021\", COUNT(CASE WHEN c.ano_compra = '2022' THEN 1 END) AS \"2022\", COUNT(CASE WHEN c.ano_compra = '2023' THEN 1 END) AS \"2023\", COUNT(CASE WHEN c.ano_compra = '2024' THEN 1 END) AS \"2024\", COUNT(CASE WHEN c.ano_compra = '2025' THEN 1 END) AS \"2025\", COUNT(CASE WHEN c.ano_compra = '2026' THEN 1 END) AS \"2026\", COUNT(*) AS total_contratacoes, ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER(), 2) AS percentual_total FROM contratacao AS c GROUP BY c.modalidade_nome ORDER BY total_contratacoes DESC",
+        "sql": "SELECT c.modalidade_nome, COUNT(CASE WHEN c.ano_compra = '2021' THEN 1 END) AS \"2021\", COUNT(CASE WHEN c.ano_compra = '2022' THEN 1 END) AS \"2022\", COUNT(CASE WHEN c.ano_compra = '2023' THEN 1 END) AS \"2023\", COUNT(CASE WHEN c.ano_compra = '2024' THEN 1 END) AS \"2024\", COUNT(CASE WHEN c.ano_compra = '2025' THEN 1 END) AS \"2025\", COUNT(CASE WHEN c.ano_compra = '2026' THEN 1 END) AS \"2026\", COUNT(*) AS total_contratacoes, ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER(), 2) AS percentual_total FROM contratacao AS c GROUP BY c.modalidade_nome ORDER BY total_contratacoes DESC",
+        "reportId": "",
+        "rowCount": 14,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-04-30T22:18:23.171913+00:00",
+        "reportDeleted": true
+      }
+    ],
+    "reportIds": []
+  },
+  {
+    "id": "0807be62-6ea5-42d0-81cc-5afb16edebe1",
+    "userId": "37ba3f85-8720-4aa8-800e-4428b2057f5a",
+    "threadId": "thread_KCXLLW2fr2FtPRKRWJOGPN98",
+    "title": "quero a somatoria dos valores estimados de contratação com dados. Nas linhas quero as modalidade",
+    "createdAt": "2026-04-30T22:49:40.808368+00:00",
+    "updatedAt": "2026-04-30T22:59:15.179098+00:00",
+    "messages": [
+      {
+        "id": "63c289ef-b8b5-4f3a-b0dd-17ef14f513ff",
+        "role": "user",
+        "text": "quero a somatoria dos valores estimados de contratação com dados. Nas linhas quero as modalidades e nas colunas quero os anos (de 2021 a 2026), mais o totalizador e mais o percentual. quero ordenação por total desc",
+        "createdAt": "2026-04-30T22:50:05.421138+00:00"
+      },
+      {
+        "id": "82dea909-3e1e-449b-81a4-be52f6b1ffbe",
+        "role": "assistant",
+        "text": "SELECT c.modalidade_nome, SUM(CASE WHEN c.ano_compra = '2021' THEN CAST(c.valor_total_estimado AS numeric) ELSE 0 END) AS valor_2021, SUM(CASE WHEN c.ano_compra = '2022' THEN CAST(c.valor_total_estimado AS numeric) ELSE 0 END) AS valor_2022, SUM(CASE WHEN c.ano_compra = '2023' THEN CAST(c.valor_total_estimado AS numeric) ELSE 0 END) AS valor_2023, SUM(CASE WHEN c.ano_compra = '2024' THEN CAST(c.valor_total_estimado AS numeric) ELSE 0 END) AS valor_2024, SUM(CASE WHEN c.ano_compra = '2025' THEN CAST(c.valor_total_estimado AS numeric) ELSE 0 END) AS valor_2025, SUM(CASE WHEN c.ano_compra = '2026' THEN CAST(c.valor_total_estimado AS numeric) ELSE 0 END) AS valor_2026, SUM(CAST(c.valor_total_estimado AS numeric)) AS total, (SUM(CAST(c.valor_total_estimado AS numeric)) / NULLIF(SUM(SUM(CAST(c.valor_total_estimado AS numeric))) OVER (), 0) * 100) AS percentual FROM contratacao AS c WHERE c.ano_compra BETWEEN '2021' AND '2026' GROUP BY c.modalidade_nome ORDER BY total DESC LIMIT 1000",
+        "sql": "SELECT c.modalidade_nome, SUM(CASE WHEN c.ano_compra = '2021' THEN CAST(c.valor_total_estimado AS numeric) ELSE 0 END) AS valor_2021, SUM(CASE WHEN c.ano_compra = '2022' THEN CAST(c.valor_total_estimado AS numeric) ELSE 0 END) AS valor_2022, SUM(CASE WHEN c.ano_compra = '2023' THEN CAST(c.valor_total_estimado AS numeric) ELSE 0 END) AS valor_2023, SUM(CASE WHEN c.ano_compra = '2024' THEN CAST(c.valor_total_estimado AS numeric) ELSE 0 END) AS valor_2024, SUM(CASE WHEN c.ano_compra = '2025' THEN CAST(c.valor_total_estimado AS numeric) ELSE 0 END) AS valor_2025, SUM(CASE WHEN c.ano_compra = '2026' THEN CAST(c.valor_total_estimado AS numeric) ELSE 0 END) AS valor_2026, SUM(CAST(c.valor_total_estimado AS numeric)) AS total, (SUM(CAST(c.valor_total_estimado AS numeric)) / NULLIF(SUM(SUM(CAST(c.valor_total_estimado AS numeric))) OVER (), 0) * 100) AS percentual FROM contratacao AS c WHERE c.ano_compra BETWEEN '2021' AND '2026' GROUP BY c.modalidade_nome ORDER BY total DESC LIMIT 1000",
+        "reportId": "7e0dbb2c-c82a-4366-8c00-104a23d0cb20",
+        "rowCount": 14,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-04-30T22:50:05.421138+00:00"
+      },
+      {
+        "id": "296d86eb-8052-46cf-b704-736336814622",
+        "role": "user",
+        "text": "agora quero por UF",
+        "createdAt": "2026-04-30T22:51:32.351621+00:00"
+      },
+      {
+        "id": "a917e9c1-fed5-4081-b436-f8a1f7c6b49e",
+        "role": "assistant",
+        "text": "SELECT c.unidade_orgao_uf_sigla, SUM(CASE WHEN c.ano_compra = '2021' THEN CAST(c.valor_total_estimado AS numeric) ELSE 0 END) AS valor_2021, SUM(CASE WHEN c.ano_compra = '2022' THEN CAST(c.valor_total_estimado AS numeric) ELSE 0 END) AS valor_2022, SUM(CASE WHEN c.ano_compra = '2023' THEN CAST(c.valor_total_estimado AS numeric) ELSE 0 END) AS valor_2023, SUM(CASE WHEN c.ano_compra = '2024' THEN CAST(c.valor_total_estimado AS numeric) ELSE 0 END) AS valor_2024, SUM(CASE WHEN c.ano_compra = '2025' THEN CAST(c.valor_total_estimado AS numeric) ELSE 0 END) AS valor_2025, SUM(CASE WHEN c.ano_compra = '2026' THEN CAST(c.valor_total_estimado AS numeric) ELSE 0 END) AS valor_2026, SUM(CAST(c.valor_total_estimado AS numeric)) AS total, (SUM(CAST(c.valor_total_estimado AS numeric)) / NULLIF(SUM(SUM(CAST(c.valor_total_estimado AS numeric))) OVER (), 0) * 100) AS percentual FROM contratacao AS c WHERE c.ano_compra BETWEEN '2021' AND '2026' GROUP BY c.unidade_orgao_uf_sigla ORDER BY total DESC LIMIT 1000",
+        "sql": "SELECT c.unidade_orgao_uf_sigla, SUM(CASE WHEN c.ano_compra = '2021' THEN CAST(c.valor_total_estimado AS numeric) ELSE 0 END) AS valor_2021, SUM(CASE WHEN c.ano_compra = '2022' THEN CAST(c.valor_total_estimado AS numeric) ELSE 0 END) AS valor_2022, SUM(CASE WHEN c.ano_compra = '2023' THEN CAST(c.valor_total_estimado AS numeric) ELSE 0 END) AS valor_2023, SUM(CASE WHEN c.ano_compra = '2024' THEN CAST(c.valor_total_estimado AS numeric) ELSE 0 END) AS valor_2024, SUM(CASE WHEN c.ano_compra = '2025' THEN CAST(c.valor_total_estimado AS numeric) ELSE 0 END) AS valor_2025, SUM(CASE WHEN c.ano_compra = '2026' THEN CAST(c.valor_total_estimado AS numeric) ELSE 0 END) AS valor_2026, SUM(CAST(c.valor_total_estimado AS numeric)) AS total, (SUM(CAST(c.valor_total_estimado AS numeric)) / NULLIF(SUM(SUM(CAST(c.valor_total_estimado AS numeric))) OVER (), 0) * 100) AS percentual FROM contratacao AS c WHERE c.ano_compra BETWEEN '2021' AND '2026' GROUP BY c.unidade_orgao_uf_sigla ORDER BY total DESC LIMIT 1000",
+        "reportId": "f34f9065-0f0d-46bf-948f-9689acded222",
+        "rowCount": 28,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-04-30T22:51:32.351621+00:00"
+      },
+      {
+        "id": "c317f634-bd7a-400d-9e59-dcfb66de25a5",
+        "role": "user",
+        "text": "quero a contagem do numero de contratação como dados. Nas linhas quero as modalidades e nas colunas quero os anos (de 2021 a 2026), mais o totalizador e mais o percentual. quero ordenação por total desc",
+        "createdAt": "2026-04-30T22:59:15.179098+00:00"
+      },
+      {
+        "id": "e78b98a8-dd0d-48f9-9c6b-18ed0bea407c",
+        "role": "assistant",
+        "text": "SELECT c.modalidade_nome, COUNT(CASE WHEN c.ano_compra = '2021' THEN c.numero_controle_pncp ELSE NULL END) AS count_2021, COUNT(CASE WHEN c.ano_compra = '2022' THEN c.numero_controle_pncp ELSE NULL END) AS count_2022, COUNT(CASE WHEN c.ano_compra = '2023' THEN c.numero_controle_pncp ELSE NULL END) AS count_2023, COUNT(CASE WHEN c.ano_compra = '2024' THEN c.numero_controle_pncp ELSE NULL END) AS count_2024, COUNT(CASE WHEN c.ano_compra = '2025' THEN c.numero_controle_pncp ELSE NULL END) AS count_2025, COUNT(CASE WHEN c.ano_compra = '2026' THEN c.numero_controle_pncp ELSE NULL END) AS count_2026, COUNT(c.numero_controle_pncp) AS total, (COUNT(c.numero_controle_pncp) / NULLIF(SUM(COUNT(c.numero_controle_pncp)) OVER (), 0) * 100) AS percentual FROM contratacao AS c WHERE c.ano_compra BETWEEN '2021' AND '2026' GROUP BY c.modalidade_nome ORDER BY total DESC LIMIT 1000",
+        "sql": "SELECT c.modalidade_nome, COUNT(CASE WHEN c.ano_compra = '2021' THEN c.numero_controle_pncp ELSE NULL END) AS count_2021, COUNT(CASE WHEN c.ano_compra = '2022' THEN c.numero_controle_pncp ELSE NULL END) AS count_2022, COUNT(CASE WHEN c.ano_compra = '2023' THEN c.numero_controle_pncp ELSE NULL END) AS count_2023, COUNT(CASE WHEN c.ano_compra = '2024' THEN c.numero_controle_pncp ELSE NULL END) AS count_2024, COUNT(CASE WHEN c.ano_compra = '2025' THEN c.numero_controle_pncp ELSE NULL END) AS count_2025, COUNT(CASE WHEN c.ano_compra = '2026' THEN c.numero_controle_pncp ELSE NULL END) AS count_2026, COUNT(c.numero_controle_pncp) AS total, (COUNT(c.numero_controle_pncp) / NULLIF(SUM(COUNT(c.numero_controle_pncp)) OVER (), 0) * 100) AS percentual FROM contratacao AS c WHERE c.ano_compra BETWEEN '2021' AND '2026' GROUP BY c.modalidade_nome ORDER BY total DESC LIMIT 1000",
+        "reportId": "73336e3d-af98-4aee-9d8b-d1add0914bc2",
+        "reportTitle": "Contagem de contratacoes por modalidade e ano",
+        "reportSubtitle": "Distribuicao de contratacoes por modalidade de 2021 a 2026, com percentual",
+        "rowCount": 14,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-04-30T22:59:15.179098+00:00"
+      }
+    ],
+    "reportIds": [
+      "7e0dbb2c-c82a-4366-8c00-104a23d0cb20",
+      "f34f9065-0f0d-46bf-948f-9689acded222",
+      "73336e3d-af98-4aee-9d8b-d1add0914bc2"
+    ]
+  },
+  {
+    "id": "8dbdc0c2-f57e-4113-8129-e55d729986f0",
+    "userId": "37ba3f85-8720-4aa8-800e-4428b2057f5a",
+    "threadId": "thread_sTfsQTMgYz6oaI0Rkyl5a9mR",
+    "title": "Contratações em Delfim Moreira/MG (Jan-Mar 2026)",
+    "createdAt": "2026-04-30T23:00:26.674283+00:00",
+    "updatedAt": "2026-04-30T23:03:46.808160+00:00",
+    "messages": [
+      {
+        "id": "6ef382c5-e88d-44dd-b5f5-89cd87ca4d08",
+        "role": "user",
+        "text": "quero as contratcoes de delfim moreira/MG de janeiro a marco de 2026",
+        "createdAt": "2026-04-30T23:00:54.056829+00:00"
+      },
+      {
+        "id": "9ca7942a-baf8-42a5-b44d-55da510452ae",
+        "role": "assistant",
+        "text": "SELECT c.numero_controle_pncp, c.ano_compra, c.objeto_compra, c.valor_total_homologado, c.data_abertura_proposta, c.orgao_entidade_razao_social, c.unidade_orgao_municipio_nome, c.unidade_orgao_uf_sigla FROM contratacao AS c WHERE c.unidade_orgao_municipio_nome ILIKE '%delfim moreira%' AND c.unidade_orgao_uf_sigla = 'MG' AND c.data_abertura_proposta >= '2026-01-01' AND c.data_abertura_proposta <= '2026-03-31' ORDER BY c.data_abertura_proposta DESC LIMIT 1000",
+        "sql": "SELECT c.numero_controle_pncp, c.ano_compra, c.objeto_compra, c.valor_total_homologado, c.data_abertura_proposta, c.orgao_entidade_razao_social, c.unidade_orgao_municipio_nome, c.unidade_orgao_uf_sigla FROM contratacao AS c WHERE c.unidade_orgao_municipio_nome ILIKE '%delfim moreira%' AND c.unidade_orgao_uf_sigla = 'MG' AND c.data_abertura_proposta >= '2026-01-01' AND c.data_abertura_proposta <= '2026-03-31' ORDER BY c.data_abertura_proposta DESC LIMIT 1000",
+        "reportId": "2d6301aa-b6b5-46c0-817c-158161b21ea7",
+        "reportTitle": "Contratações em Delfim Moreira/MG (Jan-Mar 2026)",
+        "reportSubtitle": "Lista de contratações abertas por órgão e objeto de compra",
+        "rowCount": 9,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-04-30T23:00:54.056829+00:00"
+      },
+      {
+        "id": "37cf2249-de2a-46ae-9ad8-672b7c48b816",
+        "role": "user",
+        "text": "agora quero os contratos de delfim moreira/Mg no mesmo periodo",
+        "createdAt": "2026-04-30T23:02:16.071889+00:00"
+      },
+      {
+        "id": "548370d2-8ef4-4a3c-a4c8-89d7b7531da2",
+        "role": "assistant",
+        "text": "SELECT ct.numero_controle_pncp, ct.numero_contrato_empenho, ct.nome_razao_social_fornecedor, ct.data_assinatura, ct.valor_global FROM contrato AS ct WHERE ct.unidade_orgao_municipio_nome ILIKE '%delfim moreira%' AND ct.unidade_orgao_uf_sigla = 'MG' AND ct.data_assinatura >= '2026-01-01' AND ct.data_assinatura <= '2026-03-31' ORDER BY ct.data_assinatura DESC LIMIT 1000",
+        "sql": "SELECT ct.numero_controle_pncp, ct.numero_contrato_empenho, ct.nome_razao_social_fornecedor, ct.data_assinatura, ct.valor_global FROM contrato AS ct WHERE ct.unidade_orgao_municipio_nome ILIKE '%delfim moreira%' AND ct.unidade_orgao_uf_sigla = 'MG' AND ct.data_assinatura >= '2026-01-01' AND ct.data_assinatura <= '2026-03-31' ORDER BY ct.data_assinatura DESC LIMIT 1000",
+        "reportId": "dad25216-d9d3-4426-b0a1-146f7673517c",
+        "reportTitle": "Contratos em Delfim Moreira/MG",
+        "reportSubtitle": "Lista de contratos assinados no primeiro trimestre de 2026",
+        "rowCount": 2,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-04-30T23:02:16.071889+00:00"
+      },
+      {
+        "id": "c34b9505-fbdf-4880-8427-99fb0e56b611",
+        "role": "user",
+        "text": "procure na tabela municipios qual é o codigo do municipio de delfim moreira e faça o select na base de contrato a partir desse codigo",
+        "createdAt": "2026-04-30T23:03:46.808160+00:00"
+      },
+      {
+        "id": "403fe4c7-9804-4060-a77b-3a2926e5e11e",
+        "role": "assistant",
+        "text": "SELECT ct.numero_controle_pncp, ct.numero_contrato_empenho, ct.nome_razao_social_fornecedor, ct.data_assinatura, ct.valor_global FROM contrato AS ct WHERE ct.unidade_orgao_municipio_nome ILIKE '%delfim moreira%' AND ct.unidade_orgao_uf_sigla = 'MG' ORDER BY ct.data_assinatura DESC LIMIT 1000",
+        "sql": "SELECT ct.numero_controle_pncp, ct.numero_contrato_empenho, ct.nome_razao_social_fornecedor, ct.data_assinatura, ct.valor_global FROM contrato AS ct WHERE ct.unidade_orgao_municipio_nome ILIKE '%delfim moreira%' AND ct.unidade_orgao_uf_sigla = 'MG' ORDER BY ct.data_assinatura DESC LIMIT 1000",
+        "reportId": "f772c9a0-f81f-490a-8761-f3aab2cc5451",
+        "reportTitle": "Contratos de Delfim Moreira, MG",
+        "reportSubtitle": "Listagem de contratos por fornecedor e valor com base em Delfim Moreira",
+        "rowCount": 70,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-04-30T23:03:46.808160+00:00"
+      }
+    ],
+    "reportIds": [
+      "2d6301aa-b6b5-46c0-817c-158161b21ea7",
+      "dad25216-d9d3-4426-b0a1-146f7673517c",
+      "f772c9a0-f81f-490a-8761-f3aab2cc5451"
+    ]
+  },
+  {
+    "id": "57e58d3d-498d-48dc-8f77-25087c2aac27",
+    "userId": "37ba3f85-8720-4aa8-800e-4428b2057f5a",
+    "threadId": "thread_Gki0ibhkHYZocxH1uDKCdK8V",
+    "title": "Dispensas de licitação para alimentação",
+    "createdAt": "2026-04-30T23:09:38.340079+00:00",
+    "updatedAt": "2026-04-30T23:15:25.509417+00:00",
+    "messages": [
+      {
+        "id": "abd4716d-1fe9-4c23-8a40-661e10b59b60",
+        "role": "user",
+        "text": "me de as dispensas de licitação para alimentação",
+        "createdAt": "2026-04-30T23:10:07.512483+00:00"
+      },
+      {
+        "id": "8e9bad42-3e66-4041-a690-0981fcb0f4e3",
+        "role": "assistant",
+        "text": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.modalidade_nome FROM contratacao AS c WHERE c.modalidade_nome ILIKE '%dispensa de licitação%' AND c.objeto_compra ILIKE '%alimentação%' ORDER BY c.data_publicacao_pncp DESC LIMIT 1000",
+        "sql": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.modalidade_nome FROM contratacao AS c WHERE c.modalidade_nome ILIKE '%dispensa de licitação%' AND c.objeto_compra ILIKE '%alimentação%' ORDER BY c.data_publicacao_pncp DESC LIMIT 1000",
+        "reportId": "e12a6d69-f4e9-4bf6-bb24-09b9f38ab00c",
+        "reportTitle": "Dispensas de licitação para alimentação",
+        "reportSubtitle": "Contratações por dispensa de licitação relacionadas à alimentação",
+        "rowCount": 0,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-04-30T23:10:07.512483+00:00"
+      },
+      {
+        "id": "f355eb46-faa8-4d57-86c4-900d113e2371",
+        "role": "user",
+        "text": "voce precisa verificar qual codigo e nome equivale a modalidade dispensa antes de fazer o select. faça um select das modalidades em contratacataco",
+        "createdAt": "2026-04-30T23:11:30.096164+00:00"
+      },
+      {
+        "id": "a32a043b-7dcc-4f9b-a423-41baf8b4244a",
+        "role": "assistant",
+        "text": "SELECT DISTINCT modalidade_id, modalidade_nome FROM contratacao ORDER BY modalidade_nome",
+        "sql": "SELECT DISTINCT modalidade_id, modalidade_nome FROM contratacao ORDER BY modalidade_nome",
+        "reportId": "4c2d145d-707a-44bf-a762-4250f70c6a91",
+        "reportTitle": "Lista de modalidades de contratacao",
+        "reportSubtitle": "Identificacao e nome das modalidades em contratacoes",
+        "rowCount": 14,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-04-30T23:11:30.096164+00:00"
+      },
+      {
+        "id": "e11f4a8e-589d-4c1e-9dca-924747d7793b",
+        "role": "user",
+        "text": "modalidade_nome = \"Dispensa\", numero 8",
+        "createdAt": "2026-04-30T23:12:20.776098+00:00"
+      },
+      {
+        "id": "c35a7af9-66c0-46dd-88ed-99930be394f8",
+        "role": "assistant",
+        "text": "Erro ao executar SQL: operator does not exist: text = integer\nLINE 1: ..._nome FROM contratacao AS c WHERE c.modalidade_id = 8 AND c....\n                                                             ^\nHINT:  No operator matches the given name and argument types. You might need to add explicit type casts.\n",
+        "sql": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.modalidade_nome FROM contratacao AS c WHERE c.modalidade_id = 8 AND c.objeto_compra ILIKE '%alimentação%' ORDER BY c.data_publicacao_pncp DESC LIMIT 1000;",
+        "reportId": "9d23580d-5b88-486c-9974-4e885d1fa920",
+        "reportTitle": "Contratacoes por dispensa em alimentacao",
+        "reportSubtitle": "Relatorio de contratacoes na modalidade 'dispensa' para alimentacao",
+        "rowCount": 0,
+        "status": "error",
+        "error": "Erro ao executar SQL: operator does not exist: text = integer\nLINE 1: ..._nome FROM contratacao AS c WHERE c.modalidade_id = 8 AND c....\n                                                             ^\nHINT:  No operator matches the given name and argument types. You might need to add explicit type casts.\n",
+        "createdAt": "2026-04-30T23:12:20.776098+00:00"
+      },
+      {
+        "id": "f7a258b8-abd9-4e41-bb1f-08a520875b21",
+        "role": "user",
+        "text": "use modalidade_nome Inexigibilidade",
+        "createdAt": "2026-04-30T23:14:42.545289+00:00"
+      },
+      {
+        "id": "c5ab5ad6-33ec-4de9-9374-33041e9b6271",
+        "role": "assistant",
+        "text": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.modalidade_nome FROM contratacao AS c WHERE c.modalidade_nome ILIKE '%inexigibilidade%' AND c.objeto_compra ILIKE '%alimentação%' ORDER BY c.data_publicacao_pncp DESC LIMIT 1000",
+        "sql": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.modalidade_nome FROM contratacao AS c WHERE c.modalidade_nome ILIKE '%inexigibilidade%' AND c.objeto_compra ILIKE '%alimentação%' ORDER BY c.data_publicacao_pncp DESC LIMIT 1000",
+        "reportId": "694f19b4-cbef-40b5-aefd-444c778543c7",
+        "reportTitle": "Contratações por Inexigibilidade em Alimentação",
+        "reportSubtitle": "Listagem de contratações de alimentação com a modalidade Inexigibilidade",
+        "rowCount": 1000,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-04-30T23:14:42.545289+00:00"
+      },
+      {
+        "id": "247e560f-d58c-4d45-87cc-3f661dce7102",
+        "role": "user",
+        "text": "ordene por valor estimado desc",
+        "createdAt": "2026-04-30T23:15:25.509417+00:00"
+      },
+      {
+        "id": "6ff7e8da-4b78-4607-9de2-9f34f390d986",
+        "role": "assistant",
+        "text": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.modalidade_nome FROM contratacao AS c WHERE c.modalidade_nome ILIKE '%inexigibilidade%' AND c.objeto_compra ILIKE '%alimentação%' ORDER BY CAST(c.valor_total_estimado AS numeric) DESC LIMIT 1000",
+        "sql": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.modalidade_nome FROM contratacao AS c WHERE c.modalidade_nome ILIKE '%inexigibilidade%' AND c.objeto_compra ILIKE '%alimentação%' ORDER BY CAST(c.valor_total_estimado AS numeric) DESC LIMIT 1000",
+        "reportId": "d0baa08e-a56e-4351-adcd-dbea2f043a3c",
+        "reportTitle": "Contratações por Inexigibilidade em Alimentação",
+        "reportSubtitle": "Ranking por valor estimado de contratos de alimentação",
+        "rowCount": 1000,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-04-30T23:15:25.509417+00:00"
+      }
+    ],
+    "reportIds": [
+      "e12a6d69-f4e9-4bf6-bb24-09b9f38ab00c",
+      "4c2d145d-707a-44bf-a762-4250f70c6a91",
+      "9d23580d-5b88-486c-9974-4e885d1fa920",
+      "694f19b4-cbef-40b5-aefd-444c778543c7",
+      "d0baa08e-a56e-4351-adcd-dbea2f043a3c"
+    ]
+  },
+  {
+    "id": "82a8e22c-ec04-467c-a2d5-310e41522676",
+    "userId": "37ba3f85-8720-4aa8-800e-4428b2057f5a",
+    "threadId": "thread_8CrKGT6js0bkz78H68pfkM9j",
+    "title": "Maiores valores estimados por modalidade de dispensa",
+    "createdAt": "2026-05-01T15:07:41.145986+00:00",
+    "updatedAt": "2026-05-01T15:14:25.216598+00:00",
+    "messages": [
+      {
+        "id": "03120a8c-bed4-4f08-97a3-ba30e410c7fb",
+        "role": "user",
+        "text": "me de as maiores contratações em valor estimado  por modalidade de dispensa",
+        "createdAt": "2026-05-01T15:08:05.407407+00:00"
+      },
+      {
+        "id": "5ded5446-0bb8-4c9f-ba4f-472461978679",
+        "role": "assistant",
+        "text": "SELECT modalidade_nome, MAX(CAST(valor_total_estimado AS numeric)) AS maior_valor_estimado FROM contratacao WHERE modalidade_nome ILIKE '%dispensa%' GROUP BY modalidade_nome ORDER BY maior_valor_estimado DESC LIMIT 1000",
+        "sql": "SELECT modalidade_nome, MAX(CAST(valor_total_estimado AS numeric)) AS maior_valor_estimado FROM contratacao WHERE modalidade_nome ILIKE '%dispensa%' GROUP BY modalidade_nome ORDER BY maior_valor_estimado DESC LIMIT 1000",
+        "reportId": "",
+        "reportTitle": "Maiores valores estimados por modalidade de dispensa",
+        "reportSubtitle": "Valor maximo estimado em contratacoes por modalidade de dispensa",
+        "rowCount": 1,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-05-01T15:08:05.407407+00:00",
+        "reportDeleted": true
+      },
+      {
+        "id": "e1ea6560-5116-4ce7-a9a3-a8148b963362",
+        "role": "user",
+        "text": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.modalidade_nome FROM contratacao AS c WHERE c.modalidade_nome ILIKE '%inexigibilidade%' AND c.objeto_compra ILIKE '%alimentação%' ORDER BY CAST(c.valor_total_estimado AS numeric) DESC LIMIT 1000",
+        "createdAt": "2026-05-01T15:14:25.216598+00:00"
+      },
+      {
+        "id": "814fc6a1-8c28-4d77-92cd-0d0bf52284f4",
+        "role": "assistant",
+        "text": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.modalidade_nome FROM contratacao AS c WHERE c.modalidade_nome ILIKE '%inexigibilidade%' AND c.objeto_compra ILIKE '%alimentação%' ORDER BY CAST(c.valor_total_estimado AS numeric) DESC LIMIT 1000",
+        "sql": "SELECT c.numero_controle_pncp, c.objeto_compra, c.valor_total_homologado, c.modalidade_nome FROM contratacao AS c WHERE c.modalidade_nome ILIKE '%inexigibilidade%' AND c.objeto_compra ILIKE '%alimentação%' ORDER BY CAST(c.valor_total_estimado AS numeric) DESC LIMIT 1000",
+        "reportId": "",
+        "reportTitle": "Contratações de alimentação por inexigibilidade",
+        "reportSubtitle": "Top 1000 contratações por modalidade irresindível para alimentação",
+        "rowCount": 1000,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-05-01T15:14:25.216598+00:00",
+        "reportDeleted": true
+      }
+    ],
+    "reportIds": []
+  },
+  {
+    "id": "7beeae52-0627-498f-bfe5-78582f85cf11",
+    "userId": "37ba3f85-8720-4aa8-800e-4428b2057f5a",
+    "threadId": "thread_ZYl8Z7BhERFgDLzlG8noT78K",
+    "title": "Tabela Completa de CNAE",
+    "createdAt": "2026-05-01T15:44:23.263046+00:00",
+    "updatedAt": "2026-05-01T16:05:34.448237+00:00",
+    "messages": [
+      {
+        "id": "da500c59-79e3-4f37-864f-c2272b361752",
+        "role": "user",
+        "text": "me a tabela completa de cnae",
+        "createdAt": "2026-05-01T15:44:34.830666+00:00"
+      },
+      {
+        "id": "b84d4a20-864c-4c35-9c7d-d7bea59c9b23",
+        "role": "assistant",
+        "text": "Somente uma instrucao SQL pode ser executada.",
+        "sql": "SELECT * FROM cnae LIMIT 1000;`",
+        "reportId": "",
+        "reportTitle": "Tabela Completa de CNAE",
+        "reportSubtitle": "Listagem detalhada da Classificação Nacional de Atividades Econômicas",
+        "rowCount": 0,
+        "status": "error",
+        "error": "Somente uma instrucao SQL pode ser executada.",
+        "createdAt": "2026-05-01T15:44:34.830666+00:00",
+        "reportDeleted": true
+      },
+      {
+        "id": "3c4d2ddc-1e83-4372-a84b-d4a841bb1d57",
+        "role": "user",
+        "text": "Retire esse caracter \"`\"",
+        "createdAt": "2026-05-01T15:47:01.836318+00:00"
+      },
+      {
+        "id": "18b07480-7fef-49e0-9194-68518dc71a3c",
+        "role": "assistant",
+        "text": "SELECT * FROM cnae LIMIT 1000",
+        "sql": "SELECT * FROM cnae LIMIT 1000",
+        "reportId": "84917bea-b3e8-490a-9e00-1cb19fdd934a",
+        "reportTitle": "Classificação de Atividades Econômicas (CNAE)",
+        "reportSubtitle": "Lista das 1000 classificações e descrições econômicas registradas",
+        "rowCount": 1000,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-05-01T15:47:01.836318+00:00"
+      },
+      {
+        "id": "37c92c0f-7a67-4ea9-afef-d5e6297e8287",
+        "role": "user",
+        "text": "resuma por COD_NV0 e N)M_NV0",
+        "createdAt": "2026-05-01T16:00:14.363389+00:00"
+      },
+      {
+        "id": "e924907b-9513-40d9-b054-cf89e2acd6f1",
+        "role": "assistant",
+        "text": "SELECT cod_nv0, nom_nv0, COUNT(*) AS total FROM categoria GROUP BY cod_nv0, nom_nv0 ORDER BY cod_nv0",
+        "sql": "SELECT cod_nv0, nom_nv0, COUNT(*) AS total FROM categoria GROUP BY cod_nv0, nom_nv0 ORDER BY cod_nv0",
+        "reportId": "3aa9926d-c7e4-44c6-8d01-1dcfb8e41e00",
+        "reportTitle": "Resumo por Categoria Principal",
+        "reportSubtitle": "Distribuição de itens por categorias de Material e Serviço",
+        "rowCount": 2,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-05-01T16:00:14.363389+00:00"
+      },
+      {
+        "id": "a0a802c1-63f7-4ca8-9c86-dae725c9bc25",
+        "role": "user",
+        "text": "e pedi da tabela cnae",
+        "createdAt": "2026-05-01T16:03:49.779344+00:00"
+      },
+      {
+        "id": "152edb14-6458-41f6-96aa-67d4d757659c",
+        "role": "assistant",
+        "text": "Somente consultas SELECT/WITH sao permitidas no Modo Relatorio.",
+        "sql": "A tabela `cnae` não foi especificada na estrutura de dados fornecida. Posso ajudar com informações detalhadas da base disponível ou esclarecer questões sobre as tabelas existentes e realizar consultas nelas.",
+        "reportId": "18dda02f-0f8a-4d8f-8720-95aafbf26490",
+        "reportTitle": "Requisito fora da base definida",
+        "reportSubtitle": "Tabela CNAE não integra as informações disponíveis para consulta",
+        "rowCount": 0,
+        "status": "error",
+        "error": "Somente consultas SELECT/WITH sao permitidas no Modo Relatorio.",
+        "createdAt": "2026-05-01T16:03:49.779344+00:00"
+      },
+      {
+        "id": "e61bd033-c381-4813-9463-cf46bd8aa8e3",
+        "role": "user",
+        "text": "ela esta na estrutura basta fazer o select com esses campos da tabela cnae. vai nafe",
+        "createdAt": "2026-05-01T16:04:33.775899+00:00"
+      },
+      {
+        "id": "78b7d357-376c-4648-9981-f165cedc4c23",
+        "role": "assistant",
+        "text": "SELECT cod_nv0, nom_nv0, COUNT(*) AS total FROM cnae GROUP BY cod_nv0, nom_nv0 ORDER BY cod_nv0",
+        "sql": "SELECT cod_nv0, nom_nv0, COUNT(*) AS total FROM cnae GROUP BY cod_nv0, nom_nv0 ORDER BY cod_nv0",
+        "reportId": "57bc1984-4511-47f2-bb1c-160f895fde57",
+        "reportTitle": "Setores CNAE por Categoria",
+        "reportSubtitle": "Quantidade de registros agrupados por categoria de atividade econômica",
+        "rowCount": 20,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-05-01T16:04:33.775899+00:00"
+      },
+      {
+        "id": "612f42db-de44-4e85-b62d-56f51b3c8a20",
+        "role": "user",
+        "text": "muito bem ! agora faça a mesma coisa com cod_nv0, nom_nv0, cod_nv1 e nom_nv1",
+        "createdAt": "2026-05-01T16:05:34.448237+00:00"
+      },
+      {
+        "id": "e5c76bcd-5ac7-4266-a173-d2f2a25e18a1",
+        "role": "assistant",
+        "text": "SELECT cod_nv0, nom_nv0, cod_nv1, nom_nv1, COUNT(*) AS total FROM cnae GROUP BY cod_nv0, nom_nv0, cod_nv1, nom_nv1 ORDER BY cod_nv0, cod_nv1",
+        "sql": "SELECT cod_nv0, nom_nv0, cod_nv1, nom_nv1, COUNT(*) AS total FROM cnae GROUP BY cod_nv0, nom_nv0, cod_nv1, nom_nv1 ORDER BY cod_nv0, cod_nv1",
+        "reportId": "5a15e78c-164b-4fbe-b008-7a2c5bc5fc55",
+        "reportTitle": "Distribuição por setores e sub-setores CNAE",
+        "reportSubtitle": "Quantidade de registros agrupados por setores principais e sub-setores",
+        "rowCount": 86,
+        "status": "ok",
+        "error": "",
+        "createdAt": "2026-05-01T16:05:34.448237+00:00"
+      }
+    ],
+    "reportIds": [
+      "84917bea-b3e8-490a-9e00-1cb19fdd934a",
+      "3aa9926d-c7e4-44c6-8d01-1dcfb8e41e00",
+      "18dda02f-0f8a-4d8f-8720-95aafbf26490",
+      "57bc1984-4511-47f2-bb1c-160f895fde57",
+      "5a15e78c-164b-4fbe-b008-7a2c5bc5fc55"
+    ]
+  }
+]

@@ -1,5 +1,6 @@
 function InicioPage({ navigate }) {
-  return <ModeHome onMode={(legacyMode) => navigate(window.legacyModeToRouteKey(legacyMode))} />;
+  const Component = window.InicioDashboard || window.ModeHome;
+  return <Component onMode={(legacyMode) => navigate(window.legacyModeToRouteKey(legacyMode))} />;
 }
 
 window.InicioPage = InicioPage;
